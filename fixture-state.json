@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "fixture_id": "baseline-v1",
+  "synthetic_only": true,
+  "description": "Static synthetic baseline declaration; runtime orders are process-local.",
+  "catalog": [
+    {
+      "item_id": "demo-wheel",
+      "amount_minor": 4900,
+      "currency": "USD"
+    }
+  ],
+  "initial_orders": []
+}
