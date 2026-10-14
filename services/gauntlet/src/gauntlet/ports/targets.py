@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from typing import Protocol
+from urllib.parse import unquote
 
 
 @dataclass(frozen=True)
@@ -16,7 +17,18 @@ class TargetProfile:
     route_prefixes: tuple[str, ...]
 
     def allows_route(self, path: str) -> bool:
-        route = path.split("?", 1)[0].split("#", 1)[0]
+        """Prefix match on the *decoded* path. Anything that could resolve elsewhere after
+        URL normalisation (dot segments, encoded separators, double encoding) is refused."""
+        raw = path.split("?", 1)[0].split("#", 1)[0]
+        route = unquote(raw)
+        if (
+            not route.startswith("/")
+            or route.startswith("//")
+            or "\\" in route
+            or "%" in route
+            or any(segment in (".", "..") for segment in route.split("/"))
+        ):
+            return False
         return any(
             prefix == "/" or route == prefix or route.startswith(prefix.rstrip("/") + "/")
             for prefix in self.route_prefixes
