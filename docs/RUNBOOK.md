@@ -4,6 +4,30 @@
 
 Python 3.12+, `uv`, Node >=22, pnpm, Docker and Git recommended. Copy `.env.example` to `.env.local` and privately fill only the required provider keys. First prove offline contracts and pure tests before any paid calls. Local scripts MUST NOT invoke real provider endpoints unless `RUN_LIVE_INTEGRATIONS=1` and explicit operator consent.
 
+## Dev environment (worktree bootstrap)
+
+Use the worktree-local `.venv`; never install dependencies globally. On B-00,
+Python 3.14 and uv 0.11.28 were used (project requirement: Python 3.12+).
+The existing root dependency groups define the offline tools. Until C's lockfile
+is integrated, a fresh worktree can bootstrap without writing a competing lock:
+
+```bash
+uv venv .venv
+uv pip install --python .venv/bin/python -e services/gauntlet --group dev
+.venv/bin/python -m pytest -q
+.venv/bin/ruff check .
+.venv/bin/ruff format --check .
+.venv/bin/mypy services/gauntlet/src
+uv build --package gauntlet-control --out-dir /tmp/gauntlet-build
+```
+
+After the approved `uv.lock` lands, use `uv sync --frozen` instead of the unlocked
+bootstrap above. Provider SDKs are not part of B-00's offline environment; C owns
+dependency/lock changes. `scripts/probe_sdk_inventory.py` reports installed and
+optional published versions without calling provider services or reading keys.
+For local headless diagnostics, Node 22+ and an existing Chrome executable are
+required; see `docs/SDK_VALIDATION.md`. This probe adds no npm dependency.
+
 ## Offline check (implemented scaffold)
 
 ```bash
