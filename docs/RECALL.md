@@ -29,3 +29,14 @@
 - `RecallVerdict` now references `tool_event_id` (event audit) or `decision_id` (counterfactual); the contract requires the right one per mode.
 - `AuditSummary` counts are computed from verdicts and must add up; an empty window is a gap ("absence of logs is not clearance").
 - `RemediationProposal` is draft-only and every action is a `*_review` / evidence-collection request; there is no executed status. Violations → `reverse_transaction_review`; inconclusive → `collect_missing_evidence`. Approval for review uses the A-03 `remediation` approval subject.
+
+## Counterfactual and materiality (A-06)
+
+- `domain/materiality.py`: `MaterialityPolicy` (versioned) compares structured outcomes — different action, presence/absence of an amount, or amount outside `amount_tolerance_minor` is material. Free-text promises are out of scope (grounded judge + human review later).
+- `application/recall/counterfactual.py` `CounterfactualUseCase.evaluate(recall_id, exposure, decision, readiness)`:
+  1. not replayable (critical input missing, or `ReplayWorldResolver` cannot rebuild the environment) → `not_replayable`, no replay runs;
+  2. `repeats` (≥2) control replays with every input pinned and the suspect source kept; any failed run, disagreement between runs, or mismatch with the recorded outcome → `inconclusive` and the counterfactual never runs;
+  3. `repeats` counterfactual replays removing exactly the trigger source; failed or disagreeing runs → `inconclusive` (`material_change=None`);
+  4. stable and material → `tainted`; stable and not material → `cleared`.
+- Only document-chunk and memory triggers have a defined mutation; model/prompt/policy version triggers return `inconclusive` until a replacement-version mutation is specified.
+- Every spec is deterministic (`replay_id`, `seed` per run, `logical_timestamp` = decision time) so B's engine can be audited run by run.

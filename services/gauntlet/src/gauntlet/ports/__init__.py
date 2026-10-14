@@ -15,7 +15,7 @@ from .errors import (
 from .lineage import HistoricalEventStore, LineageStore
 from .model import ModelGateway, ModelRequest, ModelResponse
 from .oracle import OracleDescriptor, TrustedOracleRegistry
-from .replay import ReplayEngine
+from .replay import ReplayEngine, ReplayWorld, ReplayWorldResolver
 from .repository import RepositoryInspector
 from .sandbox import EnvironmentHandle, SandboxProvider
 from .storage import RunStore
@@ -41,6 +41,8 @@ __all__ = [
     "OracleDescriptor",
     "PortError",
     "ReplayEngine",
+    "ReplayWorld",
+    "ReplayWorldResolver",
     "RepositoryInspector",
     "RunStore",
     "SandboxProvider",

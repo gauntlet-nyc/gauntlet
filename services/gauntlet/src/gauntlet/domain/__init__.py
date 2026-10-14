@@ -1,6 +1,12 @@
 """Pure truth policies; no provider SDK imports."""
 
 from .errors import GauntletDomainError, IllegalTransitionError, InvalidEvidenceError
+from .materiality import (
+    DecisionOutcome,
+    MaterialityPolicy,
+    ReplayDistribution,
+    distribution,
+)
 from .path_policy import is_patch_path_allowed, is_path_allowed
 from .state import GATE_LIFECYCLE, RECALL_LIFECYCLE, GateState, RecallState, StateMachine
 from .statuses import (
@@ -32,6 +38,7 @@ __all__ = [
     "Attribution",
     "AuditEvidence",
     "ControlComparison",
+    "DecisionOutcome",
     "GateEvidence",
     "GateState",
     "GateStatus",
@@ -39,16 +46,19 @@ __all__ = [
     "GauntletDomainError",
     "IllegalTransitionError",
     "InvalidEvidenceError",
+    "MaterialityPolicy",
     "OracleKind",
     "OracleOutcome",
     "RecallClassification",
     "RecallState",
+    "ReplayDistribution",
     "ReplayStatus",
     "Severity",
     "StateMachine",
     "classify_counterfactual",
     "classify_event_audit",
     "classify_gate",
+    "distribution",
     "is_patch_path_allowed",
     "is_path_allowed",
 ]
