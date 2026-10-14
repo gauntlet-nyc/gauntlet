@@ -15,10 +15,11 @@ WEB = frozenset({"fastapi", "starlette", "gauntlet.api"})
 FORBIDDEN: dict[str, frozenset[str]] = {
     "domain": PROVIDER_SDKS | WEB | {"pydantic", "gauntlet.contracts", "gauntlet.ports"},
     "contracts": PROVIDER_SDKS | WEB | {"gauntlet.ports"},
-    "ports": PROVIDER_SDKS | WEB,
+    "ports": PROVIDER_SDKS | WEB | {"gauntlet.intake", "gauntlet.analysis", "gauntlet.planning"},
     "analysis": PROVIDER_SDKS | WEB | {"gauntlet.planning", "gauntlet.application"},
     "planning": PROVIDER_SDKS | WEB | {"gauntlet.analysis", "gauntlet.application", "subprocess"},
     "application": PROVIDER_SDKS | WEB | {"gauntlet.analysis", "subprocess"},
+    "intake": PROVIDER_SDKS | WEB | {"gauntlet.analysis", "gauntlet.application", "subprocess"},
 }
 
 
