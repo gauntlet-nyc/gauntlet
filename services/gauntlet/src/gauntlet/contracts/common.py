@@ -1,5 +1,6 @@
 """Base wire model, constrained scalar types and immutable evidence references."""
 
+import re
 from typing import Annotated, Literal, Self
 
 from pydantic import AfterValidator, AwareDatetime, BaseModel, ConfigDict, Field, model_validator
@@ -28,11 +29,19 @@ def _reject_unsafe_relative_path(value: str) -> str:
     return value
 
 
+_ENCODED_SEPARATORS = re.compile(r"%(2e|2f|5c|25)", re.IGNORECASE)
+
+
 def _reject_non_route_path(value: str) -> str:
     if not value.startswith("/") or value.startswith("//") or "\\" in value:
         raise ValueError("route must be an origin-relative path such as /checkout")
-    if ".." in value.split("?")[0].split("/"):
-        raise ValueError("route must not contain '..' segments")
+    path = value.split("?", 1)[0].split("#", 1)[0]
+    if _ENCODED_SEPARATORS.search(path):
+        raise ValueError("route must not percent-encode '.', '/', '\\' or '%'")
+    if any(ch.isspace() or ord(ch) < 0x20 for ch in path):
+        raise ValueError("route must not contain whitespace or control characters")
+    if any(segment in (".", "..") for segment in path.split("/")):
+        raise ValueError("route must not contain '.' or '..' segments")
     return value
 
 
