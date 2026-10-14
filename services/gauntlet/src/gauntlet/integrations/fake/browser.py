@@ -41,7 +41,10 @@ class FakeBrowserProvider:
         self._sessions: dict[str, _Session] = {}
 
     async def open_session(self, environment: EnvironmentHandle) -> str:
-        origin = urlsplit(environment.preview_origin)
+        try:
+            origin = urlsplit(environment.preview_origin)
+        except ValueError:
+            raise EnvironmentUnavailableError("offline preview origin is malformed") from None
         if (
             origin.scheme != "https"
             or not (origin.hostname or "").endswith(".invalid")
@@ -86,14 +89,18 @@ class FakeBrowserProvider:
             )
         destination = recording.redirects[step_index] if recording.redirects else None
         if destination is not None:
-            actual = urlsplit(destination)
-            allowed = urlsplit(session.environment.preview_origin)
-            if (actual.scheme, actual.netloc) != (allowed.scheme, allowed.netloc):
+            try:
+                actual = urlsplit(destination)
+                allowed = urlsplit(session.environment.preview_origin)
+                same_origin = (actual.scheme, actual.netloc) == (allowed.scheme, allowed.netloc)
+            except ValueError:
+                same_origin = False
+            if not same_origin:
                 return ActionRecord(
                     step_index=step_index,
                     action=step.action,
                     outcome="blocked",
-                    detail="Recorded redirect leaves the allowed origin",
+                    detail="Recorded redirect is malformed or leaves the allowed origin",
                 )
         session.next_step += 1
         return recording.records[step_index].model_copy(deep=True)

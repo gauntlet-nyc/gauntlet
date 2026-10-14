@@ -151,3 +151,26 @@ Final combined check with B `b4085a7`, A through #8 and C through #10:
 - Real process smoke: `.venv/bin/python -m uvicorn gauntlet.api.main:app --host 127.0.0.1 --port 18080`, then `curl --fail --silent http://127.0.0.1:18080/runs/offline-gate`: HTTP success, fail/fail/pass, confirmed_regression/introduced, two ordered events.
 - Dashboard started with `NEXT_PUBLIC_GAUNTLET_API_URL=http://127.0.0.1:18080 corepack pnpm --filter @gauntlet/dashboard exec next start --hostname 127.0.0.1 --port 18081`. Existing Chrome ran `--headless=new --disable-gpu --no-first-run --dump-dom --timeout=15000` with a disposable profile against `/gate/offline`. Exit 0; DOM and visually inspected screenshot showed the offline label, verdict, three outcomes, and both events. Local evidence: `artifacts/b00-browser/checkpoint/{page.html,offline-gate.png}`. This tests real rendering of an offline recording, not live worker/browser execution.
 - Both GitHub Python jobs for B `b4085a7` passed. #10 needs the updated B commits; its remote CI is still on the older tests.
+
+### B-00 malformed URL regression fix (2026-10-14)
+
+Offline browser review reproduced four failures: malformed IPv6 brackets and
+NFKC-invalid host delimiters in preview origins or captured redirects escaped
+as bare `ValueError` from `urlsplit`. The adapter now converts malformed origins
+to `EnvironmentUnavailableError` and malformed redirects to a blocked action
+without recording evidence. The worker reports environment_error or aborted,
+respectively; neither yields a conclusive oracle result. Valid same-origin
+redirects still return the captured action log. No public interface, origin
+allowlist, oracle rule, or live provider permission changed.
+
+Verification in B's worktree:
+
+- `.venv/bin/python -m pytest -q -p no:asyncio services/gauntlet/tests/test_b00_ui.py -k malformed --tb=short`: four failures before the implementation, four passes after.
+- `.venv/bin/python -m pytest -q -p no:asyncio`: 118 passed, one existing Starlette deprecation warning.
+- `.venv/bin/mypy services/gauntlet/src services/gauntlet/tests/test_b00_ui.py`: 35 files clean.
+- `.venv/bin/ruff check --config 'src = ["services/gauntlet/src"]' services/gauntlet/src/gauntlet/integrations/fake/browser.py services/gauntlet/tests/test_b00_ui.py`: passed.
+- `.venv/bin/ruff format --check services/gauntlet/src/gauntlet/integrations/fake/browser.py services/gauntlet/tests/test_b00_ui.py`: both files already formatted.
+- `uv build --package gauntlet-control --out-dir /private/tmp/gauntlet-b-url-fix-dist`: wheel and sdist passed.
+
+This change exercises only the offline adapter; no additional live-browser or
+provider claim is made. Main-tree acceptance remains pending reviewed integration.

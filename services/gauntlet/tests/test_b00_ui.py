@@ -292,3 +292,52 @@ def test_oracle_cannot_confirm_interception_without_consistent_click_receipt(
     obs = observation()
     proof = replace(evidence(obs), received_target=received)
     assert registry(proof).evaluate("ui.primary_action_reachable", obs).outcome == "inconclusive"
+
+
+@pytest.mark.parametrize("url", ["https://[", "https://fake-preview.invalid\uff0foutside"])
+def test_malformed_preview_origin_raises_typed_environment_error(url: str) -> None:
+    async def scenario() -> None:
+        browser = FakeBrowserProvider((recording(),))
+        with pytest.raises(EnvironmentUnavailableError):
+            await browser.open_session(replace(environment(), preview_origin=url))
+        result = await UIWorker(browser, registry()).run(
+            plan(), replace(environment(), preview_origin=url)
+        )
+        assert result.status == "environment_error"
+        assert result.action_log == ()
+        assert registry().evaluate("ui.primary_action_reachable", result).outcome == "inconclusive"
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("url", ["https://[", "https://fake-preview.invalid\uff0foutside"])
+def test_malformed_redirect_aborts_worker_without_recorded_evidence(url: str) -> None:
+    async def scenario() -> None:
+        browser = FakeBrowserProvider(
+            (replace(recording(), redirects=(url, None, None, None, None)),)
+        )
+        result = await UIWorker(browser, registry()).run(plan(), environment())
+        assert result.status == "aborted"
+        assert len(result.action_log) == 1
+        assert result.action_log[0].outcome == "blocked"
+        assert result.evidence_ids == ()
+        assert registry().evaluate("ui.primary_action_reachable", result).outcome == "inconclusive"
+
+    asyncio.run(scenario())
+
+
+def test_valid_same_origin_redirect_preserves_recorded_action() -> None:
+    async def scenario() -> None:
+        browser = FakeBrowserProvider(
+            (
+                replace(
+                    recording(),
+                    redirects=("https://fake-preview.invalid/checkout", None, None, None, None),
+                ),
+            )
+        )
+        result = await UIWorker(browser, registry()).run(plan(), environment())
+        assert result.status == "completed"
+        assert result.action_log == observation().action_log
+
+    asyncio.run(scenario())
