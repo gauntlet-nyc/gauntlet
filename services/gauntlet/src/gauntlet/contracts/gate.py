@@ -42,6 +42,7 @@ ActionKind = Literal[
     "test_api",
     "chat",
 ]
+SurfaceKind = Literal["route", "component", "api", "agent_tool", "style", "workflow"]
 Selector = Annotated[str, Field(min_length=1, max_length=512)]
 
 
@@ -55,11 +56,29 @@ class ChangeRequest(StrictDTO):
     feature_intent: str | None = Field(default=None, max_length=2048)
 
 
+SignalKind = Literal[
+    "auth_check_removed",
+    "auth_check_added",
+    "side_effect_call",
+    "tool_definition",
+    "layout_positioning",
+]
+
+
+class ChangeSignal(StrictDTO):
+    """A deterministic, line-cited hint about *what kind* of change this is. Never a verdict."""
+
+    kind: SignalKind
+    source_ref: SourceRef
+    excerpt: str = Field(max_length=300)
+
+
 class AffectedSurface(StrictDTO):
-    kind: Literal["route", "component", "api", "agent_tool", "style", "workflow"]
+    kind: SurfaceKind
     identifier: str = Field(min_length=1, max_length=512)
     source_refs: tuple[SourceRef, ...] = Field(min_length=1, max_length=MAX_ITEMS)
     confidence: float = Field(ge=0, le=1)
+    signals: tuple[ChangeSignal, ...] = Field(default=(), max_length=20)
 
 
 class ChangeImpactMap(StrictDTO):

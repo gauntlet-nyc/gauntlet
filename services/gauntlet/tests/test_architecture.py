@@ -7,44 +7,18 @@ import pytest
 
 PACKAGE = Path(__file__).resolve().parents[1] / "src" / "gauntlet"
 
-FORBIDDEN: dict[str, set[str]] = {
-    "domain": {
-        "pydantic",
-        "fastapi",
-        "httpx",
-        "boto3",
-        "daytona",
-        "anchorbrowser",
-        "surrealdb",
-        "arize",
-        "elevenlabs",
-        "gauntlet.contracts",
-        "gauntlet.ports",
-        "gauntlet.api",
-    },
-    "contracts": {
-        "fastapi",
-        "httpx",
-        "boto3",
-        "daytona",
-        "anchorbrowser",
-        "surrealdb",
-        "arize",
-        "elevenlabs",
-        "gauntlet.ports",
-        "gauntlet.api",
-    },
-    "ports": {
-        "fastapi",
-        "httpx",
-        "boto3",
-        "daytona",
-        "anchorbrowser",
-        "surrealdb",
-        "arize",
-        "elevenlabs",
-        "gauntlet.api",
-    },
+PROVIDER_SDKS = frozenset(
+    {"httpx", "boto3", "daytona", "anchorbrowser", "surrealdb", "arize", "elevenlabs", "playwright"}
+)
+WEB = frozenset({"fastapi", "starlette", "gauntlet.api"})
+
+FORBIDDEN: dict[str, frozenset[str]] = {
+    "domain": PROVIDER_SDKS | WEB | {"pydantic", "gauntlet.contracts", "gauntlet.ports"},
+    "contracts": PROVIDER_SDKS | WEB | {"gauntlet.ports"},
+    "ports": PROVIDER_SDKS | WEB,
+    "analysis": PROVIDER_SDKS | WEB | {"gauntlet.planning", "gauntlet.application"},
+    "planning": PROVIDER_SDKS | WEB | {"gauntlet.analysis", "gauntlet.application", "subprocess"},
+    "application": PROVIDER_SDKS | WEB | {"gauntlet.analysis", "subprocess"},
 }
 
 
@@ -61,9 +35,11 @@ def _imported_modules(path: Path) -> set[str]:
 
 @pytest.mark.parametrize("layer", sorted(FORBIDDEN))
 def test_layer_has_no_forbidden_imports(layer: str) -> None:
+    files = sorted((PACKAGE / layer).rglob("*.py"))
+    assert files, f"layer {layer} has no modules"
     violations = [
-        f"{path.name}: {module}"
-        for path in (PACKAGE / layer).glob("*.py")
+        f"{path.relative_to(PACKAGE)}: {module}"
+        for path in files
         for module in _imported_modules(path)
         if any(module == banned or module.startswith(banned + ".") for banned in FORBIDDEN[layer])
     ]

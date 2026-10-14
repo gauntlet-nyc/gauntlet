@@ -7,3 +7,18 @@ Gauntlet is one modular Python control plane plus TypeScript dashboard/test fixt
 **Run contract:** plan freezes before worker invocation. Trusted verifier receives immutable observations, compares on equivalent fixture base/head, and records attribution separately from policy status. Repair applies hash-approved limited diffs to fresh head sandbox, replays original, variants and legitimate behaviors. Recall runs independent trigger/scope, then event audit or original-control-counterfactual.
 
 **Scaling later:** durable orchestration queue, tenancy, signed artifact URLs, schema/SDK version registry, job cancellation/janitor, production RBAC and opt-in historical instrumentation. Do not introduce microservices until lifecycle/throughput requires it.
+
+## Gate planning path (A-01)
+
+`ChangeRequest → GitRepositoryInspector (analysis/) → ChangeImpactMap → AttackPlanner (planning/) → PlanValidator → FrozenPlan → RunStore "plan_frozen" event`, orchestrated by `application/gate/PlanChangeUseCase`.
+
+- **Read-only git:** fixed subcommands via exec, no shell; per-invocation config disables external diff, textconv, fsmonitor and hooks; system/global git config ignored; diff/source/time bounds; repositories resolved from a server-side ID allowlist. `analysis/path_policy.py` keeps `.env*`, `.git`, `bench/private`, `bench/heldout`, dependencies and key material out of every impact map, excerpt and prompt.
+- **Surfaces are deterministic:** `analysis/surface_mapper.py` rules map changed lines to `style/component/route/api/agent_tool/workflow`, each with line-level `SourceRef`s (pure deletions cite the base commit). Unmatched, binary, renamed-only or unparseable changes become `coverage_gaps`, never silent passes.
+- **The model proposes, code decides:** `planning/worker_selector.py` derives allowed workers from surfaces. `PlanValidator` rejects non-JSON output, schema violations, wrong target/fixture, workers not allowed for the surfaces, unregistered oracles or oracles that do not support the worker, citations that touch no changed line, and attack-count/runtime overruns. Rejections are recorded with reasons.
+- **Freeze before execution:** `compute_plan_hash` is SHA-256 over canonical JSON of planner version, change, impact map and accepted attacks; it is persisted in a `plan_frozen` event before any worker runs. A change with no testable surface never calls the model and records `not_tested_reason`.
+
+## Change signals and target scope (A-02)
+
+- `analysis/signals.py` adds line-cited `ChangeSignal`s to each surface: `auth_check_removed` / `auth_check_added` (an ownership/permission term inside a guard), `side_effect_call` (refund/charge/transfer/delete/ledger/email), `tool_definition`, `layout_positioning`. Adjacent lines merge into one ranged signal. Signals steer planning only; they are never evidence of a bug.
+- `ports/targets.py` `TargetCatalog` is the server-side registry of authorized targets. `PlanChangeUseCase` refuses (`TargetNotAuthorizedError`) an unknown target or fixture **before** reading the repo or calling a model.
+- `PlanValidator` rejects steps that navigate or call APIs outside the target's registered route prefixes (segment-boundary match), use an actor that is not a registered synthetic identity, or chat with an unregistered agent. The planner prompt lists only those identities, so it never needs a hidden victim ID.

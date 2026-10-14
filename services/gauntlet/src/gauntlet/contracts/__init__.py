@@ -1,5 +1,12 @@
 """Canonical Pydantic wire contracts. Owner A; changes require three-party review."""
 
+from .approvals import (
+    ApprovalChannel,
+    ApprovalDecision,
+    ApprovalRecord,
+    ApprovalSubject,
+    FixPlan,
+)
 from .common import EvidenceRef, MissingInput, SourceRef, StrictDTO
 from .events import RunEvent
 from .gate import (
@@ -11,6 +18,7 @@ from .gate import (
     CaptureStep,
     ChangeImpactMap,
     ChangeRequest,
+    ChangeSignal,
     ChatStep,
     ClickStep,
     Finding,
@@ -21,9 +29,19 @@ from .gate import (
     PressStep,
     ResizeStep,
     ScrollStep,
+    SignalKind,
+    SurfaceKind,
     ToolCallRecord,
     TypeStep,
     WorkerKind,
+)
+from .lineage import (
+    ExposureRecord,
+    LineageEdge,
+    NodeKind,
+    NodeRef,
+    Relation,
+    ToolEvent,
 )
 from .recall import HistoricalDecision, RecallMode, RecallTrigger, RecallVerdict
 from .replay import ReplayMode, ReplayResult, ReplaySpec
@@ -31,35 +49,49 @@ from .replay import ReplayMode, ReplayResult, ReplaySpec
 __all__ = [
     "ActionRecord",
     "ActionStep",
+    "ApprovalChannel",
+    "ApprovalDecision",
+    "ApprovalRecord",
+    "ApprovalSubject",
     "AffectedSurface",
     "ApiRequestStep",
     "AttackSpec",
     "CaptureStep",
     "ChangeImpactMap",
     "ChangeRequest",
+    "ChangeSignal",
     "ChatStep",
     "ClickStep",
     "EvidenceRef",
+    "ExposureRecord",
     "Finding",
+    "FixPlan",
     "HistoricalDecision",
     "InspectStep",
+    "LineageEdge",
     "MissingInput",
     "NavigateStep",
+    "NodeKind",
+    "NodeRef",
     "Observation",
     "OracleVerdict",
     "PressStep",
     "RecallMode",
     "RecallTrigger",
     "RecallVerdict",
+    "Relation",
     "ReplayMode",
     "ReplayResult",
     "ReplaySpec",
     "ResizeStep",
     "RunEvent",
     "ScrollStep",
+    "SignalKind",
     "SourceRef",
     "StrictDTO",
+    "SurfaceKind",
     "ToolCallRecord",
+    "ToolEvent",
     "TypeStep",
     "WorkerKind",
 ]

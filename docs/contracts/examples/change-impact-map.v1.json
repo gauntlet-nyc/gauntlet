@@ -21,7 +21,22 @@
           "content_hash": null
         }
       ],
-      "confidence": 0.9
+      "confidence": 0.9,
+      "signals": [
+        {
+          "schema_version": "1.0",
+          "kind": "layout_positioning",
+          "source_ref": {
+            "schema_version": "1.0",
+            "path": "web/src/components/FloatingHelp.tsx",
+            "sha": "aaaaaaaa",
+            "start_line": 14,
+            "end_line": 14,
+            "content_hash": null
+          },
+          "excerpt": "<button className=\"fixed bottom-4 right-4 z-50 rounded-full\">"
+        }
+      ]
     }
   ],
   "coverage_gaps": [
