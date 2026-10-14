@@ -7,7 +7,13 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Final
 
-from gauntlet.contracts import AttackSpec, ChangeImpactMap, ChangeRequest, SourceRef
+from gauntlet.contracts import (
+    AttackSpec,
+    ChangeImpactMap,
+    ChangeRequest,
+    SourceRef,
+    TemporalMemoryFact,
+)
 from gauntlet.ports import ModelGateway, ModelRequest, TargetProfile, TrustedOracleRegistry
 
 from .plan_validation import PlanningLimits, PlanValidation, PlanValidator, RejectedAttack
@@ -83,6 +89,7 @@ class AttackPlanner:
         impact: ChangeImpactMap,
         excerpts: Sequence[SourceExcerpt],
         target: TargetProfile,
+        memory: Sequence[TemporalMemoryFact] = (),
     ) -> PlanDraft:
         workers = allowed_workers(impact)
         if not workers:
@@ -92,7 +99,7 @@ class AttackPlanner:
         response = await self._gateway.complete(
             ModelRequest(
                 system=self._instructions,
-                user=self._user_payload(change, impact, excerpts, workers, target),
+                user=self._user_payload(change, impact, excerpts, workers, target, memory),
                 max_output_tokens=self._limits.max_output_tokens,
             )
         )
@@ -107,6 +114,7 @@ class AttackPlanner:
         excerpts: Sequence[SourceExcerpt],
         workers: frozenset[str],
         target: TargetProfile,
+        memory: Sequence[TemporalMemoryFact],
     ) -> str:
         oracles = [
             {
@@ -133,6 +141,10 @@ class AttackPlanner:
                 "route_prefixes": list(target.route_prefixes),
             },
             "registered_oracles": oracles,
+            "verified_memory": [
+                f.model_dump(mode="json", exclude={"schema_version", "verification", "scope"})
+                for f in memory
+            ],
             "limits": {
                 "max_attacks": self._limits.max_attacks,
                 "max_total_runtime_seconds": self._limits.max_total_runtime_seconds,

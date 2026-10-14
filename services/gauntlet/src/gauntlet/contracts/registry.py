@@ -8,6 +8,7 @@ from .common import StrictDTO
 from .events import RunEvent
 from .gate import AttackSpec, ChangeImpactMap, ChangeRequest, Finding, Observation, OracleVerdict
 from .lineage import ExposureRecord, LineageEdge, ToolEvent
+from .memory import TemporalMemoryFact
 from .recall import HistoricalDecision, RecallTrigger, RecallVerdict
 from .remediation import AuditSummary, RemediationProposal
 from .replay import ReplayResult, ReplaySpec
@@ -34,6 +35,7 @@ EXPORTED_MODELS: Final[dict[str, type[StrictDTO]]] = {
     "replay-result": ReplayResult,
     "replay-spec": ReplaySpec,
     "run-event": RunEvent,
+    "temporal-memory-fact": TemporalMemoryFact,
     "tool-event": ToolEvent,
 }
 

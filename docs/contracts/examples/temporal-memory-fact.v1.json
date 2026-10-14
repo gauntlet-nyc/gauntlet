@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0",
+  "fact_id": "mem-083",
+  "kind": "ui_occlusion",
+  "summary": "Fixed help overlays can occlude primary mobile actions",
+  "verification": "confirmed",
+  "trust": "verified_test",
+  "scope": "project/cartwheel-fixture",
+  "surface_kinds": [
+    "style",
+    "component"
+  ],
+  "source": {
+    "schema_version": "1.0",
+    "finding_id": "finding-001",
+    "oracle_id": "ui.primary_action_reachable",
+    "commit": "aaaaaaaa",
+    "trace_id": null
+  },
+  "known_at": "2026-10-14T14:00:00Z",
+  "valid_from": "2026-10-14T13:55:00Z",
+  "valid_until": null,
+  "supersedes": null
+}
