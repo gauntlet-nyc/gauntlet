@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0",
+  "finding_id": "finding-001",
+  "attack_id": "attack-ui-001",
+  "status": "confirmed_regression",
+  "attribution": "introduced",
+  "severity": "high",
+  "oracle_ids": [
+    "ui.primary_action_reachable"
+  ],
+  "oracle_verdict_ids": [
+    "ov-001",
+    "ov-002",
+    "ov-003"
+  ],
+  "head_reproductions": 3,
+  "head_attempts": 3,
+  "base_reproductions": 0,
+  "base_attempts": 3,
+  "evidence_ids": [
+    "art-dom-001",
+    "art-shot-001"
+  ],
+  "trace_ids": [],
+  "repro_manifest_id": "manifest-001",
+  "limitations": [
+    "Tested only at 375x812 and 390x844 viewports"
+  ]
+}

@@ -1,9 +1,50 @@
 {
+  "$defs": {
+    "MissingInput": {
+      "additionalProperties": false,
+      "description": "A replay/historical input that was not recorded, and why. Missing never means safe.",
+      "properties": {
+        "critical": {
+          "title": "Critical",
+          "type": "boolean"
+        },
+        "field": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Field",
+          "type": "string"
+        },
+        "reason": {
+          "maxLength": 2500,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "field",
+        "reason",
+        "critical"
+      ],
+      "title": "MissingInput",
+      "type": "object"
+    }
+  },
   "additionalProperties": false,
   "properties": {
     "decision_id": {
       "anyOf": [
         {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
           "type": "string"
         },
         {
@@ -16,6 +57,9 @@
     "excluded_source_id": {
       "anyOf": [
         {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
           "type": "string"
         },
         {
@@ -26,16 +70,21 @@
       "title": "Excluded Source Id"
     },
     "fixture_checksum": {
+      "pattern": "^[0-9a-f]{64}$",
       "title": "Fixture Checksum",
       "type": "string"
     },
     "fixture_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
       "title": "Fixture Id",
       "type": "string"
     },
     "image_digest": {
       "anyOf": [
         {
+          "pattern": "^sha256:[0-9a-f]{64}$",
           "type": "string"
         },
         {
@@ -45,9 +94,23 @@
       "default": null,
       "title": "Image Digest"
     },
+    "input_messages_hash": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Input Messages Hash"
+    },
     "kb_snapshot_hash": {
       "anyOf": [
         {
+          "pattern": "^[0-9a-f]{64}$",
           "type": "string"
         },
         {
@@ -56,6 +119,19 @@
       ],
       "default": null,
       "title": "Kb Snapshot Hash"
+    },
+    "logical_timestamp": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Logical Timestamp"
     },
     "max_runtime_seconds": {
       "default": 180,
@@ -67,6 +143,7 @@
     "memory_snapshot_hash": {
       "anyOf": [
         {
+          "pattern": "^[0-9a-f]{64}$",
           "type": "string"
         },
         {
@@ -79,7 +156,7 @@
     "missing_inputs": {
       "default": [],
       "items": {
-        "type": "string"
+        "$ref": "#/$defs/MissingInput"
       },
       "title": "Missing Inputs",
       "type": "array"
@@ -98,6 +175,9 @@
     "model_id": {
       "anyOf": [
         {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
           "type": "string"
         },
         {
@@ -107,9 +187,26 @@
       "default": null,
       "title": "Model Id"
     },
+    "mutation_description": {
+      "anyOf": [
+        {
+          "maxLength": 2500,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Mutation Description"
+    },
     "policy_version": {
       "anyOf": [
         {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
           "type": "string"
         },
         {
@@ -122,6 +219,9 @@
     "prompt_version": {
       "anyOf": [
         {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
           "type": "string"
         },
         {
@@ -131,7 +231,25 @@
       "default": null,
       "title": "Prompt Version"
     },
+    "replacement_source_id": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Replacement Source Id"
+    },
     "replay_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
       "title": "Replay Id",
       "type": "string"
     },
@@ -141,17 +259,34 @@
       "title": "Schema Version",
       "type": "string"
     },
+    "seed": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Seed"
+    },
     "source_sha": {
+      "pattern": "^[0-9a-f]{7,64}$",
       "title": "Source Sha",
       "type": "string"
     },
     "target_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
       "title": "Target Id",
       "type": "string"
     },
     "tool_results_hash": {
       "anyOf": [
         {
+          "pattern": "^[0-9a-f]{64}$",
           "type": "string"
         },
         {
@@ -160,6 +295,19 @@
       ],
       "default": null,
       "title": "Tool Results Hash"
+    },
+    "tool_schema_hash": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tool Schema Hash"
     }
   },
   "required": [

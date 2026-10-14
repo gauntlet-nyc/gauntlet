@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0",
+  "decision_id": "decision-001",
+  "occurred_at": "2026-10-05T10:15:00Z",
+  "agent_id": "support-agent",
+  "actor_ref": "synthetic-customer-17",
+  "model_id": "example-model-id",
+  "prompt_version": "support-v3",
+  "policy_version": "refund-policy-7",
+  "tool_names": [
+    "lookup_order",
+    "start_refund"
+  ],
+  "tool_results_hash": "6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a",
+  "kb_snapshot_hash": "7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d",
+  "memory_snapshot_hash": "4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e4e",
+  "structured_action": "start_refund",
+  "amount_minor": 4999,
+  "source_ids": [
+    "kb-117",
+    "mem-083"
+  ],
+  "missing_inputs": []
+}

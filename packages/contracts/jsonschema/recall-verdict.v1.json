@@ -1,7 +1,6 @@
 {
-  "additionalProperties": false,
-  "properties": {
-    "classification": {
+  "$defs": {
+    "RecallClassification": {
       "enum": [
         "audit_violation",
         "audit_clear",
@@ -10,8 +9,14 @@
         "inconclusive",
         "not_replayable"
       ],
-      "title": "Classification",
+      "title": "RecallClassification",
       "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "classification": {
+      "$ref": "#/$defs/RecallClassification"
     },
     "control_matches": {
       "anyOf": [
@@ -25,13 +30,26 @@
       "default": null,
       "title": "Control Matches"
     },
+    "criterion_version": {
+      "maxLength": 64,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+      "title": "Criterion Version",
+      "type": "string"
+    },
     "decision_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
       "title": "Decision Id",
       "type": "string"
     },
     "evidence_ids": {
       "default": [],
       "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
         "type": "string"
       },
       "title": "Evidence Ids",
@@ -40,6 +58,8 @@
     "limitations": {
       "default": [],
       "items": {
+        "maxLength": 2500,
+        "minLength": 1,
         "type": "string"
       },
       "title": "Limitations",
@@ -57,9 +77,37 @@
       "default": null,
       "title": "Material Change"
     },
+    "mode": {
+      "enum": [
+        "event_audit",
+        "decision_counterfactual"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
+    "rationale": {
+      "maxLength": 2500,
+      "minLength": 1,
+      "title": "Rationale",
+      "type": "string"
+    },
     "recall_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
       "title": "Recall Id",
       "type": "string"
+    },
+    "replay_ids": {
+      "default": [],
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+        "type": "string"
+      },
+      "title": "Replay Ids",
+      "type": "array"
     },
     "schema_version": {
       "const": "1.0",
@@ -68,6 +116,9 @@
       "type": "string"
     },
     "verdict_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
       "title": "Verdict Id",
       "type": "string"
     }
@@ -76,7 +127,10 @@
     "verdict_id",
     "recall_id",
     "decision_id",
-    "classification"
+    "mode",
+    "classification",
+    "rationale",
+    "criterion_version"
   ],
   "title": "RecallVerdict",
   "type": "object"

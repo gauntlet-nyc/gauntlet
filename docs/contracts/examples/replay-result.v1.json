@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "replay_id": "replay-ctl-001",
+  "status": "matched",
+  "observed_action": "start_refund",
+  "amount_minor": 4999,
+  "state_hash_before": "9a8b7c6d5e4f30211203f4e5d6c7b8a99a8b7c6d5e4f30211203f4e5d6c7b8a9",
+  "state_hash_after": "5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c",
+  "evidence_ids": [
+    "art-replay-001"
+  ],
+  "trace_ids": [],
+  "limitations": []
+}

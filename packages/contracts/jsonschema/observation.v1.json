@@ -1,33 +1,191 @@
 {
+  "$defs": {
+    "ActionRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "navigate",
+            "resize",
+            "click",
+            "scroll",
+            "type",
+            "press",
+            "inspect",
+            "capture",
+            "test_api",
+            "chat"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "detail": {
+          "anyOf": [
+            {
+              "maxLength": 2000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        },
+        "evidence_ids": {
+          "default": [],
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "outcome": {
+          "enum": [
+            "ok",
+            "error",
+            "blocked",
+            "skipped"
+          ],
+          "title": "Outcome",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "step_index": {
+          "minimum": 0,
+          "title": "Step Index",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "step_index",
+        "action",
+        "outcome"
+      ],
+      "title": "ActionRecord",
+      "type": "object"
+    },
+    "ToolCallRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "actor_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Actor Id",
+          "type": "string"
+        },
+        "arguments_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Arguments Hash",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "side_effect_ids": {
+          "default": [],
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "type": "string"
+          },
+          "title": "Side Effect Ids",
+          "type": "array"
+        },
+        "succeeded": {
+          "title": "Succeeded",
+          "type": "boolean"
+        },
+        "tool_name": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Tool Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tool_name",
+        "actor_id",
+        "arguments_hash",
+        "succeeded"
+      ],
+      "title": "ToolCallRecord",
+      "type": "object"
+    }
+  },
   "additionalProperties": false,
   "properties": {
-    "action_count": {
-      "minimum": 0,
-      "title": "Action Count",
-      "type": "integer"
+    "action_log": {
+      "items": {
+        "$ref": "#/$defs/ActionRecord"
+      },
+      "maxItems": 100,
+      "title": "Action Log",
+      "type": "array"
     },
     "attack_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
       "title": "Attack Id",
       "type": "string"
     },
-    "details": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "title": "Details",
-      "type": "object"
-    },
     "environment_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
       "title": "Environment Id",
       "type": "string"
     },
     "evidence_ids": {
       "default": [],
       "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
         "type": "string"
       },
       "title": "Evidence Ids",
       "type": "array"
+    },
+    "fixture_checksum": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Fixture Checksum",
+      "type": "string"
+    },
+    "metrics": {
+      "patternProperties": {
+        "^[A-Za-z0-9][A-Za-z0-9._:-]*$": {
+          "type": "number"
+        }
+      },
+      "propertyNames": {
+        "maxLength": 128,
+        "minLength": 1
+      },
+      "title": "Metrics",
+      "type": "object"
+    },
+    "observation_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "title": "Observation Id",
+      "type": "string"
     },
     "schema_version": {
       "const": "1.0",
@@ -35,13 +193,62 @@
       "title": "Schema Version",
       "type": "string"
     },
-    "state_checksum": {
-      "title": "State Checksum",
+    "source_sha": {
+      "pattern": "^[0-9a-f]{7,64}$",
+      "title": "Source Sha",
       "type": "string"
+    },
+    "state_hash_after": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "State Hash After"
+    },
+    "state_hash_before": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "State Hash Before"
+    },
+    "status": {
+      "enum": [
+        "completed",
+        "aborted",
+        "budget_exceeded",
+        "environment_error"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "tool_calls": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ToolCallRecord"
+      },
+      "maxItems": 100,
+      "title": "Tool Calls",
+      "type": "array"
     },
     "trace_ids": {
       "default": [],
       "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
         "type": "string"
       },
       "title": "Trace Ids",
@@ -49,10 +256,13 @@
     }
   },
   "required": [
+    "observation_id",
     "attack_id",
     "environment_id",
-    "state_checksum",
-    "action_count"
+    "source_sha",
+    "fixture_checksum",
+    "status",
+    "action_log"
   ],
   "title": "Observation",
   "type": "object"

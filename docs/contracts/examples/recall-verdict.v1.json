@@ -1,11 +1,19 @@
 {
-  "schema_version":"1.0",
-  "verdict_id":"verdict-001",
-  "recall_id":"recall-001",
-  "decision_id":"decision-001",
-  "classification":"inconclusive",
-  "control_matches":false,
-  "material_change":null,
-  "evidence_ids":[],
-  "limitations":["Control replay did not reproduce the historical outcome"]
+  "schema_version": "1.0",
+  "verdict_id": "verdict-001",
+  "recall_id": "recall-001",
+  "decision_id": "decision-002",
+  "mode": "decision_counterfactual",
+  "classification": "inconclusive",
+  "rationale": "Control replay did not reproduce the historical outcome",
+  "criterion_version": "materiality-1.0",
+  "control_matches": false,
+  "material_change": null,
+  "replay_ids": [
+    "replay-ctl-002"
+  ],
+  "evidence_ids": [],
+  "limitations": [
+    "Control replay did not reproduce the historical outcome"
+  ]
 }

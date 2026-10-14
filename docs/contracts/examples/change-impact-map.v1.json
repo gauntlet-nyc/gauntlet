@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "base_sha": "1111111",
+  "head_sha": "aaaaaaaa",
+  "changed_files": [
+    "web/src/components/FloatingHelp.tsx",
+    "web/src/app/layout.tsx"
+  ],
+  "surfaces": [
+    {
+      "schema_version": "1.0",
+      "kind": "component",
+      "identifier": "FloatingHelp",
+      "source_refs": [
+        {
+          "schema_version": "1.0",
+          "path": "web/src/components/FloatingHelp.tsx",
+          "sha": "aaaaaaaa",
+          "start_line": 12,
+          "end_line": 20,
+          "content_hash": null
+        }
+      ],
+      "confidence": 0.9
+    }
+  ],
+  "coverage_gaps": [
+    "No route manifest entry for /help yet"
+  ]
+}

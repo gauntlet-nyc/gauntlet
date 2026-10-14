@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "verdict_id": "ov-001",
+  "oracle_id": "ui.primary_action_reachable",
+  "oracle_kind": "hard",
+  "criterion_version": "1.0",
+  "observation_id": "obs-ui-head-001",
+  "outcome": "fail",
+  "observed": "click on checkout-primary-action intercepted by floating-help-button",
+  "expected": "checkout-primary-action receives the click",
+  "evidence_ids": [
+    "art-dom-001",
+    "art-shot-001"
+  ]
+}
