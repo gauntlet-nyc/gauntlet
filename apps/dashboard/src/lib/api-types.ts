@@ -72,6 +72,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/fix-plans/{fix_plan_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Fix Plan */
+        get: operations["get_fix_plan_v1_fix_plans__fix_plan_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/fix-plans/{fix_plan_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide Fix Plan */
+        post: operations["decide_fix_plan_v1_fix_plans__fix_plan_id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -100,6 +134,89 @@ export interface components {
              * @constant
              */
             schema_version: "1.0";
+        };
+        /**
+         * ApprovalDecision
+         * @description What an authenticated reviewer submits. Reviewer identity comes from auth, not the body.
+         */
+        ApprovalDecision: {
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approved" | "rejected";
+            /** Plan Sha256 */
+            plan_sha256: string;
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /**
+             * Subject
+             * @enum {string}
+             */
+            subject: "scope" | "fix_plan" | "remediation";
+            /** Subject Id */
+            subject_id: string;
+        };
+        /** ApprovalRecord */
+        ApprovalRecord: {
+            /**
+             * Allowed Paths
+             * @default []
+             */
+            allowed_paths: string[];
+            /** Approval Id */
+            approval_id: string;
+            /**
+             * Channel
+             * @enum {string}
+             */
+            channel: "dashboard" | "api";
+            /**
+             * Decided At
+             * Format: date-time
+             */
+            decided_at: string;
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approved" | "rejected";
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Fixture Id */
+            fixture_id: string;
+            /** Plan Sha256 */
+            plan_sha256: string;
+            /** Reason */
+            reason?: string | null;
+            /** Reviewer Id */
+            reviewer_id: string;
+            /** Run Id */
+            run_id: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /**
+             * Subject
+             * @enum {string}
+             */
+            subject: "scope" | "fix_plan" | "remediation";
+            /** Subject Id */
+            subject_id: string;
+            /** Target Id */
+            target_id: string;
         };
         /** AttackSpec */
         AttackSpec: {
@@ -221,6 +338,55 @@ export interface components {
             plan: components["schemas"]["AttackSpec"];
             /** Run Id */
             run_id: string;
+        };
+        /** FixPlan */
+        FixPlan: {
+            /** Allowed Paths */
+            allowed_paths: string[];
+            /** Base Sha */
+            base_sha: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Finding Id */
+            finding_id: string;
+            /** Fix Plan Id */
+            fix_plan_id: string;
+            /** Rationale */
+            rationale: string;
+            /** Run Id */
+            run_id: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /** Test Plan */
+            test_plan: string[];
+            /** Unified Diff */
+            unified_diff: string;
+        };
+        /** FixPlanView */
+        FixPlanView: {
+            /** Approvals */
+            approvals: components["schemas"]["ApprovalRecord"][];
+            fix_plan: components["schemas"]["FixPlan"];
+            /** Fixture Id */
+            fixture_id: string;
+            /** Label */
+            label: string;
+            /** Plan Sha256 */
+            plan_sha256: string;
+            /** Target Id */
+            target_id: string;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
         };
         /** HealthResponse */
         HealthResponse: {
@@ -386,6 +552,19 @@ export interface components {
             /** Value */
             value: string;
         };
+        /** ValidationError */
+        ValidationError: {
+            /** Context */
+            ctx?: Record<string, never>;
+            /** Input */
+            input?: unknown;
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -471,6 +650,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChangeRequest"];
+                };
+            };
+        };
+    };
+    get_fix_plan_v1_fix_plans__fix_plan_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fix_plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FixPlanView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decide_fix_plan_v1_fix_plans__fix_plan_id__approve_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                fix_plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApprovalDecision"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalRecord"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

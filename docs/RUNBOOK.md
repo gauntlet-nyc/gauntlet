@@ -28,3 +28,7 @@ A demo reset should only delete **scoped synthetic** state for a known `fixture_
 ## Operational support
 
 Log UTC/run_id/attempt_id/replay_id/trace_id for every attempt. Track sandbox leaked resources, token spend and browser session TTL. Keep artifacts restricted; rotate leaked keys; do not store raw historical customer content in Arize traces.
+
+## Reviewer tokens (dev)
+
+Approval routes (`POST /v1/fix-plans/{id}/approve`) accept only a bearer token found in the server-side table `GAUNTLET_REVIEWER_TOKENS`, a JSON object like `{"<token>": {"reviewer_id": "rev-1", "channel": "dashboard"}}`. Unset means every approval is refused. The dashboard server reads one token from `GAUNTLET_REVIEWER_TOKEN` (not `NEXT_PUBLIC_*`). This is development-grade auth pending a real identity provider decision; approval state is in memory and lost on restart.

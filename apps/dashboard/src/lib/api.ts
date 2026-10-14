@@ -50,3 +50,36 @@ export async function getCartwheelChange(): Promise<ChangeRequest> {
   if (!res.ok) throw new Error(`API returned ${res.status}`);
   return parseChangeRequest(await res.json());
 }
+
+export type FixPlanView = components["schemas"]["FixPlanView"];
+
+const fixPlanSchema = z.object({
+  label: z.string(),
+  plan_sha256: z.string(),
+  target_id: z.string(),
+  fixture_id: z.string(),
+  fix_plan: z
+    .object({
+      fix_plan_id: z.string(),
+      rationale: z.string(),
+      unified_diff: z.string(),
+      allowed_paths: z.array(z.string()),
+      test_plan: z.array(z.string()),
+    })
+    .passthrough(),
+  approvals: z.array(
+    z.object({ approval_id: z.string(), decision: z.string(), reviewer_id: z.string() }).passthrough(),
+  ),
+});
+
+export function parseFixPlan(data: unknown): FixPlanView {
+  return fixPlanSchema.parse(data) as unknown as FixPlanView;
+}
+
+export async function getFixPlan(id: string): Promise<FixPlanView> {
+  const res = await fetch(`${API_URL}/v1/fix-plans/${encodeURIComponent(id)}`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`API returned ${res.status}`);
+  return parseFixPlan(await res.json());
+}

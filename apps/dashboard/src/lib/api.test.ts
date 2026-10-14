@@ -25,3 +25,11 @@ describe("parseChangeRequest", () => {
     expect(() => parseChangeRequest({ repository_id: "cartwheel" })).toThrow();
   });
 });
+
+import { parseFixPlan } from "./api";
+
+describe("parseFixPlan", () => {
+  it("rejects a payload without a plan hash", () => {
+    expect(() => parseFixPlan({ label: "x", approvals: [] })).toThrow();
+  });
+});
