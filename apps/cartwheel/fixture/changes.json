@@ -1,0 +1,16 @@
+[
+  {
+    "id": "help-button",
+    "branch": "feat/floating-help",
+    "message": "Add a floating Help button",
+    "date": "2026-10-02T12:00:00+00:00",
+    "feature_intent": "Add a floating Help button"
+  },
+  {
+    "id": "refund-tool",
+    "branch": "feat/assistant-refund-by-order",
+    "message": "Let the support assistant request refunds by order id",
+    "date": "2026-10-03T12:00:00+00:00",
+    "feature_intent": "Let the support assistant request refunds for an order"
+  }
+]
