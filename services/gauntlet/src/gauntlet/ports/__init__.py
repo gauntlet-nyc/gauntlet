@@ -11,6 +11,7 @@ from .errors import (
     PortError,
     UnknownOracleError,
 )
+from .lineage import HistoricalEventStore, LineageStore
 from .model import ModelGateway, ModelRequest, ModelResponse
 from .oracle import OracleDescriptor, TrustedOracleRegistry
 from .replay import ReplayEngine
@@ -29,6 +30,8 @@ __all__ = [
     "EnvironmentHandle",
     "EnvironmentUnavailableError",
     "EventSequenceConflictError",
+    "HistoricalEventStore",
+    "LineageStore",
     "ModelGateway",
     "ModelRequest",
     "ModelResponse",

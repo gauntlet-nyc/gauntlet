@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0",
+  "event_id": "tool-ev-001",
+  "decision_id": "decision-001",
+  "target_id": "cartwheel-fixture",
+  "tool_name": "start_refund",
+  "actor_ref": "synthetic-customer-17",
+  "arguments_hash": "6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a6a",
+  "occurred_at": "2026-10-05T10:15:03Z",
+  "outcome": "succeeded",
+  "result_hash": "9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c9c",
+  "side_effect_ids": [
+    "ledger-tx-5521"
+  ]
+}

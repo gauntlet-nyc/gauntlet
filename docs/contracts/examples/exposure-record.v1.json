@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "exposure_id": "recall-001:decision-007",
+  "recall_id": "recall-001",
+  "decision_id": "decision-007",
+  "trigger_node": {
+    "schema_version": "1.0",
+    "kind": "document_chunk",
+    "node_id": "kb-117"
+  },
+  "path": [
+    {
+      "schema_version": "1.0",
+      "edge_id": "edge-001",
+      "source": {
+        "schema_version": "1.0",
+        "kind": "document_chunk",
+        "node_id": "kb-117"
+      },
+      "relation": "retrieved_by",
+      "target": {
+        "schema_version": "1.0",
+        "kind": "decision",
+        "node_id": "decision-001"
+      },
+      "recorded_at": "2026-10-05T10:15:01Z",
+      "evidence_ids": [
+        "trace-hist-001"
+      ]
+    },
+    {
+      "schema_version": "1.0",
+      "edge_id": "edge-002",
+      "source": {
+        "schema_version": "1.0",
+        "kind": "decision",
+        "node_id": "decision-001"
+      },
+      "relation": "wrote",
+      "target": {
+        "schema_version": "1.0",
+        "kind": "memory",
+        "node_id": "mem-083"
+      },
+      "recorded_at": "2026-10-05T10:15:02Z",
+      "evidence_ids": []
+    },
+    {
+      "schema_version": "1.0",
+      "edge_id": "edge-003",
+      "source": {
+        "schema_version": "1.0",
+        "kind": "memory",
+        "node_id": "mem-083"
+      },
+      "relation": "read_by",
+      "target": {
+        "schema_version": "1.0",
+        "kind": "decision",
+        "node_id": "decision-007"
+      },
+      "recorded_at": "2026-10-08T09:00:00Z",
+      "evidence_ids": []
+    }
+  ],
+  "direct": false,
+  "note": null
+}

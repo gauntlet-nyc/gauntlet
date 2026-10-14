@@ -7,6 +7,7 @@ from .approvals import ApprovalDecision, ApprovalRecord, FixPlan
 from .common import StrictDTO
 from .events import RunEvent
 from .gate import AttackSpec, ChangeImpactMap, ChangeRequest, Finding, Observation, OracleVerdict
+from .lineage import ExposureRecord, LineageEdge, ToolEvent
 from .recall import HistoricalDecision, RecallTrigger, RecallVerdict
 from .replay import ReplayResult, ReplaySpec
 
@@ -18,9 +19,11 @@ EXPORTED_MODELS: Final[dict[str, type[StrictDTO]]] = {
     "attack-spec": AttackSpec,
     "change-impact-map": ChangeImpactMap,
     "change-request": ChangeRequest,
+    "exposure-record": ExposureRecord,
     "finding": Finding,
     "fix-plan": FixPlan,
     "historical-decision": HistoricalDecision,
+    "lineage-edge": LineageEdge,
     "observation": Observation,
     "oracle-verdict": OracleVerdict,
     "recall-trigger": RecallTrigger,
@@ -28,6 +31,7 @@ EXPORTED_MODELS: Final[dict[str, type[StrictDTO]]] = {
     "replay-result": ReplayResult,
     "replay-spec": ReplaySpec,
     "run-event": RunEvent,
+    "tool-event": ToolEvent,
 }
 
 

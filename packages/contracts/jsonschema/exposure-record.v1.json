@@ -1,0 +1,173 @@
+{
+  "$defs": {
+    "LineageEdge": {
+      "additionalProperties": false,
+      "properties": {
+        "edge_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Edge Id",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "default": [],
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "recorded_at": {
+          "format": "date-time",
+          "title": "Recorded At",
+          "type": "string"
+        },
+        "relation": {
+          "enum": [
+            "retrieved_by",
+            "wrote",
+            "read_by",
+            "derived_into",
+            "configured",
+            "produced"
+          ],
+          "title": "Relation",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/NodeRef"
+        },
+        "target": {
+          "$ref": "#/$defs/NodeRef"
+        }
+      },
+      "required": [
+        "edge_id",
+        "source",
+        "relation",
+        "target",
+        "recorded_at"
+      ],
+      "title": "LineageEdge",
+      "type": "object"
+    },
+    "NodeRef": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "document_chunk",
+            "memory",
+            "decision",
+            "tool_event",
+            "model_version",
+            "prompt_version",
+            "policy_version"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "node_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Node Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "node_id"
+      ],
+      "title": "NodeRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A decision reachable from the trigger through recorded edges. Exposure is not harm.",
+  "properties": {
+    "decision_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "title": "Decision Id",
+      "type": "string"
+    },
+    "direct": {
+      "title": "Direct",
+      "type": "boolean"
+    },
+    "exposure_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "title": "Exposure Id",
+      "type": "string"
+    },
+    "note": {
+      "anyOf": [
+        {
+          "maxLength": 2500,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Note"
+    },
+    "path": {
+      "items": {
+        "$ref": "#/$defs/LineageEdge"
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "title": "Path",
+      "type": "array"
+    },
+    "recall_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "title": "Recall Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "trigger_node": {
+      "$ref": "#/$defs/NodeRef"
+    }
+  },
+  "required": [
+    "exposure_id",
+    "recall_id",
+    "decision_id",
+    "trigger_node",
+    "path",
+    "direct"
+  ],
+  "title": "ExposureRecord",
+  "type": "object"
+}
