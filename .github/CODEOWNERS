@@ -1,5 +1,54 @@
-# Replace placeholders with actual GitHub handles before enforcement.
-# /services/gauntlet/src/gauntlet/contracts/ @agent-a @agent-b @agent-c
-# /services/gauntlet/src/gauntlet/verification/ @agent-b @agent-a
-# /apps/ @agent-c
-# /docs/ @agent-c
+# Ownership per docs/OWNERSHIP.md. Last matching pattern wins, so general rules come first.
+# A = @rudraasakariya, B = @rishibhansali, C = @moh0405
+
+# C: root configs, tooling, CI, apps, API/reporting, local infra, process docs
+*                                               @moh0405
+/.github/                                       @moh0405
+/apps/                                          @moh0405
+/infra/local/                                   @moh0405
+/scripts/                                       @moh0405
+/services/gauntlet/src/gauntlet/api/            @moh0405
+/services/gauntlet/src/gauntlet/reporting/      @moh0405
+
+# A: contracts, domain, ports, application, intake, analysis, planning
+/services/gauntlet/src/gauntlet/domain/         @rudraasakariya
+/services/gauntlet/src/gauntlet/ports/          @rudraasakariya
+/services/gauntlet/src/gauntlet/application/    @rudraasakariya
+/services/gauntlet/src/gauntlet/intake/         @rudraasakariya
+/services/gauntlet/src/gauntlet/analysis/       @rudraasakariya
+/services/gauntlet/src/gauntlet/planning/       @rudraasakariya
+/docs/ARCHITECTURE.md                           @rudraasakariya
+/docs/CONTRACTS.md                              @rudraasakariya
+/docs/RECALL.md                                 @rudraasakariya
+/docs/prompts/                                  @rudraasakariya
+/docs/contracts/examples/                       @rudraasakariya
+
+# B: execution, workers, verification, recall, repair, providers, persistence, memory, security
+/services/gauntlet/src/gauntlet/execution/      @rishibhansali
+/services/gauntlet/src/gauntlet/workers/        @rishibhansali
+/services/gauntlet/src/gauntlet/recall/         @rishibhansali
+/services/gauntlet/src/gauntlet/repair/         @rishibhansali
+/services/gauntlet/src/gauntlet/integrations/   @rishibhansali
+/services/gauntlet/src/gauntlet/persistence/    @rishibhansali
+/services/gauntlet/src/gauntlet/memory/         @rishibhansali
+/services/gauntlet/src/gauntlet/observability/  @rishibhansali
+/infra/daytona/                                 @rishibhansali
+/infra/surreal/                                 @rishibhansali
+/scripts/probe_*                                @rishibhansali
+/docs/SDK_VALIDATION.md                         @rishibhansali
+/docs/MEMORY.md                                 @rishibhansali
+/docs/BENCHMARK.md                              @rishibhansali
+/bench/private/                                 @rishibhansali
+/bench/heldout-README.md                        @rishibhansali
+
+# Oracle and security changes: B plus an independent reviewer
+/services/gauntlet/src/gauntlet/verification/   @rishibhansali @rudraasakariya
+/services/gauntlet/src/gauntlet/security/       @rishibhansali @rudraasakariya
+/docs/SECURITY.md                               @rishibhansali @rudraasakariya
+
+# Shared contracts: all three must review
+/services/gauntlet/src/gauntlet/contracts/      @rudraasakariya @rishibhansali @moh0405
+/packages/contracts/                            @rudraasakariya @rishibhansali @moh0405
+/docs/adr/                                      @rudraasakariya @rishibhansali @moh0405
+/docs/DEVELOPMENT_PLAN.md                       @rudraasakariya @rishibhansali @moh0405
+/AGENTS.md                                      @rudraasakariya @rishibhansali @moh0405
