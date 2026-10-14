@@ -200,7 +200,7 @@ storage and evidence collection require the shared contract freeze below.
   port exists in B's current checkout or A's latest inspected branch
   `origin/feat/a-09-dependency-map`. Do not substitute a private public DTO.
 
-### Contract freeze request for A/C (prepared, not posted)
+### Contract freeze request for A/C (posted as issue #22)
 
 1. Input: trusted collector bytes plus run/attempt/observation identity, media
    type, source SHA and fixture checksum; planner and target content cannot
@@ -362,3 +362,5 @@ editable interpreter without its checkout source on `PYTHONPATH`, producing
 three local schema diffs. After restoring only those temporary generated files
 and using the checkout-local `.venv`, the 24-schema export was clean. No shared
 branch or main file was changed by the compatibility run.
+
+P1 artifact binding request is now tracked at https://github.com/rudraasakariya/gauntlet/issues/22; no shared port/schema was changed on B's branch.
