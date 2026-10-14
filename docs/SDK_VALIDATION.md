@@ -311,3 +311,54 @@ Verification:
 No headless run is needed for this metadata/configuration probe; previous
 headless evidence applies only to the recorded fixtures/checkpoint. Integrated
 main acceptance and genuine provider smoke remain outstanding.
+
+## Cross-owner review and SDK signature check (2026-10-14)
+
+B reviewed A-00 PR #1 (approved), A-03 PR #6 (approved), and A-04 PR #9
+(approved). A-02 PR #8 has a B change request: its route-prefix check accepts
+`/checkout/%2e%2e/admin` under `/checkout`, while a browser URL parser resolves
+it to `/admin`. A needs to reject or canonicalize encoded dot/path segments
+before accepting a model-proposed route. B's eventual live browser adapter must
+also verify the final URL after redirects. These reviews do not merge any PR.
+
+B approved C's optional SDK pin PR #21 for dependency installation and signature
+checking. In a detached, worktree-local Python 3.12 environment,
+`uv sync --frozen --group live-providers` resolved and installed Daytona 0.224.1,
+Anchor 1.0.1 and Playwright 1.64.0. The branch's 85 Python tests passed. The
+installed methods report:
+
+- `AsyncDaytona(DaytonaConfig(...))`; `AsyncDaytona.create(params, timeout=60)`
+  returns `AsyncSandbox`; `AsyncDaytona.delete(sandbox, timeout=60, wait=False)`.
+- `DaytonaConfig` accepts explicit `api_key`, `api_url`, `server_url` and `target`.
+  `AsyncSandbox.get_preview_link(port, request_timeout=None)` is present.
+- `AsyncAnchorbrowser(api_key=..., timeout=..., max_retries=0)` accepts the
+  repository's key explicitly. Its `browser.create()` and `browser.connect(id)`
+  are asynchronous context managers, not direct browser instances.
+- `async_playwright()` is available; no browser binary was downloaded here.
+
+These are inspected signatures, not a successful service call. No keys were read
+and no provider resource was created. A/C still need to review the shared
+root dependency change and resolve the stacked lockfiles.
+
+A temporary detached checkout combined B `03314ae`, A through A-09b
+`2df2193`, and C's P0 checkpoint `7c8bcc6` with no merge conflicts. With
+`uv sync --frozen` in that checkout:
+
+- `.venv/bin/python -m pytest -q -p no:asyncio`: 327 passed, one Starlette
+  deprecation warning.
+- `.venv/bin/mypy services/gauntlet/src`: 78 source files clean.
+- `.venv/bin/python scripts/export_schemas.py` followed by
+  `git diff --exit-code packages/contracts/jsonschema`: 24 schemas, no drift.
+- `uv build --package gauntlet-control --out-dir /private/tmp/gauntlet-abc-stack-dist`:
+  wheel and source distribution passed.
+- `corepack pnpm --filter @gauntlet/dashboard test`: 4 passed.
+- `corepack pnpm --filter @gauntlet/dashboard build`: passed.
+- `.venv/bin/ruff check . --output-format concise`: 16 import-order errors in
+  A-owned tests under C's root `src` setting. B's tests are clean; A/C must
+  resolve the whole-tree lint gate during integration.
+
+The first exploratory schema export in that temporary checkout used B's
+editable interpreter without its checkout source on `PYTHONPATH`, producing
+three local schema diffs. After restoring only those temporary generated files
+and using the checkout-local `.venv`, the 24-schema export was clean. No shared
+branch or main file was changed by the compatibility run.
