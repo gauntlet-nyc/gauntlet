@@ -33,11 +33,23 @@ class FakeReplayEngine:
         missing = [item.field for item in spec.missing_inputs if item.critical]
         if spec.mode in {"historical_control", "historical_counterfactual"}:
             missing.extend(field for field in _HISTORICAL_PINS if getattr(spec, field) is None)
+        elif spec.mode == "event_audit":
+            missing.extend(
+                field
+                for field in (
+                    "image_digest",
+                    "policy_version",
+                    "tool_schema_hash",
+                    "tool_results_hash",
+                    "logical_timestamp",
+                )
+                if getattr(spec, field) is None
+            )
         if missing:
             return ReplayResult(
                 replay_id=spec.replay_id,
                 status=ReplayStatus.NOT_REPLAYABLE,
-                limitations=("Critical replay inputs are unavailable: " + ", ".join(missing),),
+                limitations=("Critical replay inputs are unavailable: " + ", ".join(missing[:10]),),
             )
         result = self._recordings.get(spec.model_dump_json())
         if result is None:

@@ -66,6 +66,18 @@ def registry(*items: ClickEvidence) -> RegisteredOracleRegistry:
     )
 
 
+def test_planner_sees_read_only_descriptor_without_evidence_or_predicate() -> None:
+    oracle = registry()
+    descriptors = oracle.descriptors()
+    assert len(descriptors) == 1
+    item = oracle.descriptor("ui.primary_action_reachable")
+    assert item == descriptors[0]
+    assert item.worker_kinds == frozenset({"ui"})
+    assert item.kind == "hard"
+    with pytest.raises(UnknownOracleError):
+        oracle.descriptor("unknown.oracle")
+
+
 @pytest.mark.asyncio
 async def test_browser_executes_only_recorded_steps_and_closes_idempotently() -> None:
     browser = FakeBrowserProvider((recording(),))

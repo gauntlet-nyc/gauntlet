@@ -12,6 +12,7 @@ from gauntlet.contracts import AttackSpec, Observation, OracleVerdict
 from gauntlet.contracts.gate import ClickStep, InspectStep
 from gauntlet.domain import OracleKind, OracleOutcome
 from gauntlet.ports.errors import UnknownOracleError
+from gauntlet.ports.oracle import OracleDescriptor
 
 _ORACLE_ID = "ui.primary_action_reachable"
 
@@ -47,13 +48,22 @@ class RegisteredOracleRegistry:
     def is_registered(self, oracle_id: str) -> bool:
         return oracle_id == _ORACLE_ID
 
-    def kind_of(self, oracle_id: str) -> OracleKind:
+    def descriptors(self) -> tuple[OracleDescriptor, ...]:
+        return (self.descriptor(_ORACLE_ID),)
+
+    def descriptor(self, oracle_id: str) -> OracleDescriptor:
         if not self.is_registered(oracle_id):
             raise UnknownOracleError("oracle ID is not registered")
-        return OracleKind.HARD
+        return OracleDescriptor(
+            oracle_id=_ORACLE_ID,
+            kind=OracleKind.HARD,
+            criterion_version="1.0",
+            worker_kinds=frozenset({"ui"}),
+            description="Checks whether the registered primary action receives a click",
+        )
 
     def evaluate(self, oracle_id: str, observation: Observation) -> OracleVerdict:
-        kind = self.kind_of(oracle_id)
+        kind = self.descriptor(oracle_id).kind
         outcome, evidence_ids = self._evaluate_click(observation)
         return OracleVerdict(
             verdict_id=f"oracle-{uuid4().hex}",

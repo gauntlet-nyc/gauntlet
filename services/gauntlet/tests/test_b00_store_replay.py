@@ -106,3 +106,10 @@ async def test_critical_missing_input_overrides_preloaded_result() -> None:
     )
     engine = FakeReplayEngine(((spec, ReplayResult(replay_id=spec.replay_id, status="matched")),))
     assert (await engine.replay(spec)).status == "not_replayable"
+
+
+@pytest.mark.asyncio
+async def test_event_audit_cannot_replay_without_recorded_tool_results() -> None:
+    spec = replay().model_copy(update={"mode": "event_audit", "tool_results_hash": None})
+    engine = FakeReplayEngine(((spec, ReplayResult(replay_id=spec.replay_id, status="matched")),))
+    assert (await engine.replay(spec)).status == "not_replayable"
