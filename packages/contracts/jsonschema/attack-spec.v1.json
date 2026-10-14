@@ -1,0 +1,240 @@
+{
+  "$defs": {
+    "ActionStep": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "navigate",
+            "resize",
+            "click",
+            "scroll",
+            "type",
+            "press",
+            "inspect",
+            "capture",
+            "test_api",
+            "chat"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "height": {
+          "anyOf": [
+            {
+              "maximum": 2160,
+              "minimum": 240,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Height"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "target": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "maxLength": 5000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        },
+        "width": {
+          "anyOf": [
+            {
+              "maximum": 3840,
+              "minimum": 240,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Width"
+        }
+      },
+      "required": [
+        "action"
+      ],
+      "title": "ActionStep",
+      "type": "object"
+    },
+    "SourceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "content_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Content Hash"
+        },
+        "end_line": {
+          "minimum": 1,
+          "title": "End Line",
+          "type": "integer"
+        },
+        "path": {
+          "minLength": 1,
+          "title": "Path",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "sha": {
+          "minLength": 7,
+          "title": "Sha",
+          "type": "string"
+        },
+        "start_line": {
+          "minimum": 1,
+          "title": "Start Line",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "path",
+        "sha",
+        "start_line",
+        "end_line"
+      ],
+      "title": "SourceRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "attack_id": {
+      "minLength": 1,
+      "title": "Attack Id",
+      "type": "string"
+    },
+    "fixture_id": {
+      "minLength": 1,
+      "title": "Fixture Id",
+      "type": "string"
+    },
+    "hypothesis": {
+      "maxLength": 2500,
+      "minLength": 1,
+      "title": "Hypothesis",
+      "type": "string"
+    },
+    "max_actions": {
+      "maximum": 100,
+      "minimum": 1,
+      "title": "Max Actions",
+      "type": "integer"
+    },
+    "max_runtime_seconds": {
+      "maximum": 900,
+      "minimum": 1,
+      "title": "Max Runtime Seconds",
+      "type": "integer"
+    },
+    "oracle_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 12,
+      "minItems": 1,
+      "title": "Oracle Ids",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_refs": {
+      "items": {
+        "$ref": "#/$defs/SourceRef"
+      },
+      "title": "Source Refs",
+      "type": "array"
+    },
+    "steps": {
+      "items": {
+        "$ref": "#/$defs/ActionStep"
+      },
+      "maxItems": 100,
+      "minItems": 1,
+      "title": "Steps",
+      "type": "array"
+    },
+    "target_id": {
+      "minLength": 1,
+      "title": "Target Id",
+      "type": "string"
+    },
+    "why_this_change": {
+      "maxLength": 2500,
+      "minLength": 1,
+      "title": "Why This Change",
+      "type": "string"
+    },
+    "worker_kind": {
+      "enum": [
+        "ui",
+        "accessibility",
+        "workflow",
+        "api",
+        "concurrency",
+        "ai_agent"
+      ],
+      "title": "Worker Kind",
+      "type": "string"
+    }
+  },
+  "required": [
+    "attack_id",
+    "hypothesis",
+    "why_this_change",
+    "source_refs",
+    "worker_kind",
+    "target_id",
+    "fixture_id",
+    "steps",
+    "oracle_ids",
+    "max_actions",
+    "max_runtime_seconds"
+  ],
+  "title": "AttackSpec",
+  "type": "object"
+}

@@ -1,0 +1,3 @@
+# Cartwheel test fixture (planned, owner C)
+
+**Purpose:** authorized synthetic target to demonstrate two changed feature PRs and historical poisoned KB/memory lineage. A minimal product view/Checkout CTA/Help panel and fake support agent/refund tool are required in Phases 1/2. Synthetic seven-day tool history and KB memory provenance are added in Phase 4. No real payment or customer accounts. Hidden benchmark scoring truth MUST NOT be contained in the target repo or accessible Git history; only normal feature requirements and code are available to the tester. Need independently testable base/head SHAs and fixture checksum.

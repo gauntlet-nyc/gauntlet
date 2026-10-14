@@ -1,0 +1,67 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "end_at": {
+      "format": "date-time",
+      "title": "End At",
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "finding",
+        "document",
+        "memory",
+        "model_version",
+        "prompt_version",
+        "policy_version",
+        "tool_result_window"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "mode": {
+      "enum": [
+        "event_audit",
+        "decision_counterfactual"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
+    "reference": {
+      "minLength": 1,
+      "title": "Reference",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "start_at": {
+      "format": "date-time",
+      "title": "Start At",
+      "type": "string"
+    },
+    "target_id": {
+      "title": "Target Id",
+      "type": "string"
+    },
+    "trigger_id": {
+      "minLength": 1,
+      "title": "Trigger Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "trigger_id",
+    "kind",
+    "reference",
+    "mode",
+    "start_at",
+    "end_at",
+    "target_id"
+  ],
+  "title": "RecallTrigger",
+  "type": "object"
+}

@@ -1,0 +1,5 @@
+# Replace placeholders with actual GitHub handles before enforcement.
+# /services/gauntlet/src/gauntlet/contracts/ @agent-a @agent-b @agent-c
+# /services/gauntlet/src/gauntlet/verification/ @agent-b @agent-a
+# /apps/ @agent-c
+# /docs/ @agent-c

@@ -1,0 +1,59 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "action_count": {
+      "minimum": 0,
+      "title": "Action Count",
+      "type": "integer"
+    },
+    "attack_id": {
+      "title": "Attack Id",
+      "type": "string"
+    },
+    "details": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Details",
+      "type": "object"
+    },
+    "environment_id": {
+      "title": "Environment Id",
+      "type": "string"
+    },
+    "evidence_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Evidence Ids",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "state_checksum": {
+      "title": "State Checksum",
+      "type": "string"
+    },
+    "trace_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Trace Ids",
+      "type": "array"
+    }
+  },
+  "required": [
+    "attack_id",
+    "environment_id",
+    "state_checksum",
+    "action_count"
+  ],
+  "title": "Observation",
+  "type": "object"
+}

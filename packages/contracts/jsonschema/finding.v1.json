@@ -1,0 +1,98 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "attack_id": {
+      "title": "Attack Id",
+      "type": "string"
+    },
+    "attribution": {
+      "enum": [
+        "introduced",
+        "pre_existing",
+        "unknown"
+      ],
+      "title": "Attribution",
+      "type": "string"
+    },
+    "base_attempts": {
+      "minimum": 0,
+      "title": "Base Attempts",
+      "type": "integer"
+    },
+    "base_reproductions": {
+      "minimum": 0,
+      "title": "Base Reproductions",
+      "type": "integer"
+    },
+    "evidence_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Evidence Ids",
+      "type": "array"
+    },
+    "finding_id": {
+      "title": "Finding Id",
+      "type": "string"
+    },
+    "head_attempts": {
+      "minimum": 0,
+      "title": "Head Attempts",
+      "type": "integer"
+    },
+    "head_reproductions": {
+      "minimum": 0,
+      "title": "Head Reproductions",
+      "type": "integer"
+    },
+    "limitations": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Limitations",
+      "type": "array"
+    },
+    "oracle_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Oracle Ids",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "confirmed_regression",
+        "confirmed_pre_existing",
+        "confirmed_policy_violation",
+        "suspected",
+        "not_reproducible",
+        "environment_error",
+        "passed",
+        "not_tested"
+      ],
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "finding_id",
+    "attack_id",
+    "status",
+    "attribution",
+    "oracle_ids",
+    "head_reproductions",
+    "head_attempts",
+    "base_reproductions",
+    "base_attempts"
+  ],
+  "title": "Finding",
+  "type": "object"
+}

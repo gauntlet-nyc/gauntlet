@@ -1,0 +1,83 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "classification": {
+      "enum": [
+        "audit_violation",
+        "audit_clear",
+        "tainted",
+        "cleared",
+        "inconclusive",
+        "not_replayable"
+      ],
+      "title": "Classification",
+      "type": "string"
+    },
+    "control_matches": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Control Matches"
+    },
+    "decision_id": {
+      "title": "Decision Id",
+      "type": "string"
+    },
+    "evidence_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Evidence Ids",
+      "type": "array"
+    },
+    "limitations": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Limitations",
+      "type": "array"
+    },
+    "material_change": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Material Change"
+    },
+    "recall_id": {
+      "title": "Recall Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "verdict_id": {
+      "title": "Verdict Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "verdict_id",
+    "recall_id",
+    "decision_id",
+    "classification"
+  ],
+  "title": "RecallVerdict",
+  "type": "object"
+}

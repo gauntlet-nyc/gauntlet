@@ -1,0 +1,151 @@
+{
+  "$defs": {
+    "AffectedSurface": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "identifier": {
+          "minLength": 1,
+          "title": "Identifier",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "route",
+            "component",
+            "api",
+            "agent_tool",
+            "style",
+            "workflow"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_refs": {
+          "items": {
+            "$ref": "#/$defs/SourceRef"
+          },
+          "title": "Source Refs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "identifier",
+        "source_refs",
+        "confidence"
+      ],
+      "title": "AffectedSurface",
+      "type": "object"
+    },
+    "SourceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "content_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Content Hash"
+        },
+        "end_line": {
+          "minimum": 1,
+          "title": "End Line",
+          "type": "integer"
+        },
+        "path": {
+          "minLength": 1,
+          "title": "Path",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "sha": {
+          "minLength": 7,
+          "title": "Sha",
+          "type": "string"
+        },
+        "start_line": {
+          "minimum": 1,
+          "title": "Start Line",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "path",
+        "sha",
+        "start_line",
+        "end_line"
+      ],
+      "title": "SourceRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "base_sha": {
+      "title": "Base Sha",
+      "type": "string"
+    },
+    "changed_files": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Changed Files",
+      "type": "array"
+    },
+    "coverage_gaps": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Coverage Gaps",
+      "type": "array"
+    },
+    "head_sha": {
+      "title": "Head Sha",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "surfaces": {
+      "items": {
+        "$ref": "#/$defs/AffectedSurface"
+      },
+      "title": "Surfaces",
+      "type": "array"
+    }
+  },
+  "required": [
+    "base_sha",
+    "head_sha",
+    "changed_files",
+    "surfaces"
+  ],
+  "title": "ChangeImpactMap",
+  "type": "object"
+}
