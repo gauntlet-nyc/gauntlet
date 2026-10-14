@@ -37,7 +37,18 @@ def test_unknown_action_is_rejected() -> None:
 
 
 @pytest.mark.parametrize(
-    "path", ["https://evil.example/x", "//evil.example/x", "javascript:alert(1)", "/a/../../etc"]
+    "path",
+    [
+        "https://evil.example/x",
+        "//evil.example/x",
+        "javascript:alert(1)",
+        "/a/../../etc",
+        "/checkout/%2e%2e/admin",
+        "/checkout/..%2Fadmin",
+        "/checkout/%252e%252e/admin",
+        "/checkout/./x",
+        "/checkout/a b",
+    ],
 )
 def test_navigate_only_accepts_origin_relative_routes(path: str) -> None:
     with pytest.raises(ValidationError):

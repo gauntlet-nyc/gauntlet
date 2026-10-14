@@ -196,3 +196,30 @@ def test_react_inline_style_positioning_is_signalled() -> None:
         "src/components/FloatingHelp.tsx", diff.files[0].hunks, "1" * 7, "2" * 7
     )
     assert [s.kind for s in signals] == ["layout_positioning"]
+
+
+ENCODED_ESCAPES = (
+    "/checkout/%2e%2e/admin",
+    "/checkout/%2E%2E/admin",
+    "/checkout/%2e./admin",
+    "/checkout/..%2fadmin",
+    "/checkout/%252e%252e/admin",
+    "/checkout/%5c..%5cadmin",
+)
+
+
+@pytest.mark.parametrize("path", ENCODED_ESCAPES)
+def test_encoded_dot_segments_cannot_escape_route_prefix(path: str) -> None:
+    """Regression for B's review on #8: browsers resolve these outside /checkout."""
+    assert not CARTWHEEL.allows_route(path)
+
+
+@pytest.mark.parametrize("path", ENCODED_ESCAPES)
+def test_validator_rejects_plans_with_encoded_escapes(demo_repo: DemoRepo, path: str) -> None:
+    impact = inspect(demo_repo, demo_repo.tool_head)
+    attack = ai_attack(impact)
+    attack["worker_kind"] = "api"
+    attack["steps"] = [
+        {"action": "test_api", "method": "GET", "path": path, "actor_id": "synthetic-attacker-01"}
+    ]
+    assert reasons_for(demo_repo, impact, attack), f"{path} must be rejected"
