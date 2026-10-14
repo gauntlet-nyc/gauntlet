@@ -78,36 +78,39 @@ def test_planner_sees_read_only_descriptor_without_evidence_or_predicate() -> No
         oracle.descriptor("unknown.oracle")
 
 
-@pytest.mark.asyncio
-async def test_browser_executes_only_recorded_steps_and_closes_idempotently() -> None:
-    browser = FakeBrowserProvider((recording(),))
-    session = await browser.open_session(environment())
-    for index, step in enumerate(plan().steps):
-        result = await browser.perform(session, index, step)
-        assert result == observation().action_log[index]
-    await browser.close_session(session)
-    await browser.close_session(session)
-    with pytest.raises(EnvironmentUnavailableError):
-        await browser.perform(session, 0, plan().steps[0])
+def test_browser_executes_only_recorded_steps_and_closes_idempotently() -> None:
+    async def scenario() -> None:
+        browser = FakeBrowserProvider((recording(),))
+        session = await browser.open_session(environment())
+        for index, step in enumerate(plan().steps):
+            result = await browser.perform(session, index, step)
+            assert result == observation().action_log[index]
+        await browser.close_session(session)
+        await browser.close_session(session)
+        with pytest.raises(EnvironmentUnavailableError):
+            await browser.perform(session, 0, plan().steps[0])
+
+    asyncio.run(scenario())
 
 
-@pytest.mark.asyncio
-async def test_browser_rejects_different_fixture_and_unrecorded_action() -> None:
-    browser = FakeBrowserProvider((recording(),))
-    with pytest.raises(EnvironmentUnavailableError):
-        await browser.open_session(replace(environment(), fixture_checksum="f" * 64))
-    session = await browser.open_session(environment())
-    denied = await browser.perform(
-        session, 0, ChatStep(agent_id="assistant", actor_id="synthetic-owner", message="refund")
-    )
-    assert denied.outcome == "blocked"
-    assert denied.evidence_ids == ()
-    changed = await browser.perform(session, 0, NavigateStep(path="/different"))
-    assert changed.outcome == "blocked"
-    await browser.close_session(session)
+def test_browser_rejects_different_fixture_and_unrecorded_action() -> None:
+    async def scenario() -> None:
+        browser = FakeBrowserProvider((recording(),))
+        with pytest.raises(EnvironmentUnavailableError):
+            await browser.open_session(replace(environment(), fixture_checksum="f" * 64))
+        session = await browser.open_session(environment())
+        denied = await browser.perform(
+            session, 0, ChatStep(agent_id="assistant", actor_id="synthetic-owner", message="refund")
+        )
+        assert denied.outcome == "blocked"
+        assert denied.evidence_ids == ()
+        changed = await browser.perform(session, 0, NavigateStep(path="/different"))
+        assert changed.outcome == "blocked"
+        await browser.close_session(session)
+
+    asyncio.run(scenario())
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "url",
     [
@@ -116,32 +119,41 @@ async def test_browser_rejects_different_fixture_and_unrecorded_action() -> None
         "https://fake-preview.invalid@outside.invalid/",
     ],
 )
-async def test_off_origin_redirect_is_blocked_without_using_recorded_success(url: str) -> None:
-    browser = FakeBrowserProvider((replace(recording(), redirects=(url, None, None, None, None)),))
-    session = await browser.open_session(environment())
-    result = await browser.perform(session, 0, plan().steps[0])
-    assert result.outcome == "blocked"
-    assert result.evidence_ids == ()
-    await browser.close_session(session)
+def test_off_origin_redirect_is_blocked_without_using_recorded_success(url: str) -> None:
+    async def scenario() -> None:
+        browser = FakeBrowserProvider(
+            (replace(recording(), redirects=(url, None, None, None, None)),)
+        )
+        session = await browser.open_session(environment())
+        result = await browser.perform(session, 0, plan().steps[0])
+        assert result.outcome == "blocked"
+        assert result.evidence_ids == ()
+        await browser.close_session(session)
+
+    asyncio.run(scenario())
 
 
-@pytest.mark.asyncio
-async def test_worker_produces_golden_action_log_with_environment_binding() -> None:
-    browser = FakeBrowserProvider((recording(),))
-    result = await UIWorker(browser, registry()).run(plan(), environment())
-    assert result.status == "completed"
-    assert result.action_log == observation().action_log
-    assert result.evidence_ids == ("art-dom-001", "art-shot-001", "art-shot-002")
-    assert result.source_sha == environment().source_sha
-    assert result.fixture_checksum == environment().fixture_checksum
+def test_worker_produces_golden_action_log_with_environment_binding() -> None:
+    async def scenario() -> None:
+        browser = FakeBrowserProvider((recording(),))
+        result = await UIWorker(browser, registry()).run(plan(), environment())
+        assert result.status == "completed"
+        assert result.action_log == observation().action_log
+        assert result.evidence_ids == ("art-dom-001", "art-shot-001", "art-shot-002")
+        assert result.source_sha == environment().source_sha
+        assert result.fixture_checksum == environment().fixture_checksum
+
+    asyncio.run(scenario())
 
 
-@pytest.mark.asyncio
-async def test_worker_rejects_unknown_oracle_before_browser_open() -> None:
-    browser = FakeBrowserProvider(())
-    bad = plan().model_copy(update={"oracle_ids": ("untrusted.model_assertion",)})
-    with pytest.raises(UnknownOracleError):
-        await UIWorker(browser, registry()).run(bad, environment())
+def test_worker_rejects_unknown_oracle_before_browser_open() -> None:
+    async def scenario() -> None:
+        browser = FakeBrowserProvider(())
+        bad = plan().model_copy(update={"oracle_ids": ("untrusted.model_assertion",)})
+        with pytest.raises(UnknownOracleError):
+            await UIWorker(browser, registry()).run(bad, environment())
+
+    asyncio.run(scenario())
 
 
 class InterruptibleBrowser(FakeBrowserProvider):
@@ -163,46 +175,54 @@ class InterruptibleBrowser(FakeBrowserProvider):
         await super().close_session(session_id)
 
 
-@pytest.mark.asyncio
-async def test_cancellation_closes_browser_and_propagates() -> None:
-    browser = InterruptibleBrowser()
-    task = asyncio.create_task(UIWorker(browser, registry()).run(plan(), environment()))
-    await browser.started.wait()
-    task.cancel()
-    with pytest.raises(asyncio.CancelledError):
-        await task
-    assert browser.closed
+def test_cancellation_closes_browser_and_propagates() -> None:
+    async def scenario() -> None:
+        browser = InterruptibleBrowser()
+        task = asyncio.create_task(UIWorker(browser, registry()).run(plan(), environment()))
+        await browser.started.wait()
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+        assert browser.closed
+
+    asyncio.run(scenario())
 
 
-@pytest.mark.asyncio
-async def test_timeout_closes_browser_and_reports_budget_exceeded() -> None:
-    browser = InterruptibleBrowser()
-    spec = plan().model_copy(update={"max_runtime_seconds": 1})
-    result = await UIWorker(browser, registry()).run(spec, environment())
-    assert result.status == "budget_exceeded"
-    assert browser.closed
-
-
-@pytest.mark.asyncio
-async def test_environment_failure_is_not_a_successful_observation() -> None:
-    browser = InterruptibleBrowser(failure=True)
-    result = await UIWorker(browser, registry()).run(plan(), environment())
-    assert result.status == "environment_error"
-    assert browser.closed
-    assert registry().evaluate("ui.primary_action_reachable", result).outcome == "inconclusive"
-
-
-@pytest.mark.asyncio
-async def test_hung_cleanup_is_bounded_and_reports_environment_error() -> None:
-    class HungCleanupBrowser(FakeBrowserProvider):
-        async def close_session(self, session_id: str) -> None:
-            await asyncio.Event().wait()
-
-    browser = HungCleanupBrowser((recording(),))
-    spec = plan().model_copy(update={"max_runtime_seconds": 1})
-    async with asyncio.timeout(2):
+def test_timeout_closes_browser_and_reports_budget_exceeded() -> None:
+    async def scenario() -> None:
+        browser = InterruptibleBrowser()
+        spec = plan().model_copy(update={"max_runtime_seconds": 1})
         result = await UIWorker(browser, registry()).run(spec, environment())
-    assert result.status == "environment_error"
+        assert result.status == "budget_exceeded"
+        assert browser.closed
+
+    asyncio.run(scenario())
+
+
+def test_environment_failure_is_not_a_successful_observation() -> None:
+    async def scenario() -> None:
+        browser = InterruptibleBrowser(failure=True)
+        result = await UIWorker(browser, registry()).run(plan(), environment())
+        assert result.status == "environment_error"
+        assert browser.closed
+        assert registry().evaluate("ui.primary_action_reachable", result).outcome == "inconclusive"
+
+    asyncio.run(scenario())
+
+
+def test_hung_cleanup_is_bounded_and_reports_environment_error() -> None:
+    async def scenario() -> None:
+        class HungCleanupBrowser(FakeBrowserProvider):
+            async def close_session(self, session_id: str) -> None:
+                await asyncio.Event().wait()
+
+        browser = HungCleanupBrowser((recording(),))
+        spec = plan().model_copy(update={"max_runtime_seconds": 1})
+        async with asyncio.timeout(2):
+            result = await UIWorker(browser, registry()).run(spec, environment())
+        assert result.status == "environment_error"
+
+    asyncio.run(scenario())
 
 
 def test_oracle_needs_structured_bound_click_evidence_not_blocked_text() -> None:
@@ -236,30 +256,32 @@ def test_oracle_accepts_actual_primary_action_and_rejects_contradictory_records(
     )
 
 
-@pytest.mark.asyncio
-async def test_sandbox_lifecycle_and_fixture_isolation() -> None:
-    fixture = Fixture("baseline-v1", "a" * 64, frozenset({"aaaaaaaa"}))
-    sandbox = FakeSandboxProvider({"cartwheel-fixture": fixture})
-    first = await sandbox.create(
-        target_id="cartwheel-fixture",
-        source_sha="aaaaaaaa",
-        fixture_id="baseline-v1",
-        mode="gate_compare",
-    )
-    second = await sandbox.create(
-        target_id="cartwheel-fixture",
-        source_sha="aaaaaaaa",
-        fixture_id="baseline-v1",
-        mode="gate_compare",
-    )
-    assert first.environment_id != second.environment_id
-    assert await sandbox.verify_fixture(first.environment_id, "a" * 64)
-    assert not await sandbox.verify_fixture(first.environment_id, "b" * 64)
-    await sandbox.destroy(first.environment_id)
-    await sandbox.destroy(first.environment_id)
-    assert not await sandbox.verify_fixture(first.environment_id, "a" * 64)
-    assert await sandbox.verify_fixture(second.environment_id, "a" * 64)
-    await sandbox.destroy(second.environment_id)
+def test_sandbox_lifecycle_and_fixture_isolation() -> None:
+    async def scenario() -> None:
+        fixture = Fixture("baseline-v1", "a" * 64, frozenset({"aaaaaaaa"}))
+        sandbox = FakeSandboxProvider({"cartwheel-fixture": fixture})
+        first = await sandbox.create(
+            target_id="cartwheel-fixture",
+            source_sha="aaaaaaaa",
+            fixture_id="baseline-v1",
+            mode="gate_compare",
+        )
+        second = await sandbox.create(
+            target_id="cartwheel-fixture",
+            source_sha="aaaaaaaa",
+            fixture_id="baseline-v1",
+            mode="gate_compare",
+        )
+        assert first.environment_id != second.environment_id
+        assert await sandbox.verify_fixture(first.environment_id, "a" * 64)
+        assert not await sandbox.verify_fixture(first.environment_id, "b" * 64)
+        await sandbox.destroy(first.environment_id)
+        await sandbox.destroy(first.environment_id)
+        assert not await sandbox.verify_fixture(first.environment_id, "a" * 64)
+        assert await sandbox.verify_fixture(second.environment_id, "a" * 64)
+        await sandbox.destroy(second.environment_id)
+
+    asyncio.run(scenario())
 
 
 @pytest.mark.parametrize("received", [None, "another-unrelated-element"])

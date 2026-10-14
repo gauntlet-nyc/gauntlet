@@ -101,6 +101,14 @@ review and lock changes.
 
 ### Handoff and remaining gates
 
+2026-10-14 follow-up: A's review of PR #7 confirmed structural port compatibility
+and reported a clean merge/test run against the A stack, but did not approve the
+PR. GitHub's scaffold CI failed 25 B tests because it installs pytest without
+pytest-asyncio. B tests now use explicit `asyncio.run` scenarios, preserving all
+18 async test bodies and assertions. `.venv/bin/python -m pytest -q -p no:asyncio`
+passes all 113 tests; no CI/dependency ownership change is needed. All eight PRs
+were still open at this follow-up, so no phase gate has advanced on main.
+
 - C composes the B adapters into the real API; this branch does not change C's API/dashboard or generated contracts.
 - A plus another appropriate owner must review the oracle/evidence boundary; shared changes require the repository's A/B/C review.
 - Full main-tree integration tests/build happen after reviewed merges. A/B/C branches remain open; branch-local success does not complete that gate.
