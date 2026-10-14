@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "proposal_id": "recall-002:reverse_transaction_review",
+  "recall_id": "recall-002",
+  "action": "reverse_transaction_review",
+  "verdict_ids": [
+    "recall-002:tool-ev-002"
+  ],
+  "affected_actor_refs": [
+    "synthetic-attacker-01"
+  ],
+  "rationale": "Confirmed forbidden effects; a human decides on reversal and customer contact",
+  "evidence_ids": [
+    "ledger-tx-7781"
+  ],
+  "status": "draft",
+  "created_at": "2026-10-14T16:00:00Z"
+}

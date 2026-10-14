@@ -3,6 +3,7 @@
   "verdict_id": "verdict-002",
   "recall_id": "recall-001",
   "decision_id": "decision-001",
+  "tool_event_id": null,
   "mode": "decision_counterfactual",
   "classification": "tainted",
   "rationale": "Control reproduced a 49.99 refund; without kb-117 the agent declined the refund",

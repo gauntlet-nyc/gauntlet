@@ -9,6 +9,7 @@ from .events import RunEvent
 from .gate import AttackSpec, ChangeImpactMap, ChangeRequest, Finding, Observation, OracleVerdict
 from .lineage import ExposureRecord, LineageEdge, ToolEvent
 from .recall import HistoricalDecision, RecallTrigger, RecallVerdict
+from .remediation import AuditSummary, RemediationProposal
 from .replay import ReplayResult, ReplaySpec
 
 SCHEMA_VERSION_SUFFIX: Final = "v1"
@@ -17,6 +18,7 @@ EXPORTED_MODELS: Final[dict[str, type[StrictDTO]]] = {
     "approval-decision": ApprovalDecision,
     "approval-record": ApprovalRecord,
     "attack-spec": AttackSpec,
+    "audit-summary": AuditSummary,
     "change-impact-map": ChangeImpactMap,
     "change-request": ChangeRequest,
     "exposure-record": ExposureRecord,
@@ -28,6 +30,7 @@ EXPORTED_MODELS: Final[dict[str, type[StrictDTO]]] = {
     "oracle-verdict": OracleVerdict,
     "recall-trigger": RecallTrigger,
     "recall-verdict": RecallVerdict,
+    "remediation-proposal": RemediationProposal,
     "replay-result": ReplayResult,
     "replay-spec": ReplaySpec,
     "run-event": RunEvent,

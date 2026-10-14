@@ -127,6 +127,7 @@ def test_audit_mode_cannot_produce_tainted() -> None:
             golden(
                 "recall-verdict-tainted.v1.json",
                 mode="event_audit",
+                tool_event_id="tool-ev-001",
                 control_matches=None,
                 material_change=None,
             )
@@ -139,6 +140,7 @@ def test_audit_violation_requires_evidence() -> None:
             golden(
                 "recall-verdict.v1.json",
                 mode="event_audit",
+                tool_event_id="tool-ev-001",
                 classification="audit_violation",
                 control_matches=None,
                 material_change=None,
@@ -197,3 +199,12 @@ def test_contracts_are_immutable() -> None:
     event = RunEvent.model_validate(golden("run-event.v1.json"))
     with pytest.raises(ValidationError):
         event.sequence = 2
+
+
+def test_audit_verdict_must_name_tool_event_and_counterfactual_a_decision() -> None:
+    with pytest.raises(ValidationError, match="tool_event_id"):
+        RecallVerdict.model_validate(
+            golden("recall-verdict.v1.json", mode="event_audit", control_matches=None)
+        )
+    with pytest.raises(ValidationError, match="decision_id"):
+        RecallVerdict.model_validate(golden("recall-verdict.v1.json", decision_id=None))

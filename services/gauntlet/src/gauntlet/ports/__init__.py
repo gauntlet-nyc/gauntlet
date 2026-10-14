@@ -1,6 +1,7 @@
 """Async Protocol ports. Adapters (owner B) implement these; application code uses only these."""
 
 from .approvals import ApprovalStore
+from .audit import AuditEvidenceProvider, AuditFacts
 from .browser import BrowserProvider
 from .errors import (
     ApprovalAlreadyConsumedError,
@@ -24,6 +25,8 @@ from .worker import TestWorker
 __all__ = [
     "ApprovalAlreadyConsumedError",
     "ApprovalStore",
+    "AuditEvidenceProvider",
+    "AuditFacts",
     "BrowserProvider",
     "DuplicateApprovalError",
     "DuplicateIdempotencyKeyError",
