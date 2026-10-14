@@ -1,7 +1,7 @@
 """Base wire model, constrained scalar types and immutable evidence references."""
 
-import re
 from typing import Annotated, Literal, Self
+from urllib.parse import unquote
 
 from pydantic import AfterValidator, AwareDatetime, BaseModel, ConfigDict, Field, model_validator
 
@@ -29,17 +29,28 @@ def _reject_unsafe_relative_path(value: str) -> str:
     return value
 
 
-_ENCODED_SEPARATORS = re.compile(r"%(2e|2f|5c|25)", re.IGNORECASE)
+MAX_PERCENT_DECODE_ROUNDS = 3
 
 
 def _reject_non_route_path(value: str) -> str:
-    if not value.startswith("/") or value.startswith("//") or "\\" in value:
+    if any(ord(c) < 0x20 or ord(c) == 0x7F for c in value):
+        raise ValueError("route must not contain control characters")
+    path = value.split("#", 1)[0].split("?", 1)[0]
+    # Browsers and servers percent-decode paths, so check what the path becomes, not only how
+    # it is spelled: /%2e%2e/admin resolves to /admin and /%2f%2fhost to //host.
+    for _ in range(MAX_PERCENT_DECODE_ROUNDS):
+        decoded = unquote(path)
+        if decoded == path:
+            break
+        path = decoded
+    else:
+        raise ValueError("route is over-encoded")
+    if any(ord(c) < 0x20 or ord(c) == 0x7F for c in path):
+        raise ValueError("route must not contain control characters")
+    if not value.startswith("/") or path.startswith("//") or "\\" in path:
         raise ValueError("route must be an origin-relative path such as /checkout")
-    path = value.split("?", 1)[0].split("#", 1)[0]
-    if _ENCODED_SEPARATORS.search(path):
-        raise ValueError("route must not percent-encode '.', '/', '\\' or '%'")
-    if any(ch.isspace() or ord(ch) < 0x20 for ch in path):
-        raise ValueError("route must not contain whitespace or control characters")
+    if any(ch.isspace() for ch in value.split("#", 1)[0].split("?", 1)[0]):
+        raise ValueError("route must not contain literal whitespace")
     if any(segment in (".", "..") for segment in path.split("/")):
         raise ValueError("route must not contain '.' or '..' segments")
     return value

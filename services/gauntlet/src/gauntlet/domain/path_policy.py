@@ -5,7 +5,7 @@ from typing import Final
 
 
 def _compile(*patterns: str) -> tuple[re.Pattern[str], ...]:
-    return tuple(re.compile(p) for p in patterns)
+    return tuple(re.compile(p, re.IGNORECASE) for p in patterns)
 
 
 _READ_DENIED: Final = _compile(

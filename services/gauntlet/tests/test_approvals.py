@@ -182,6 +182,17 @@ def test_unknown_approval_is_denied() -> None:
         ".github/workflows/ci.yml",
         "pnpm-lock.yaml",
         ".env",
+        # case variants reach the same files on case-insensitive filesystems
+        "TESTS/checkout.spec.ts",
+        "web/src/a.Test.TSX",
+        "src/Verification/ui_oracles.py",
+        "Oracles/x.py",
+        "BENCH/public/README.md",
+        ".GITHUB/workflows/ci.yml",
+        "UV.LOCK",
+        "package-lock.JSON",
+        ".ENV",
+        ".Env.local",
     ],
 )
 def test_fix_plans_cannot_target_protected_paths(path: str) -> None:
