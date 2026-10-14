@@ -94,11 +94,12 @@ try {
       const image = await call('Page.captureScreenshot', { format: 'png' });
       const filename = `${width}-${repeat}.png`;
       await writeFile(join(output, filename), Buffer.from(image.data, 'base64'));
-      measurements.push({ sourceSha, width, repeat, ...before, clicks, screenshot: filename });
+      measurements.push({ operatorAssertedSourceSha: sourceSha, width, repeat, ...before, clicks, screenshot: filename });
     }
   }
-  const report = { mode: 'local_headless_diagnostic', sourceSha, browser: version.product,
-    limitations: ['No Daytona/Anchor integration', 'DOM click receipt only; fixture has no order handler'], measurements };
+  const report = { mode: 'local_headless_diagnostic', operatorAssertedSourceSha: sourceSha, browser: version.product,
+    limitations: ['Running server revision is operator asserted, not verified by this probe',
+      'No Daytona/Anchor integration', 'DOM click receipt only; fixture has no order handler'], measurements };
   await writeFile(join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify(report, null, 2));
 } finally {

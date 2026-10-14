@@ -192,6 +192,19 @@ async def test_environment_failure_is_not_a_successful_observation() -> None:
     assert registry().evaluate("ui.primary_action_reachable", result).outcome == "inconclusive"
 
 
+@pytest.mark.asyncio
+async def test_hung_cleanup_is_bounded_and_reports_environment_error() -> None:
+    class HungCleanupBrowser(FakeBrowserProvider):
+        async def close_session(self, session_id: str) -> None:
+            await asyncio.Event().wait()
+
+    browser = HungCleanupBrowser((recording(),))
+    spec = plan().model_copy(update={"max_runtime_seconds": 1})
+    async with asyncio.timeout(2):
+        result = await UIWorker(browser, registry()).run(spec, environment())
+    assert result.status == "environment_error"
+
+
 def test_oracle_needs_structured_bound_click_evidence_not_blocked_text() -> None:
     obs = observation()
     assert registry().evaluate("ui.primary_action_reachable", obs).outcome == "inconclusive"
@@ -247,3 +260,12 @@ async def test_sandbox_lifecycle_and_fixture_isolation() -> None:
     assert not await sandbox.verify_fixture(first.environment_id, "a" * 64)
     assert await sandbox.verify_fixture(second.environment_id, "a" * 64)
     await sandbox.destroy(second.environment_id)
+
+
+@pytest.mark.parametrize("received", [None, "another-unrelated-element"])
+def test_oracle_cannot_confirm_interception_without_consistent_click_receipt(
+    received: str | None,
+) -> None:
+    obs = observation()
+    proof = replace(evidence(obs), received_target=received)
+    assert registry(proof).evaluate("ui.primary_action_reachable", obs).outcome == "inconclusive"

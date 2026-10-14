@@ -60,8 +60,9 @@ class UIWorker:
             finally:
                 if session is not None:
                     try:
-                        await self._browser.close_session(session)
-                    except EnvironmentUnavailableError:
+                        async with asyncio.timeout(min(5, spec.max_runtime_seconds)):
+                            await self._browser.close_session(session)
+                    except (EnvironmentUnavailableError, TimeoutError):
                         status = "environment_error"
         return Observation.model_validate(
             {

@@ -58,7 +58,7 @@ forbidden and explicitly labels the result `offline_recording`.
 - The browser replays exact typed steps for the registered source/fixture/checksum, uses reserved `.invalid` origins, and blocks recorded off-origin redirects. It does not run a real browser.
 - The fixed UI oracle consumes trusted internal `ClickEvidence`, bound to observation, attack, environment, source, checksum, step, and registered primary target. Text in `detail` cannot establish failure. No runtime predicate registration exists. P1 must add a trusted collector/artifact binding; this is not a new public DTO.
 - Replay only returns an exact preloaded result. Missing historical pins, critical missing inputs, or an absent recording yield `not_replayable`. No tool execution callback exists.
-- `UIWorker` bounds actions/runtime and closes the session on success, failure, timeout, and cancellation. It never assigns a Gate verdict.
+- `UIWorker` bounds actions/runtime and attempts session closure on success, failure, timeout, and cancellation. Cleanup has a separate timeout of at most five seconds (or the smaller execution budget); failed cleanup yields `environment_error`. Retried orphan cleanup remains a later integration requirement. It never assigns a Gate verdict.
 
 ### Real local headless diagnostic (not the P1 acceptance gate)
 
@@ -86,6 +86,12 @@ clicks hit and were received by `help-button`; all six base center clicks hit
 and were received by `checkout-primary-action`. JSON reports and twelve PNGs
 are in the ignored `artifacts/b00-browser/{base,head}/` directories.
 
+The CLI revision is operator asserted: the probe does not verify the running
+server's build SHA. The captured initial reports used the field `sourceSha`;
+the current script names it `operatorAssertedSourceSha` to make that limitation
+explicit. The separate checkout/build/start command record establishes which
+fixture was served during this diagnostic; the probe alone cannot establish it.
+
 This is a directed local diagnostic, not blind planner discovery or Daytona /
 Anchor proof. The fixture has no order-submission handler, so results establish
 DOM click delivery only. Keyboard fallback, fixture runtime state checksums,
@@ -99,4 +105,5 @@ review and lock changes.
 - A plus another appropriate owner must review the oracle/evidence boundary; shared changes require the repository's A/B/C review.
 - Full main-tree integration tests/build happen after reviewed merges. A/B/C branches remain open; branch-local success does not complete that gate.
 - Repository-wide Ruff currently reports the existing C-owned `test_api.py` import ordering. Format check reports the two existing master-plan Markdown code blocks. B-owned Python lint/format and whole-source mypy are checked separately; these baseline failures are not silently fixed across ownership boundaries.
+- Independent review reproduced two edge cases, now covered by regression tests: missing/inconsistent click receipt must be inconclusive, and a hung browser close must time out. The main-tree baseline (before these branches are integrated) passed 11 tests and built a wheel; this does not verify the B changes on main.
 - Live provider setup requires C-approved pinned SDK dependencies, explicit `RUN_LIVE_INTEGRATIONS=1` opt-in and permitted spend, an authorized target/fixture, Daytona key/endpoint and runtime quota, Anchor key and reachable allowlisted preview, Arize key/space/project, Surreal core URL/namespace/database/auth, separate Memory endpoint/context/key/scopes, and AWS credential chain/region/model access. These prerequisites are phase-specific; B-00 requires no provider credentials.

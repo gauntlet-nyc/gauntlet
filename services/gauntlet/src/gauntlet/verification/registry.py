@@ -146,7 +146,7 @@ class RegisteredOracleRegistry:
             click.outcome == "blocked"
             and proof.hit_target
             and proof.hit_target != target
-            and proof.received_target != target
+            and proof.received_target == proof.hit_target
         ):
             return OracleOutcome.FAIL, (proof.evidence_id,)
         return inconclusive
