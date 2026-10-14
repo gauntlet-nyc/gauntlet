@@ -115,3 +115,27 @@ were still open at this follow-up, so no phase gate has advanced on main.
 - Repository-wide Ruff currently reports the existing C-owned `test_api.py` import ordering. Format check reports the two existing master-plan Markdown code blocks. B-owned Python lint/format and whole-source mypy are checked separately; these baseline failures are not silently fixed across ownership boundaries.
 - Independent review reproduced two edge cases, now covered by regression tests: missing/inconsistent click receipt must be inconclusive, and a hung browser close must time out. The main-tree baseline (before these branches are integrated) passed 11 tests and built a wheel; this does not verify the B changes on main.
 - Live provider setup requires C-approved pinned SDK dependencies, explicit `RUN_LIVE_INTEGRATIONS=1` opt-in and permitted spend, an authorized target/fixture, Daytona key/endpoint and runtime quota, Anchor key and reachable allowlisted preview, Arize key/space/project, Surreal core URL/namespace/database/auth, separate Memory endpoint/context/key/scopes, and AWS credential chain/region/model access. These prerequisites are phase-specific; B-00 requires no provider credentials.
+
+### Incoming PR compatibility follow-up (2026-10-14)
+
+PRs #9 (A-04 lineage), #10 (C offline joint checkpoint), and #11 (C-02
+refund fixture) arrived during validation; all eleven PRs remain open. #10
+supplies the proposed API/dashboard composition; its Python CI contains the
+older B tests and fails for the same missing async plugin fixed by `9c20af6`.
+B's two GitHub Python checks passed for that commit. C also reported six test
+mypy errors: B now uses `ReplayStatus.MATCHED` and `OracleOutcome.FAIL` at typed
+call sites. B test imports follow the incoming C root `src` configuration;
+on the older B root use Ruff's explicit `--config 'src = ["services/gauntlet/src"]'`.
+
+A temporary detached checkout merged B with A through #8 and C through #10
+without conflicts. Before #10 it passed 203 tests, source mypy (58 files),
+Python sdist/wheel, dashboard tests (3), and dashboard production build. With
+#10, `.venv/bin/python -m pytest -q -p no:asyncio` passed 204 tests. These are
+compatibility checks, not main-tree acceptance or live-provider evidence.
+The later-phase #9/#11 were inspected but excluded from this P0 check. #11
+explicitly reports an OpenAPI generation conflict with its sibling #10;
+C must regenerate from the combined routes during integration.
+
+Incoming C root lint settings also expose nine A-owned test import blocks.
+B fixes its four blocks only; full combined Ruff remains an integration gate.
+No owner branches or main were merged by this check.

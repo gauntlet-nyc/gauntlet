@@ -6,8 +6,10 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
+
 from gauntlet.contracts import AttackSpec, Observation, RunEvent
 from gauntlet.domain import GateEvidence, classify_gate
+from gauntlet.domain.statuses import OracleOutcome
 from gauntlet.integrations.fake.browser import BrowserRecording, FakeBrowserProvider
 from gauntlet.integrations.fake.sandbox import FakeSandboxProvider, Fixture
 from gauntlet.integrations.fake.storage import FakeRunStore
@@ -92,9 +94,9 @@ def test_golden_plan_to_verified_event_without_network(
                 fixtures_equal=True,
                 oracle_trusted=True,
                 head_attempts=2,
-                head_failures=outcomes[:2].count("fail"),
+                head_failures=outcomes[:2].count(OracleOutcome.FAIL),
                 base_attempts=1,
-                base_failures=outcomes[2:].count("fail"),
+                base_failures=outcomes[2:].count(OracleOutcome.FAIL),
             )
         )
         assert verdict.status == "confirmed_regression"

@@ -5,6 +5,7 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
+
 from gauntlet.contracts import ActionRecord, AttackSpec, Observation
 from gauntlet.contracts.gate import ActionStep, ChatStep, NavigateStep
 from gauntlet.integrations.fake.browser import BrowserRecording, FakeBrowserProvider

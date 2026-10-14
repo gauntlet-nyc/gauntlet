@@ -4,7 +4,9 @@ import asyncio
 from pathlib import Path
 
 import pytest
+
 from gauntlet.contracts import MissingInput, ReplayResult, ReplaySpec, RunEvent
+from gauntlet.domain.statuses import ReplayStatus
 from gauntlet.integrations.fake.replay import FakeReplayEngine
 from gauntlet.integrations.fake.storage import FakeRunStore
 from gauntlet.ports.errors import DuplicateIdempotencyKeyError, EventSequenceConflictError
@@ -69,7 +71,7 @@ def test_replay_only_returns_result_for_the_exact_recorded_world() -> None:
         spec = replay()
         result = ReplayResult(
             replay_id=spec.replay_id,
-            status="matched",
+            status=ReplayStatus.MATCHED,
             observed_action="deny_refund",
             evidence_ids=("recorded-001",),
         )
@@ -97,7 +99,7 @@ def test_replay_missing_pins_cannot_return_a_recorded_match(field: str) -> None:
     async def scenario() -> None:
         spec = replay().model_copy(update={field: None})
         engine = FakeReplayEngine(
-            ((spec, ReplayResult(replay_id=spec.replay_id, status="matched")),)
+            ((spec, ReplayResult(replay_id=spec.replay_id, status=ReplayStatus.MATCHED)),)
         )
         result = await engine.replay(spec)
         assert result.status == "not_replayable"
@@ -117,7 +119,7 @@ def test_critical_missing_input_overrides_preloaded_result() -> None:
             }
         )
         engine = FakeReplayEngine(
-            ((spec, ReplayResult(replay_id=spec.replay_id, status="matched")),)
+            ((spec, ReplayResult(replay_id=spec.replay_id, status=ReplayStatus.MATCHED)),)
         )
         assert (await engine.replay(spec)).status == "not_replayable"
 
@@ -128,7 +130,7 @@ def test_event_audit_cannot_replay_without_recorded_tool_results() -> None:
     async def scenario() -> None:
         spec = replay().model_copy(update={"mode": "event_audit", "tool_results_hash": None})
         engine = FakeReplayEngine(
-            ((spec, ReplayResult(replay_id=spec.replay_id, status="matched")),)
+            ((spec, ReplayResult(replay_id=spec.replay_id, status=ReplayStatus.MATCHED)),)
         )
         assert (await engine.replay(spec)).status == "not_replayable"
 
