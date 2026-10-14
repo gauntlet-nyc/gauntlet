@@ -1,0 +1,8 @@
+{
+  "schema_version": "1.0",
+  "subject": "fix_plan",
+  "subject_id": "fix-001",
+  "plan_sha256": "b6371633f77b1b2897c14d60c9c573237fe6d65d8d7d99cd53cbfe585426dcea",
+  "decision": "approved",
+  "reason": null
+}

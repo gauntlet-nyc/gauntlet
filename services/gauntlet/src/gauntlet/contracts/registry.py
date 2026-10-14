@@ -3,6 +3,7 @@
 import json
 from typing import Final
 
+from .approvals import ApprovalDecision, ApprovalRecord, FixPlan
 from .common import StrictDTO
 from .events import RunEvent
 from .gate import AttackSpec, ChangeImpactMap, ChangeRequest, Finding, Observation, OracleVerdict
@@ -12,10 +13,13 @@ from .replay import ReplayResult, ReplaySpec
 SCHEMA_VERSION_SUFFIX: Final = "v1"
 
 EXPORTED_MODELS: Final[dict[str, type[StrictDTO]]] = {
+    "approval-decision": ApprovalDecision,
+    "approval-record": ApprovalRecord,
     "attack-spec": AttackSpec,
     "change-impact-map": ChangeImpactMap,
     "change-request": ChangeRequest,
     "finding": Finding,
+    "fix-plan": FixPlan,
     "historical-decision": HistoricalDecision,
     "observation": Observation,
     "oracle-verdict": OracleVerdict,

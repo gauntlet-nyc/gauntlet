@@ -42,6 +42,7 @@ ActionKind = Literal[
     "test_api",
     "chat",
 ]
+SurfaceKind = Literal["route", "component", "api", "agent_tool", "style", "workflow"]
 Selector = Annotated[str, Field(min_length=1, max_length=512)]
 
 
@@ -56,7 +57,7 @@ class ChangeRequest(StrictDTO):
 
 
 class AffectedSurface(StrictDTO):
-    kind: Literal["route", "component", "api", "agent_tool", "style", "workflow"]
+    kind: SurfaceKind
     identifier: str = Field(min_length=1, max_length=512)
     source_refs: tuple[SourceRef, ...] = Field(min_length=1, max_length=MAX_ITEMS)
     confidence: float = Field(ge=0, le=1)

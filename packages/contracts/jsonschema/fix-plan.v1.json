@@ -1,0 +1,89 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "allowed_paths": {
+      "items": {
+        "maxLength": 512,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 50,
+      "minItems": 1,
+      "title": "Allowed Paths",
+      "type": "array"
+    },
+    "base_sha": {
+      "pattern": "^[0-9a-f]{7,64}$",
+      "title": "Base Sha",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "finding_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "title": "Finding Id",
+      "type": "string"
+    },
+    "fix_plan_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "title": "Fix Plan Id",
+      "type": "string"
+    },
+    "rationale": {
+      "maxLength": 2500,
+      "minLength": 1,
+      "title": "Rationale",
+      "type": "string"
+    },
+    "run_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "test_plan": {
+      "items": {
+        "maxLength": 2500,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "title": "Test Plan",
+      "type": "array"
+    },
+    "unified_diff": {
+      "maxLength": 200000,
+      "minLength": 1,
+      "title": "Unified Diff",
+      "type": "string"
+    }
+  },
+  "required": [
+    "fix_plan_id",
+    "run_id",
+    "finding_id",
+    "base_sha",
+    "allowed_paths",
+    "unified_diff",
+    "rationale",
+    "test_plan",
+    "created_at"
+  ],
+  "title": "FixPlan",
+  "type": "object"
+}
