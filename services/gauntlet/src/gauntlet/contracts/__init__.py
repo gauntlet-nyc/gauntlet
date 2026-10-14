@@ -2,6 +2,12 @@
 
 from .common import EvidenceRef, MissingInput, SourceRef, StrictDTO
 from .events import RunEvent
+from .evidence import (
+    EVIDENCE_MEDIA_TYPES,
+    EvidenceBinding,
+    EvidenceCollector,
+    EvidenceSubject,
+)
 from .gate import (
     ActionRecord,
     ActionStep,
@@ -29,6 +35,7 @@ from .recall import HistoricalDecision, RecallMode, RecallTrigger, RecallVerdict
 from .replay import ReplayMode, ReplayResult, ReplaySpec
 
 __all__ = [
+    "EVIDENCE_MEDIA_TYPES",
     "ActionRecord",
     "ActionStep",
     "AffectedSurface",
@@ -39,7 +46,10 @@ __all__ = [
     "ChangeRequest",
     "ChatStep",
     "ClickStep",
+    "EvidenceBinding",
+    "EvidenceCollector",
     "EvidenceRef",
+    "EvidenceSubject",
     "Finding",
     "HistoricalDecision",
     "InspectStep",

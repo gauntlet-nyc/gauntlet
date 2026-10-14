@@ -5,6 +5,7 @@ from typing import Final
 
 from .common import StrictDTO
 from .events import RunEvent
+from .evidence import EvidenceBinding
 from .gate import AttackSpec, ChangeImpactMap, ChangeRequest, Finding, Observation, OracleVerdict
 from .recall import HistoricalDecision, RecallTrigger, RecallVerdict
 from .replay import ReplayResult, ReplaySpec
@@ -15,6 +16,7 @@ EXPORTED_MODELS: Final[dict[str, type[StrictDTO]]] = {
     "attack-spec": AttackSpec,
     "change-impact-map": ChangeImpactMap,
     "change-request": ChangeRequest,
+    "evidence-binding": EvidenceBinding,
     "finding": Finding,
     "historical-decision": HistoricalDecision,
     "observation": Observation,
