@@ -15,6 +15,11 @@ dev = [
     "jsonschema>=4.20",
     "uvicorn>=0.54.0",
 ]
+live-providers = [
+    "anchorbrowser==1.0.1",
+    "daytona==0.224.1",
+    "playwright==1.64.0",
+]
 
 [tool.uv.workspace]
 members = ["services/gauntlet"]
