@@ -17,3 +17,11 @@ describe("parseFakeRun", () => {
     expect(() => parseFakeRun({ ...sample, plan: undefined })).toThrow();
   });
 });
+
+import { parseChangeRequest } from "./api";
+
+describe("parseChangeRequest", () => {
+  it("rejects a payload without SHAs", () => {
+    expect(() => parseChangeRequest({ repository_id: "cartwheel" })).toThrow();
+  });
+});
