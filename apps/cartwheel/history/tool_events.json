@@ -1,0 +1,540 @@
+[
+  {
+    "actor_ref": "synthetic-customer-02",
+    "arguments_hash": "3b05b40484891280c80d702d259e4e037c8fb9831102a45384cbbef0403bfb5d",
+    "decision_id": "decision-001",
+    "event_id": "tool-event-001",
+    "occurred_at": "2026-10-07T09:40:03Z",
+    "outcome": "succeeded",
+    "result_hash": "f641995247a452530885f94c9ce9c928eee2def9a09b011e78189974c3f469bd",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-001"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-02",
+    "arguments_hash": "8ace677456edf0b887127049a7f0baa2b42d800dc35d759db6804ac547561d8d",
+    "decision_id": "decision-002",
+    "event_id": "tool-event-002",
+    "occurred_at": "2026-10-07T11:25:03Z",
+    "outcome": "succeeded",
+    "result_hash": "483de8f8690ca66b37dccccf3b1d51a612d1442645c0f5250587a292c744b75a",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-002"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-04",
+    "arguments_hash": "27bcf62e58e7e95206facb864c7b7e2257781fc5ccecd4acf6e8074d2fb17cad",
+    "decision_id": "decision-004",
+    "event_id": "tool-event-004",
+    "occurred_at": "2026-10-07T15:36:03Z",
+    "outcome": "succeeded",
+    "result_hash": "d1f0cd05db4ba9985fedb553f37cb52c75152b379bd0a509acaa5b5907cc69dc",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-004"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-05",
+    "arguments_hash": "31052206a175f229425ead0dd8085181b742571558a724de2bcc1cf41b9aa615",
+    "decision_id": "decision-005",
+    "event_id": "tool-event-005",
+    "occurred_at": "2026-10-07T17:44:03Z",
+    "outcome": "succeeded",
+    "result_hash": "84de02a04c570afca772a614beecc6083064dcace77f5c0fbf2194058601a53e",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-005"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-06",
+    "arguments_hash": "755ab3c5234be702dfe17e99af336468bafffb739488f7e0715693248d8b2c95",
+    "decision_id": "decision-006",
+    "event_id": "tool-event-006",
+    "occurred_at": "2026-10-07T19:07:03Z",
+    "outcome": "succeeded",
+    "result_hash": "81222a49549ee97c8bf68caacd8f1647f9e826b9e52833bc835538d43bc02e4f",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-006"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-07",
+    "arguments_hash": "3667269412c03efd17aee4d3db77e0cd98187e725d293082b7dab46b90baf28e",
+    "decision_id": "decision-007",
+    "event_id": "tool-event-007",
+    "occurred_at": "2026-10-08T09:00:03Z",
+    "outcome": "unknown",
+    "result_hash": null,
+    "schema_version": "1.0",
+    "side_effect_ids": [],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-08",
+    "arguments_hash": "0e9fe3fb0bf21c69d63b01ec8077f708a805f1bad8cf412735d970152ea6f85a",
+    "decision_id": "decision-008",
+    "event_id": "tool-event-008",
+    "occurred_at": "2026-10-08T11:03:03Z",
+    "outcome": "succeeded",
+    "result_hash": "56c6ca394570cf841fab13d4dcd179480b3a484844f675a3195d7cd431cea69b",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-008"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-10",
+    "arguments_hash": "824acda8d785712341d6daad0e3f50d99fedc72de97b046ba0d7ebaae0f6a5e8",
+    "decision_id": "decision-009",
+    "event_id": "tool-event-009",
+    "occurred_at": "2026-10-08T13:25:03Z",
+    "outcome": "succeeded",
+    "result_hash": "7cfb8a56390813c63d906e423019ac8ed7c7fdd44668d89c2891ecf4e8b0be4e",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-009"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-11",
+    "arguments_hash": "226a66062aa5e3891006435a86bd13137adc99d9204e380c883842ac9229fc7b",
+    "decision_id": "decision-011",
+    "event_id": "tool-event-011",
+    "occurred_at": "2026-10-08T17:08:03Z",
+    "outcome": "succeeded",
+    "result_hash": "381eddcf182f78291a6587d47efc01c2efac99679cfb0378f5e038b660c7cab2",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-011"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-12",
+    "arguments_hash": "18dfc21244b36b46c002e5352189913600ffce8b15ce82adbeb9c637c9cf72a7",
+    "decision_id": "decision-012",
+    "event_id": "tool-event-012",
+    "occurred_at": "2026-10-08T19:46:03Z",
+    "outcome": "succeeded",
+    "result_hash": "8d686948510582438060db225d0352b4c9ad679a59d7eaf3fc583f885785f13c",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-012"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-13",
+    "arguments_hash": "f4383be26c6f7ab9022a40634b948415d37187a2f130cefc4dfdabd52ffaf8aa",
+    "decision_id": "decision-013",
+    "event_id": "tool-event-013",
+    "occurred_at": "2026-10-09T09:17:03Z",
+    "outcome": "succeeded",
+    "result_hash": "ab56797ebbf01afe5ce5aebf55ad57ef04d071e44686a71b8bdb469d41098dc2",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-013"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-14",
+    "arguments_hash": "671df18dc6cefbbec4fa561220815d5d6efdbc114c23eee36c3a8853cad05636",
+    "decision_id": "decision-014",
+    "event_id": "tool-event-014",
+    "occurred_at": "2026-10-09T11:23:03Z",
+    "outcome": "succeeded",
+    "result_hash": "6fd58cb8febe85e0c220cf0f3dc0ca05d2e538a06f8255f3d15d2a229ed9c68f",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-014"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-16",
+    "arguments_hash": "71f259233939fa69b57612e03aefbc2a53d2a5366874a7ebff2f12ab7c5e83c9",
+    "decision_id": "decision-015",
+    "event_id": "tool-event-015",
+    "occurred_at": "2026-10-09T13:08:03Z",
+    "outcome": "succeeded",
+    "result_hash": "eaa66960376dcbdee3e91490a921ffede088c524738a0e4e9341667e2e6e0296",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-015"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-16",
+    "arguments_hash": "4338c7ecff8234b6b8eaefff6a63582f62cb711bae0331ddc82bed3ddf2e8d19",
+    "decision_id": "decision-016",
+    "event_id": "tool-event-016",
+    "occurred_at": "2026-10-09T15:00:03Z",
+    "outcome": "succeeded",
+    "result_hash": "ba7fcebc549295e755fb62bbb9505ad4a482b244c3031a1972c110f865f82bcf",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-016"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-18",
+    "arguments_hash": "fc63d24ac6dd3c5c504808a499bf9870c04785618ea9a4c4fb6f91b6351cfd43",
+    "decision_id": "decision-018",
+    "event_id": "tool-event-018",
+    "occurred_at": "2026-10-09T19:17:03Z",
+    "outcome": "succeeded",
+    "result_hash": "8b82748ae1b54fde0687cff76db7f028204ec9439707ba6615df56c10bdba0de",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-018"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-19",
+    "arguments_hash": "ae9e13fe6cbc017216b813ef81d0591fe88c0502875cc53764f78637db89ba95",
+    "decision_id": "decision-019",
+    "event_id": "tool-event-019",
+    "occurred_at": "2026-10-10T09:23:03Z",
+    "outcome": "succeeded",
+    "result_hash": "bcd34107d50ca2123718466fae60d020a938117769483e262beb5eda4c1d557a",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-019"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-20",
+    "arguments_hash": "319286e40cd3bb0a79b1d03ca8fe0483c95e8e9479abdd2dd71342b02c7b5f46",
+    "decision_id": "decision-020",
+    "event_id": "tool-event-020",
+    "occurred_at": "2026-10-10T11:49:03Z",
+    "outcome": "succeeded",
+    "result_hash": "498eb6d4ede5bcb703565de710a8bcc813d68e6ee3bd72d37c0ad583e780c3c5",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-020"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-01",
+    "arguments_hash": "a52866eddc1ccc7391545db03c0bc68f7ae2fcfd6ac0319812bf9e38719d736c",
+    "decision_id": "decision-021",
+    "event_id": "tool-event-021",
+    "occurred_at": "2026-10-10T13:47:03Z",
+    "outcome": "succeeded",
+    "result_hash": "3b40ea80f1cbfe496b25504c05188974ee6df07b2ec57b1efacd282572b8458b",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-021"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-02",
+    "arguments_hash": "0da1b206fc7af48eeed3d4056564f1c41af2e7aee5644463f9ad1658dada6a74",
+    "decision_id": "decision-022",
+    "event_id": "tool-event-022",
+    "occurred_at": "2026-10-10T15:22:03Z",
+    "outcome": "succeeded",
+    "result_hash": "c2a31817bd7acc9d9d2beb2d5a9d073b70520f1a8c0b1f391038bf6705939e23",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-022"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-03",
+    "arguments_hash": "5a40de58893dd75cb796c1009bd94d492a3444d42ed79bf519a480c351e6b60f",
+    "decision_id": "decision-023",
+    "event_id": "tool-event-023",
+    "occurred_at": "2026-10-10T17:00:03Z",
+    "outcome": "succeeded",
+    "result_hash": "b0919c0b93ad0b9b6a7b9fae6ccc4a120511e52455ebf7153a2d37718aab6a31",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-023"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-05",
+    "arguments_hash": "ae4d092958aaee21d02e38dcf7fcaa3b4b6d9fc719ed53eaa92c683ea54ab731",
+    "decision_id": "decision-025",
+    "event_id": "tool-event-025",
+    "occurred_at": "2026-10-11T09:01:03Z",
+    "outcome": "succeeded",
+    "result_hash": "f9982d2119cead8e745a26fe76372350b7a025657a7cb46f7360160825c45023",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-025"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-06",
+    "arguments_hash": "3a80d2ed2ed1056debde5adb12b59fdeff1838febc6c5daf6b6622d262d28dd1",
+    "decision_id": "decision-026",
+    "event_id": "tool-event-026",
+    "occurred_at": "2026-10-11T11:47:03Z",
+    "outcome": "succeeded",
+    "result_hash": "db1140250c8bdea31f4795e1db679433a70a717b2672111103f2e3efc8da44a1",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-026"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-07",
+    "arguments_hash": "cd1f221f6f4287f25c6282b12521a147789a13bdc1fae36076d16a90025fbd9c",
+    "decision_id": "decision-027",
+    "event_id": "tool-event-027",
+    "occurred_at": "2026-10-11T13:35:03Z",
+    "outcome": "succeeded",
+    "result_hash": "feebaa4a315fb74ff255cb291bc864f585b5e0ff1aedb6bb736da70e46fb5225",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-027"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-08",
+    "arguments_hash": "d0b28296b764b16c7f8bb139b7f851ac17927b6f8c20a5bdcfd4f016e21bdf70",
+    "decision_id": "decision-028",
+    "event_id": "tool-event-028",
+    "occurred_at": "2026-10-11T15:14:03Z",
+    "outcome": "succeeded",
+    "result_hash": "03b7088fbae8951b92a4b0c7fcf3ade16a6d8cf0ad7bb129d3a11202c9223d6e",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-028"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-09",
+    "arguments_hash": "a6a1738d2de6c4af340b2a76aee4756105426710f384ccb731f93a09292a9a93",
+    "decision_id": "decision-029",
+    "event_id": "tool-event-029",
+    "occurred_at": "2026-10-11T17:18:03Z",
+    "outcome": "succeeded",
+    "result_hash": "9aed24fefcfbf403d06809f63f046c9f374304f83e02e6d5dc51953e5c3765f6",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-029"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-10",
+    "arguments_hash": "f300ec19dc8e8d7bda93c4cda2396db56a17c6289ab2b072be4e863891cd53bc",
+    "decision_id": "decision-030",
+    "event_id": "tool-event-030",
+    "occurred_at": "2026-10-11T19:09:03Z",
+    "outcome": "succeeded",
+    "result_hash": "3a09e9525b46032d207ad8b7994e711e4f0d376744d2af00aa27440552db0d78",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-030"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-12",
+    "arguments_hash": "8dea4d8e328ab6e3f96273b27273f346e3aa56d3d09b37eac40fd852cc0b153b",
+    "decision_id": "decision-032",
+    "event_id": "tool-event-032",
+    "occurred_at": "2026-10-12T11:15:03Z",
+    "outcome": "succeeded",
+    "result_hash": "4ebe269866f08133303129b7cf754223b3ca682e3d1eb5ee238b3b13a941da00",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-032"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-13",
+    "arguments_hash": "f5691ca54c8b0e3d2ce57532481ac57aef3e4f8f16ca4a96374b5e9fe9029f0b",
+    "decision_id": "decision-033",
+    "event_id": "tool-event-033",
+    "occurred_at": "2026-10-12T13:13:03Z",
+    "outcome": "succeeded",
+    "result_hash": "2a2d421bf89098fde80e415a2512b993a47772835333fde248e253d338fe3d93",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-033"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-14",
+    "arguments_hash": "0e90913a8c29afc04b31fe5cece2f2b3af14a3b1f2d98f24f90ec5c8c1a839b7",
+    "decision_id": "decision-034",
+    "event_id": "tool-event-034",
+    "occurred_at": "2026-10-12T15:16:03Z",
+    "outcome": "succeeded",
+    "result_hash": "a9020282f89b7b9602947c28608167f38b04228d3da093755694f895ef913996",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-034"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-15",
+    "arguments_hash": "5020fa0c4642142ef0e612358d43607eb1267b3c108ef6c9fc0867486973194f",
+    "decision_id": "decision-035",
+    "event_id": "tool-event-035",
+    "occurred_at": "2026-10-12T17:38:03Z",
+    "outcome": "succeeded",
+    "result_hash": "c7e78f20f5ca1dd0c030c5fa6794d378e8b0dcf69d8e543b7c6798876dd5049a",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-035"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-16",
+    "arguments_hash": "ff6ab655fcd87bf6023cab40cdc3b5593324864a565c99d347fcd940395896a9",
+    "decision_id": "decision-036",
+    "event_id": "tool-event-036",
+    "occurred_at": "2026-10-12T19:01:03Z",
+    "outcome": "succeeded",
+    "result_hash": "c711ee5d176c6c839b3a271ed3eedf79643cd21e3e1dd7448c579cb02437ca09",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-036"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-17",
+    "arguments_hash": "a2e2ae83d1d808637fa46be1ff59fd3b0420eb6ffd583355e63d78214ca6c437",
+    "decision_id": "decision-037",
+    "event_id": "tool-event-037",
+    "occurred_at": "2026-10-13T09:37:03Z",
+    "outcome": "succeeded",
+    "result_hash": "41859edacaa48908a81200fdbf8b32369aba306042d2764f99f2b845c2e7b759",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-037"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-19",
+    "arguments_hash": "a99a067bf6962e8cf31f1b7b9522c9917ef12a84ad09a3c82b9a126fd78156c9",
+    "decision_id": "decision-039",
+    "event_id": "tool-event-039",
+    "occurred_at": "2026-10-13T13:42:03Z",
+    "outcome": "succeeded",
+    "result_hash": "a22b7c715bf8bf73618357a4af8ffa43b334de49b1f7b85ecdac37c36bdb5db6",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-039"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-20",
+    "arguments_hash": "871e17a04fbe088ea3f4a3136b643da352a0cc89e70e3c95a27c890430ed93ea",
+    "decision_id": "decision-040",
+    "event_id": "tool-event-040",
+    "occurred_at": "2026-10-13T15:00:03Z",
+    "outcome": "succeeded",
+    "result_hash": "92cbb595655d1e40405c3631898d1d23af839657e953562d4fd49d5b0ff8915f",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-040"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-01",
+    "arguments_hash": "f6286f98891757d141dcfeb56bc07314409f54d9816c74e06d3aeb0aca541852",
+    "decision_id": "decision-041",
+    "event_id": "tool-event-041",
+    "occurred_at": "2026-10-13T17:46:03Z",
+    "outcome": "succeeded",
+    "result_hash": "4a453d057d066872f12f92a790263e894c7bbc8d83ee148c2e5bafb27d9086a8",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-041"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  },
+  {
+    "actor_ref": "synthetic-customer-02",
+    "arguments_hash": "b4b190381cfa04ce5bda69440ae6fa390f8851650a03affcb80eb092a2b7abd9",
+    "decision_id": "decision-042",
+    "event_id": "tool-event-042",
+    "occurred_at": "2026-10-13T19:19:03Z",
+    "outcome": "succeeded",
+    "result_hash": "0c28a5990a528b6ce8c74f57b8294897c4daa1176723148801c9204d1828c8d1",
+    "schema_version": "1.0",
+    "side_effect_ids": [
+      "ledger-042"
+    ],
+    "target_id": "cartwheel-fixture",
+    "tool_name": "request_refund"
+  }
+]

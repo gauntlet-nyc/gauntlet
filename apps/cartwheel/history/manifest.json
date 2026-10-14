@@ -1,0 +1,19 @@
+{
+  "checksum_sha256": "56065ddda1ead4f8700e27abfcb8417f4ed8d86c7b74a8fa165d968b1aa49cc0",
+  "counts": {
+    "decisions": 42,
+    "kb_chunks": 30,
+    "ledger": 35,
+    "lineage_edges": 254,
+    "memory": 1,
+    "messages": 42,
+    "orders": 42,
+    "tool_events": 36
+  },
+  "note": "Synthetic data. Scoring truth is generated separately and is not stored here.",
+  "schema_version": "1.0",
+  "seed": 20261014,
+  "target_id": "cartwheel-fixture",
+  "window_end": "2026-10-14T09:00:00Z",
+  "window_start": "2026-10-07T09:00:00Z"
+}
