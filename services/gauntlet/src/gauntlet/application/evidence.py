@@ -23,9 +23,8 @@ class EvidenceCheck:
         return not self.reasons
 
 
-_IDENTITY_FIELDS = (
-    "run_id", "attempt_id", "observation_id", "environment_id", "source_sha", "fixture_checksum",
-)  # fmt: skip
+_REF_FIELDS = tuple(EvidenceRef.model_fields)
+_SUBJECT_FIELDS = tuple(EvidenceSubject.model_fields)
 
 
 async def check_evidence(
@@ -37,23 +36,19 @@ async def check_evidence(
     if stored is None:
         return EvidenceCheck(ref.artifact_id, ("artifact is missing",))
     reasons: list[str] = []
-    actual = hashlib.sha256(stored.content).hexdigest()
     binding = stored.binding
-    if actual != binding.evidence.sha256:
+    if hashlib.sha256(stored.content).hexdigest() != binding.evidence.sha256:
         reasons.append("stored bytes do not match the recorded hash")
-    if ref.sha256 != binding.evidence.sha256:
-        reasons.append("reference hash differs from the stored binding")
     if len(stored.content) != binding.byte_size:
         reasons.append("stored size differs from the binding")
-    if ref.media_type != binding.evidence.media_type:
-        reasons.append("reference media type differs from the stored binding")
-    for field in _IDENTITY_FIELDS:
+    # The whole reference must equal the stored one: a producer cannot alter any field.
+    for field in _REF_FIELDS:
+        if getattr(ref, field) != getattr(binding.evidence, field):
+            reasons.append(f"reference {field} differs from the stored binding")
+    # Exact subject equality: None is a value, not a wildcard.
+    for field in _SUBJECT_FIELDS:
         if getattr(binding.subject, field) != getattr(expected, field):
             reasons.append(f"evidence is bound to a different {field}")
-    if expected.step_index is not None and binding.subject.step_index != expected.step_index:
-        reasons.append("evidence is bound to a different step")
-    if binding.subject.collector != expected.collector:
-        reasons.append("evidence came from a different collector")
     return EvidenceCheck(ref.artifact_id, tuple(reasons))
 
 

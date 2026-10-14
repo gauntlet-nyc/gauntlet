@@ -7,6 +7,8 @@ import itertools
 from datetime import UTC, datetime
 
 import pytest
+from pydantic import ValidationError
+
 from gauntlet.application.evidence import check_all, check_evidence
 from gauntlet.contracts import (
     EVIDENCE_MEDIA_TYPES,
@@ -16,7 +18,6 @@ from gauntlet.contracts import (
 )
 from gauntlet.contracts.evidence import MAX_EVIDENCE_BYTES
 from gauntlet.ports import ArtifactRejectedError, ArtifactStore, StoredArtifact
-from pydantic import ValidationError
 
 NOW = datetime(2026, 10, 14, 19, 0, tzinfo=UTC)
 PNG = b"\x89PNG\r\n\x1a\n" + b"fake-screenshot-bytes"
@@ -99,7 +100,7 @@ def test_tampered_bytes_are_detected() -> None:
 def test_producer_claimed_hash_cannot_override_stored_binding() -> None:
     store, binding = store_one()
     forged = binding.evidence.model_copy(update={"sha256": "bb" * 32})
-    assert "reference hash differs" in check(store, forged)
+    assert "reference sha256 differs" in check(store, forged)
 
 
 @pytest.mark.parametrize(
@@ -110,7 +111,7 @@ def test_producer_claimed_hash_cannot_override_stored_binding() -> None:
         ("observation_id", "obs-other", "different observation_id"),
         ("source_sha", "bbbbbbbb", "different source_sha"),
         ("fixture_checksum", "1f" * 32, "different fixture_checksum"),
-        ("step_index", 4, "different step"),
+        ("step_index", 4, "different step_index"),
         ("collector", "replay_collector", "different collector"),
     ],
 )
@@ -149,3 +150,30 @@ def test_binding_contract_rejects_bad_media_time_and_unknown_collector() -> None
         EvidenceBinding.model_validate({**data, "recorded_at": datetime(2026, 1, 1, tzinfo=UTC)})
     with pytest.raises(ValidationError):
         EvidenceSubject.model_validate({**SUBJECT.model_dump(), "collector": "planner"})
+
+
+# --- Regressions from B and C review of #26 -------------------------------------------------
+
+
+def test_any_reference_field_change_is_untrusted() -> None:
+    store, binding = store_one()
+    later = binding.evidence.created_at.replace(second=1)
+    assert "reference created_at differs" in check(
+        store, binding.evidence.model_copy(update={"created_at": later})
+    )
+    assert "reference trace_id differs" in check(
+        store, binding.evidence.model_copy(update={"trace_id": "trace-other"})
+    )
+
+
+def test_store_returning_a_different_artifact_is_untrusted() -> None:
+    store, binding = store_one()
+    other = asyncio.run(store.put(PNG, "image/png", SUBJECT))
+    store.items[binding.evidence.artifact_id] = store.items[other.evidence.artifact_id]
+    assert "reference artifact_id differs" in check(store, binding.evidence)
+
+
+def test_unspecified_expected_step_is_not_a_wildcard() -> None:
+    store, binding = store_one()
+    no_step = SUBJECT.model_copy(update={"step_index": None})
+    assert "different step_index" in check(store, binding.evidence, no_step)
