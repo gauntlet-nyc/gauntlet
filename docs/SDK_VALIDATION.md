@@ -174,3 +174,105 @@ Verification in B's worktree:
 
 This change exercises only the offline adapter; no additional live-browser or
 provider claim is made. Main-tree acceptance remains pending reviewed integration.
+
+## B-01 readiness and execution sequence (2026-10-14)
+
+**Owner:** B. **Phase:** P1 preparation only; P0 main acceptance remains open.
+**Goal:** execute the existing typed UI plan against isolated Daytona base/head
+previews using Anchor, retain independently verifiable click evidence, and
+compare head repetitions against base without revealing hidden truth.
+**Spec:** DEVELOPMENT_PLAN.md sections 5, 16 and 18; PHASES.md P1; SECURITY.md.
+**Architecture:** preserve SandboxProvider, BrowserProvider, UIWorker and the
+independent oracle. Provider SDK objects stay inside integrations. Artifact
+storage and evidence collection require the shared contract freeze below.
+
+### Current dependency evidence
+
+- C checkpoint #10 at `3cdeddd` now has green Python/dashboard CI after C changed
+  setup to `uv sync --frozen`. Earlier statements that #10 CI is red are obsolete.
+- `git merge-base --is-ancestor 1f33292 origin/feat/c-00-gate-checkpoint`
+  returned 1: the checkpoint still lacks the latest B fixes.
+- All 18 PRs remain open; this is not main-tree acceptance.
+- `.venv/bin/python scripts/probe_sdk_inventory.py` completed successfully:
+  Daytona, Anchor and Playwright are absent; all live outcomes remain not_run.
+- `EvidenceRef` already supplies artifact_id, sha256, media_type, created_at and
+  optional trace_id. `ports/storage.py` supplies only RunStore. No ArtifactStore
+  port exists in B's current checkout or A's latest inspected branch
+  `origin/feat/a-09-dependency-map`. Do not substitute a private public DTO.
+
+### Contract freeze request for A/C (prepared, not posted)
+
+1. Input: trusted collector bytes plus run/attempt/observation identity, media
+   type, source SHA and fixture checksum; planner and target content cannot
+   supply trusted artifact provenance.
+2. Output: the existing EvidenceRef plus a reviewed lookup/binding mechanism
+   allowing the verifier to retrieve and hash-check the immutable bytes.
+3. Invariant: evidence cannot be overwritten, rebound to another attempt, or
+   promoted to trusted evidence from page text; missing/corrupt bytes yield
+   inconclusive verification. Credentials and signed preview tokens are excluded.
+4. Example existing reference JSON: `{"schema_version":"1.0","artifact_id":"art-shot-001","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","media_type":"image/png","created_at":"2026-10-14T19:00:00Z","trace_id":null}`.
+5. Consumers: B's Anchor collector, RegisteredOracleRegistry and artifact store;
+   C's evidence API/dashboard. A owns the port/schema decision and golden; all
+   three owners review it before B implements that boundary.
+
+### Ordered deliverables and acceptance
+
+- [ ] **P0 integration:** C incorporates B through `1f33292`; owners complete
+  reviews; full tests/build run from main. Existing local combined evidence is
+  supplementary and does not check this box.
+- [ ] **B-01a provider smoke:** C approves and pins `daytona`, `anchorbrowser`
+  and `playwright` in the local dependency lock. Verify signatures against the
+  installed versions and official documentation before writing external calls.
+  With explicit spend authorization, use one synthetic registered fixture:
+  create one Daytona environment, verify revision/checksum/readiness, open its
+  approved preview with Anchor, capture one screenshot, then close the browser
+  and destroy the environment in bounded cleanup. Record genuine resource IDs,
+  sanitized results, versions, elapsed time and cleanup outcome here. Failure
+  stays environment_error; an offline response cannot satisfy this acceptance.
+- [ ] **B-01b sandbox adapter:** implement existing `SandboxProvider.create`,
+  `verify_fixture` and `destroy` under `integrations/daytona/`; tests under
+  `services/gauntlet/tests/test_b01_sandbox.py`. Tests cover unknown target/SHA,
+  fixture mismatch, readiness timeout, partial-create failure and idempotent
+  destruction. Only registered build commands execute; no planner-provided
+  shell. Base/head must use equivalent image and fixture state. VM fork remains
+  optional; independent sandbox creation must not be described as a fork.
+- [ ] **B-01c browser adapter:** implement existing `BrowserProvider` under
+  `integrations/anchor/`; tests under `services/gauntlet/tests/test_b01_browser.py`.
+  Translate typed steps only. Test viewport bounds, off-origin redirects,
+  popups/subresource egress, malformed URLs, timeout, cancellation, failed close
+  and repeated cleanup. Generic planner JavaScript/shell is never accepted.
+  Navigation routing alone does not establish DNS or network egress isolation.
+- [ ] **B-01d trusted evidence:** after the ArtifactStore/binding contract freezes,
+  collect bounding rectangles, elementFromPoint, actual click delivery and
+  screenshots with artifact hashes. Bind to the actual environment, revision,
+  checksum, observation and step. Test missing/corrupt artifacts, wrong source,
+  another attempt's evidence, absent click receipt and contradictory hit/receipt;
+  each must stay inconclusive. Do not weaken the existing oracle.
+- [ ] **P1 acceptance:** A freezes hypotheses from the actual diff and normal
+  manifest before actions; repeat selected head attempts, replay the same plan
+  on base, and persist evidence/events. Include an unrelated clean change and
+  legitimate workflow checks. C's fixture currently establishes DOM click
+  delivery, not completed order submission; C must supply the required real
+  workflow behavior before claiming that broader acceptance.
+
+### Required operator/project setup
+
+C-approved pinned dependencies and isolated `.venv`; approved synthetic target
+repository, actual base/head revisions and runtime fixture checksum; explicit
+`RUN_LIVE_INTEGRATIONS=1` and authorized provider spend; Daytona API key, endpoint,
+runtime class/quota and preview/network policy; Anchor key and an approved,
+reachable preview. Pass repository `ANCHOR_API_KEY` explicitly to the SDK rather
+than relying on its differently named default. Keep provider credentials in the
+control plane, outside app sandboxes and artifacts. A's planner/model access and
+C's evidence/API composition are additional dependencies for the complete P1
+loop. No credential values were read or changed during this readiness check.
+
+### Validation commands after each approved implementation slice
+
+Use the approved worktree environment (`uv sync --frozen` once C's lock is in the
+checkout), then `.venv/bin/python -m pytest -q`,
+`.venv/bin/mypy services/gauntlet/src`, and
+`uv build --package gauntlet-control --out-dir /tmp/gauntlet-b01-dist`.
+Run the changed-path Ruff checks and the real provider smoke appropriate to that
+slice. Require full main-tree tests/build after reviewed integration. A plan or
+an SDK inventory is not evidence that these future commands passed.
