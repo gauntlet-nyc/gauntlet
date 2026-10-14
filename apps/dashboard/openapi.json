@@ -510,6 +510,50 @@
         "title": "NavigateStep",
         "type": "object"
       },
+      "OfflineGateResponse": {
+        "properties": {
+          "attribution": {
+            "title": "Attribution",
+            "type": "string"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/RunEvent"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "execution_mode": {
+            "title": "Execution Mode",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "oracle_outcomes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Oracle Outcomes",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "execution_mode",
+          "oracle_outcomes",
+          "status",
+          "attribution",
+          "events"
+        ],
+        "title": "OfflineGateResponse",
+        "type": "object"
+      },
       "PressStep": {
         "additionalProperties": false,
         "properties": {
@@ -889,6 +933,24 @@
           }
         },
         "summary": "Fake Run"
+      }
+    },
+    "/runs/offline-gate": {
+      "get": {
+        "operationId": "offline_gate_runs_offline_gate_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfflineGateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Offline Gate"
       }
     },
     "/targets/cartwheel/change-request": {

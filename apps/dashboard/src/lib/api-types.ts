@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/runs/offline-gate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Offline Gate */
+        get: operations["offline_gate_runs_offline_gate_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/targets/cartwheel/change-request": {
         parameters: {
             query?: never;
@@ -263,6 +280,21 @@ export interface components {
              */
             schema_version: "1.0";
         };
+        /** OfflineGateResponse */
+        OfflineGateResponse: {
+            /** Attribution */
+            attribution: string;
+            /** Events */
+            events: components["schemas"]["RunEvent"][];
+            /** Execution Mode */
+            execution_mode: string;
+            /** Label */
+            label: string;
+            /** Oracle Outcomes */
+            oracle_outcomes: string[];
+            /** Status */
+            status: string;
+        };
         /** PressStep */
         PressStep: {
             /**
@@ -451,6 +483,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FakeRunResponse"];
+                };
+            };
+        };
+    };
+    offline_gate_runs_offline_gate_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OfflineGateResponse"];
                 };
             };
         };

@@ -25,3 +25,11 @@ describe("parseChangeRequest", () => {
     expect(() => parseChangeRequest({ repository_id: "cartwheel" })).toThrow();
   });
 });
+
+import { parseOfflineGate } from "./api";
+
+describe("parseOfflineGate", () => {
+  it("rejects a payload without a verdict", () => {
+    expect(() => parseOfflineGate({ label: "x", events: [] })).toThrow();
+  });
+});
