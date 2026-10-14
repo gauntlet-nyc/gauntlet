@@ -1,0 +1,825 @@
+{
+  "components": {
+    "schemas": {
+      "ApiRequestStep": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "const": "test_api",
+            "default": "test_api",
+            "title": "Action",
+            "type": "string"
+          },
+          "actor_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Actor Id",
+            "type": "string"
+          },
+          "body_json": {
+            "anyOf": [
+              {
+                "maxLength": 5000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body Json"
+          },
+          "method": {
+            "enum": [
+              "GET",
+              "POST",
+              "PUT",
+              "PATCH",
+              "DELETE"
+            ],
+            "title": "Method",
+            "type": "string"
+          },
+          "path": {
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Path",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "method",
+          "path",
+          "actor_id"
+        ],
+        "title": "ApiRequestStep",
+        "type": "object"
+      },
+      "AttackSpec": {
+        "additionalProperties": false,
+        "properties": {
+          "attack_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Attack Id",
+            "type": "string"
+          },
+          "expected_observation": {
+            "maxLength": 2500,
+            "minLength": 1,
+            "title": "Expected Observation",
+            "type": "string"
+          },
+          "fixture_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Fixture Id",
+            "type": "string"
+          },
+          "hypothesis": {
+            "maxLength": 2500,
+            "minLength": 1,
+            "title": "Hypothesis",
+            "type": "string"
+          },
+          "max_actions": {
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Max Actions",
+            "type": "integer"
+          },
+          "max_runtime_seconds": {
+            "maximum": 900.0,
+            "minimum": 1.0,
+            "title": "Max Runtime Seconds",
+            "type": "integer"
+          },
+          "oracle_ids": {
+            "items": {
+              "maxLength": 128,
+              "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$",
+              "type": "string"
+            },
+            "maxItems": 12,
+            "minItems": 1,
+            "title": "Oracle Ids",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_refs": {
+            "items": {
+              "$ref": "#/components/schemas/SourceRef"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Source Refs",
+            "type": "array"
+          },
+          "steps": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "capture": "#/components/schemas/CaptureStep",
+                  "chat": "#/components/schemas/ChatStep",
+                  "click": "#/components/schemas/ClickStep",
+                  "inspect": "#/components/schemas/InspectStep",
+                  "navigate": "#/components/schemas/NavigateStep",
+                  "press": "#/components/schemas/PressStep",
+                  "resize": "#/components/schemas/ResizeStep",
+                  "scroll": "#/components/schemas/ScrollStep",
+                  "test_api": "#/components/schemas/ApiRequestStep",
+                  "type": "#/components/schemas/TypeStep"
+                },
+                "propertyName": "action"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/NavigateStep"
+                },
+                {
+                  "$ref": "#/components/schemas/ResizeStep"
+                },
+                {
+                  "$ref": "#/components/schemas/ClickStep"
+                },
+                {
+                  "$ref": "#/components/schemas/ScrollStep"
+                },
+                {
+                  "$ref": "#/components/schemas/TypeStep"
+                },
+                {
+                  "$ref": "#/components/schemas/PressStep"
+                },
+                {
+                  "$ref": "#/components/schemas/InspectStep"
+                },
+                {
+                  "$ref": "#/components/schemas/CaptureStep"
+                },
+                {
+                  "$ref": "#/components/schemas/ApiRequestStep"
+                },
+                {
+                  "$ref": "#/components/schemas/ChatStep"
+                }
+              ]
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Steps",
+            "type": "array"
+          },
+          "target_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Target Id",
+            "type": "string"
+          },
+          "why_this_change": {
+            "maxLength": 2500,
+            "minLength": 1,
+            "title": "Why This Change",
+            "type": "string"
+          },
+          "worker_kind": {
+            "enum": [
+              "ui",
+              "accessibility",
+              "workflow",
+              "api",
+              "concurrency",
+              "ai_agent"
+            ],
+            "title": "Worker Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "attack_id",
+          "hypothesis",
+          "why_this_change",
+          "expected_observation",
+          "source_refs",
+          "worker_kind",
+          "target_id",
+          "fixture_id",
+          "steps",
+          "oracle_ids",
+          "max_actions",
+          "max_runtime_seconds"
+        ],
+        "title": "AttackSpec",
+        "type": "object"
+      },
+      "CaptureStep": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "const": "capture",
+            "default": "capture",
+            "title": "Action",
+            "type": "string"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "title": "CaptureStep",
+        "type": "object"
+      },
+      "ChatStep": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "const": "chat",
+            "default": "chat",
+            "title": "Action",
+            "type": "string"
+          },
+          "actor_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Actor Id",
+            "type": "string"
+          },
+          "agent_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Agent Id",
+            "type": "string"
+          },
+          "message": {
+            "maxLength": 5000,
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "agent_id",
+          "actor_id",
+          "message"
+        ],
+        "title": "ChatStep",
+        "type": "object"
+      },
+      "ClickStep": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "const": "click",
+            "default": "click",
+            "title": "Action",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "target": {
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Target",
+            "type": "string"
+          }
+        },
+        "required": [
+          "target"
+        ],
+        "title": "ClickStep",
+        "type": "object"
+      },
+      "FakeRunResponse": {
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/RunEvent"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/AttackSpec"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "run_id",
+          "plan",
+          "events"
+        ],
+        "title": "FakeRunResponse",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "properties": {
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "provider_integrations": {
+            "title": "Provider Integrations",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "mode",
+          "provider_integrations"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "InspectStep": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "const": "inspect",
+            "default": "inspect",
+            "title": "Action",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "target": {
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Target",
+            "type": "string"
+          }
+        },
+        "required": [
+          "target"
+        ],
+        "title": "InspectStep",
+        "type": "object"
+      },
+      "NavigateStep": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "const": "navigate",
+            "default": "navigate",
+            "title": "Action",
+            "type": "string"
+          },
+          "path": {
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Path",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "title": "NavigateStep",
+        "type": "object"
+      },
+      "PressStep": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "const": "press",
+            "default": "press",
+            "title": "Action",
+            "type": "string"
+          },
+          "key": {
+            "pattern": "^[A-Za-z0-9+]{1,32}$",
+            "title": "Key",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "title": "PressStep",
+        "type": "object"
+      },
+      "ResizeStep": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "const": "resize",
+            "default": "resize",
+            "title": "Action",
+            "type": "string"
+          },
+          "height": {
+            "maximum": 2160.0,
+            "minimum": 240.0,
+            "title": "Height",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "width": {
+            "maximum": 3840.0,
+            "minimum": 240.0,
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "width",
+          "height"
+        ],
+        "title": "ResizeStep",
+        "type": "object"
+      },
+      "RunEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "actor": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Actor",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "event_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Event Id",
+            "type": "string"
+          },
+          "event_type": {
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "title": "Event Type",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          },
+          "payload": {
+            "maxProperties": 64,
+            "patternProperties": {
+              "^[A-Za-z0-9][A-Za-z0-9._:-]*$": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "propertyNames": {
+              "maxLength": 128,
+              "minLength": 1
+            },
+            "title": "Payload",
+            "type": "object"
+          },
+          "run_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 0.0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Id"
+          },
+          "trace_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trace Id"
+          }
+        },
+        "required": [
+          "run_id",
+          "event_id",
+          "sequence",
+          "created_at",
+          "actor",
+          "event_type"
+        ],
+        "title": "RunEvent",
+        "type": "object"
+      },
+      "ScrollStep": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "const": "scroll",
+            "default": "scroll",
+            "title": "Action",
+            "type": "string"
+          },
+          "delta_y": {
+            "maximum": 20000.0,
+            "minimum": -20000.0,
+            "title": "Delta Y",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "target": {
+            "anyOf": [
+              {
+                "maxLength": 512,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target"
+          }
+        },
+        "required": [
+          "delta_y"
+        ],
+        "title": "ScrollStep",
+        "type": "object"
+      },
+      "SourceRef": {
+        "additionalProperties": false,
+        "properties": {
+          "content_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Hash"
+          },
+          "end_line": {
+            "minimum": 1.0,
+            "title": "End Line",
+            "type": "integer"
+          },
+          "path": {
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Path",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "sha": {
+            "pattern": "^[0-9a-f]{7,64}$",
+            "title": "Sha",
+            "type": "string"
+          },
+          "start_line": {
+            "minimum": 1.0,
+            "title": "Start Line",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path",
+          "sha",
+          "start_line",
+          "end_line"
+        ],
+        "title": "SourceRef",
+        "type": "object"
+      },
+      "TypeStep": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "const": "type",
+            "default": "type",
+            "title": "Action",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "target": {
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Target",
+            "type": "string"
+          },
+          "value": {
+            "maxLength": 5000,
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "target",
+          "value"
+        ],
+        "title": "TypeStep",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Gauntlet Unified API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/fake-run": {
+      "get": {
+        "operationId": "fake_run_page_fake_run_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Fake Run Page"
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health"
+      }
+    },
+    "/runs/fake": {
+      "get": {
+        "operationId": "fake_run_runs_fake_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FakeRunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Fake Run"
+      }
+    }
+  }
+}
