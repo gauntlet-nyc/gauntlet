@@ -35,3 +35,10 @@ Gauntlet is one modular Python control plane plus TypeScript dashboard/test fixt
 - `contracts/voice.py`: `VoiceToolCall` intents are only `run_summary`, `finding_explanation`, `inconclusive_list`, `replay_request`; approve/merge/deploy/refund/remediate are not representable. `caller_ref` comes from the verified webhook signature (C/B), not from speech.
 - `VoiceBriefing` is templated from persisted findings (no model, no caller text), cites `source_event_sequence`, and always says "Not tested does not mean safe." when anything was untested or had gaps.
 - `VoiceReplayRequest` starts `pending_operator_confirmation` (15 min TTL). Only `decide_replay_request` with an `AuthenticatedReviewer` on `dashboard`/`api` can confirm or decline; voice is not a valid channel, expiry is enforced, decisions are final. A confirmed request is still only a request to re-run a frozen attack, never a merge or remediation.
+
+## Dependency-aware surfaces (A-09, offline part)
+
+- `analysis/dependency_graph.py` builds a bounded JS/TS import graph (static/dynamic `import`, `export ... from`, `require`; relative and configured alias paths such as `@/` → `src/`; packages and asset imports ignored). `routes_rendering` walks importers breadth-first (depth ≤ 8) to the pages/layouts that render a changed file.
+- `GitRepositoryInspector(import_aliases=...)` adds `route` surfaces (confidence 0.6, citing the changed lines) for routes that render a changed non-route source file. The scan reads at most `max_scan_files` source files at head (each ≤ `max_scan_file_bytes`) with the same safe git invocation; over the limit it is skipped with a coverage gap; unresolved relative imports are a gap.
+- Checked against C's real Cartwheel fixture (`584c628` → `5d00edb`): surfaces route `/`, component `FloatingHelp`, style with a `layout_positioning` signal; workers limited to ui/accessibility/workflow. That run exposed that React inline styles (`position: "fixed"`, `zIndex`) were not signalled; the patterns now cover them, with a regression test.
+- GitHub App / check-run integration (the other half of A-09) is deferred until credentials and a webhook endpoint exist.
