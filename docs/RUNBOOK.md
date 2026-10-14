@@ -31,4 +31,4 @@ Log UTC/run_id/attempt_id/replay_id/trace_id for every attempt. Track sandbox le
 
 ## Reviewer tokens (dev)
 
-Approval routes (`POST /v1/fix-plans/{id}/approve`) accept only a bearer token found in the server-side table `GAUNTLET_REVIEWER_TOKENS`, a JSON object like `{"<token>": {"reviewer_id": "rev-1", "channel": "dashboard"}}`. Unset means every approval is refused. The dashboard server reads one token from `GAUNTLET_REVIEWER_TOKEN` (not `NEXT_PUBLIC_*`). This is development-grade auth pending a real identity provider decision; approval state is in memory and lost on restart.
+Approval routes (`POST /v1/fix-plans/{id}/approve`) accept only a bearer token found in the server-side table `GAUNTLET_REVIEWER_TOKENS`, a JSON object like `{"<token>": {"reviewer_id": "rev-1", "channel": "dashboard"}}`. Unset means every approval is refused. The dashboard server reads one token from `GAUNTLET_REVIEWER_TOKEN` (not `NEXT_PUBLIC_*`). This is development-grade auth by team decision (ADR 0002, real identity deferred to Phase 10); approval state is in memory and lost on restart.
