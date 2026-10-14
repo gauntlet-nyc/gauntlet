@@ -276,3 +276,38 @@ checkout), then `.venv/bin/python -m pytest -q`,
 Run the changed-path Ruff checks and the real provider smoke appropriate to that
 slice. Require full main-tree tests/build after reviewed integration. A plan or
 an SDK inventory is not evidence that these future commands passed.
+
+### Executable local UI preflight
+
+Run `.venv/bin/python scripts/probe_sdk_inventory.py --ui-preflight` before
+attempting B-01 live setup. It reads only installed distribution metadata and
+process environment, never provider APIs or dotenv files. It prints booleans
+for configuration presence, installed versions, and `status: not_tested`.
+Exit 2 means a local prerequisite is missing; exit 0 means only that local
+prerequisites are present, not that credentials work or live execution is
+approved. `--published` and `--ui-preflight` are mutually exclusive.
+
+Required process environment: `RUN_LIVE_INTEGRATIONS=1`, non-placeholder
+`DAYTONA_API_KEY`, non-placeholder `ANCHOR_API_KEY`, and
+`GAUNTLET_ALLOWED_TARGET_IDS` containing the exact `cartwheel-fixture` ID.
+Use the project's trusted environment-loading mechanism or export the variables
+in the launching shell; merely placing them in `.env.local` does not load them
+for this script. Never paste keys into a PR, command log or chat. C must pin
+Daytona, Anchor and Playwright in the approved local dependency mechanism. The
+runtime, quota, preview, fixture and review requirements above still apply.
+
+Actual run in B's worktree returned exit 2: all three SDKs, both keys, live
+opt-in and target configuration are absent. No keys were printed or network
+requests made. This reports unavailable local setup, not a provider outage.
+
+Verification:
+
+- Seven preflight tests failed before implementation and passed afterward.
+- `.venv/bin/python -m pytest -q -p no:asyncio`: 125 passed, one existing Starlette warning.
+- `.venv/bin/mypy scripts/probe_sdk_inventory.py services/gauntlet/tests/test_b01_preflight.py`: two files clean.
+- `.venv/bin/ruff check scripts/probe_sdk_inventory.py services/gauntlet/tests/test_b01_preflight.py`: passed.
+- `uv build --package gauntlet-control --out-dir /private/tmp/gauntlet-preflight-dist`: wheel and sdist passed.
+
+No headless run is needed for this metadata/configuration probe; previous
+headless evidence applies only to the recorded fixtures/checkpoint. Integrated
+main acceptance and genuine provider smoke remain outstanding.
