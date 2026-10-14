@@ -29,3 +29,9 @@ Gauntlet is one modular Python control plane plus TypeScript dashboard/test fixt
 - `ports/memory.py`: `MemoryReader.recall(MemoryQuery(scope, lens, surface_kinds, as_of))` and append-only `MemoryWriter.remember` — B implements them on SurrealDB Agent Memory (a separate service from core).
 - `planning/memory_selection.py` re-filters whatever the store returns: confirmed + `verified_test`/`policy` trust only, known and valid at `as_of`, matching surfaces, superseded facts hidden (still stored).
 - `PlanChangeUseCase.execute(..., as_of=)` pins memory visibility, so historical benchmarks cannot leak future findings; the `plan_frozen` event records `memory_fact_ids`. Memory is shown to the planner as untrusted evidence, never as an oracle or instruction.
+
+## Voice-safe actions (A-08)
+
+- `contracts/voice.py`: `VoiceToolCall` intents are only `run_summary`, `finding_explanation`, `inconclusive_list`, `replay_request`; approve/merge/deploy/refund/remediate are not representable. `caller_ref` comes from the verified webhook signature (C/B), not from speech.
+- `VoiceBriefing` is templated from persisted findings (no model, no caller text), cites `source_event_sequence`, and always says "Not tested does not mean safe." when anything was untested or had gaps.
+- `VoiceReplayRequest` starts `pending_operator_confirmation` (15 min TTL). Only `decide_replay_request` with an `AuthenticatedReviewer` on `dashboard`/`api` can confirm or decline; voice is not a valid channel, expiry is enforced, decisions are final. A confirmed request is still only a request to re-run a frozen attack, never a merge or remediation.

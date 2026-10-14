@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "request_id": "replay-req-001",
+  "run_id": "run-001",
+  "attack_id": "attack-ui-001",
+  "requested_by": "operator-phone-01",
+  "requested_at": "2026-10-14T16:30:00Z",
+  "expires_at": "2026-10-14T16:45:00Z",
+  "status": "pending_operator_confirmation",
+  "confirmed_by": null,
+  "confirmed_channel": null
+}

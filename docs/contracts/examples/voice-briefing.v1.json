@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "run_id": "run-001",
+  "source_event_sequence": 7,
+  "findings": [
+    {
+      "schema_version": "1.0",
+      "finding_id": "finding-001",
+      "status": "confirmed_regression",
+      "severity": "high",
+      "headline": "confirmed regression on attack-ui-001"
+    }
+  ],
+  "confirmed": 1,
+  "suspected": 0,
+  "not_tested": 0,
+  "coverage_gaps": 1,
+  "spoken_summary": "Run run-001: 1 confirmed, 0 suspected, 0 not tested, 1 coverage gaps. Most serious: high confirmed regression on attack-ui-001. Not tested does not mean safe."
+}

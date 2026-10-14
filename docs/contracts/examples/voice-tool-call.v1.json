@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0",
+  "call_id": "voice-call-001",
+  "intent": "replay_request",
+  "caller_ref": "operator-phone-01",
+  "run_id": "run-001",
+  "finding_id": null,
+  "attack_id": "attack-ui-001",
+  "received_at": "2026-10-14T16:30:00Z"
+}
