@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from conftest import DemoRepo
+
 from gauntlet.analysis import (
     FileStatus,
     GitCommandError,
@@ -82,6 +83,14 @@ def test_mapper_cites_changed_lines_and_reports_gaps() -> None:
         ("deploy/server.pem", False),
         ("../outside.ts", False),
         ("/etc/passwd", False),
+        # Case-insensitive file systems (macOS, Windows): every spelling is the same file.
+        (".ENV", False),
+        (".Env.local", False),
+        ("Bench/Private/truth.json", False),
+        ("Secrets/token.txt", False),
+        ("src/x.PEM", False),
+        (".GIT/config", False),
+        ("Node_Modules/x/index.js", False),
     ],
 )
 def test_path_policy(path: str, allowed: bool) -> None:
@@ -160,3 +169,23 @@ def test_repository_config_cannot_run_external_diff(demo_repo: DemoRepo, tmp_pat
     impact = _inspect(demo_repo, demo_repo.ui_head)
     assert impact.surfaces
     assert not marker.exists()
+
+
+def test_read_source_refuses_mixed_case_secret_paths(demo_repo: DemoRepo) -> None:
+    """Regression for B's review on #5: a tracked `.ENV` must never be read for a model."""
+    subprocess.run(["git", "-C", str(demo_repo.path), "mv", ".env", ".ENV.tmp"], check=True)
+    subprocess.run(["git", "-C", str(demo_repo.path), "mv", ".ENV.tmp", ".ENV"], check=True)
+    subprocess.run(
+        ["git", "-C", str(demo_repo.path), "-c", "user.name=t", "-c", "user.email=t@x.invalid",
+         "commit", "-q", "-m", "rename"],
+        check=True,
+    )  # fmt: skip
+    head = subprocess.run(
+        ["git", "-C", str(demo_repo.path), "rev-parse", "HEAD"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()  # fmt: skip
+    inspector = GitRepositoryInspector({"cartwheel": demo_repo.path})
+    with pytest.raises(PathNotAllowedError):
+        asyncio.run(inspector.read_source(
+            "cartwheel", SourceRef(path=".ENV", sha=head, start_line=1, end_line=1)
+        ))  # fmt: skip

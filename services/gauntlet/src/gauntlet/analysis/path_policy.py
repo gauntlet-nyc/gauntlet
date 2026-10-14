@@ -4,7 +4,7 @@ import re
 from typing import Final
 
 _DENIED: Final[tuple[re.Pattern[str], ...]] = tuple(
-    re.compile(pattern)
+    re.compile(pattern, re.IGNORECASE)
     for pattern in (
         r"(^|/)\.env($|\.)",
         r"(^|/)\.git(/|$)",
