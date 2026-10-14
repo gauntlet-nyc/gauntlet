@@ -24,3 +24,12 @@ def test_fake_run_page_is_labelled_fake() -> None:
     assert resp.status_code == 200
     assert "FAKE RUN" in resp.text
     assert "attack-ui-001" in resp.text
+
+
+def test_offline_gate_checkpoint_reports_regression_from_recordings() -> None:
+    body = client.get("/runs/offline-gate").json()
+    assert body["execution_mode"] == "offline_recording"
+    assert body["oracle_outcomes"] == ["fail", "fail", "pass"]
+    assert body["status"] == "confirmed_regression"
+    assert body["attribution"] == "introduced"
+    assert [e["sequence"] for e in body["events"]] == [1, 2]
