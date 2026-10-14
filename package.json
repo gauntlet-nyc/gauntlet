@@ -5,5 +5,10 @@
   "scripts": {
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test"
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss": ">=8.5.23"
+    }
   }
 }
