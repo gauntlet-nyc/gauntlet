@@ -4,9 +4,11 @@ import json
 from collections.abc import Sequence
 from typing import Any
 
-from gauntlet.contracts import Observation, OracleVerdict, RunEvent
+from gauntlet.contracts import ApprovalRecord, Observation, OracleVerdict, RunEvent
 from gauntlet.domain import OracleKind
 from gauntlet.ports import (
+    ApprovalAlreadyConsumedError,
+    DuplicateApprovalError,
     DuplicateIdempotencyKeyError,
     EventSequenceConflictError,
     ModelRequest,
@@ -78,3 +80,22 @@ class InMemoryRunStore:
 
     async def list_events(self, run_id: str, after_sequence: int = -1) -> Sequence[RunEvent]:
         return [e for e in self.events.get(run_id, []) if e.sequence > after_sequence]
+
+
+class InMemoryApprovalStore:
+    def __init__(self) -> None:
+        self.records: dict[str, ApprovalRecord] = {}
+        self.consumed: dict[str, str] = {}
+
+    async def save(self, record: ApprovalRecord) -> None:
+        if record.approval_id in self.records:
+            raise DuplicateApprovalError(record.approval_id)
+        self.records[record.approval_id] = record
+
+    async def get(self, approval_id: str) -> ApprovalRecord | None:
+        return self.records.get(approval_id)
+
+    async def consume(self, approval_id: str, consumer_ref: str) -> None:
+        if approval_id in self.consumed:
+            raise ApprovalAlreadyConsumedError(approval_id)
+        self.consumed[approval_id] = consumer_ref

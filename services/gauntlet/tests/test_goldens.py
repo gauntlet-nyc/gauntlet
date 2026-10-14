@@ -5,10 +5,13 @@ from pathlib import Path
 
 import pytest
 from gauntlet.contracts import (
+    ApprovalDecision,
+    ApprovalRecord,
     AttackSpec,
     ChangeImpactMap,
     ChangeRequest,
     Finding,
+    FixPlan,
     HistoricalDecision,
     Observation,
     OracleVerdict,
@@ -24,9 +27,12 @@ EXAMPLES_DIR = Path(__file__).resolve().parents[3] / "docs" / "contracts" / "exa
 
 GOLDENS: dict[str, type[StrictDTO]] = {
     "ai-plan.v1.json": AttackSpec,
+    "approval-decision.v1.json": ApprovalDecision,
+    "approval-record.v1.json": ApprovalRecord,
     "change-impact-map.v1.json": ChangeImpactMap,
     "change-request.v1.json": ChangeRequest,
     "finding.v1.json": Finding,
+    "fix-plan.v1.json": FixPlan,
     "historical-decision.v1.json": HistoricalDecision,
     "observation.v1.json": Observation,
     "oracle-verdict.v1.json": OracleVerdict,

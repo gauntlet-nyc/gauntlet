@@ -8,9 +8,9 @@ from typing import Final
 
 from gauntlet.contracts import AffectedSurface, SourceRef
 from gauntlet.contracts.gate import SurfaceKind
+from gauntlet.domain import is_path_allowed
 
 from .diff_parser import FileChange, FileStatus, Hunk, ParsedDiff
-from .path_policy import is_path_allowed
 
 
 @dataclass(frozen=True)

@@ -2,7 +2,7 @@
 
 Python Pydantic DTOs in `services/gauntlet/src/gauntlet/contracts/` are canonical. Export machine JSON Schemas to `packages/contracts/jsonschema/` with `scripts/export_schemas.py`; the exported set is the single list in `contracts/registry.py`, and `tests/test_schema_export.py` fails if a committed schema is stale or orphaned. Generate OpenAPI from FastAPI when endpoints exist. Frontend must generate TypeScript client, not fork types by hand. `schema_version` defaults to `1.0`; incompatible changes require an explicit v2 and an ADR.
 
-**Stable types (v1, A-00):** `ChangeRequest`, `SourceRef`, `ChangeImpactMap`, `AttackSpec` (+ typed steps), `Observation` (+ `ActionRecord`, `ToolCallRecord`), `OracleVerdict`, `Finding`, `ReplaySpec`, `ReplayResult`, `HistoricalDecision`, `RecallTrigger`, `RecallVerdict`, `RunEvent`, `EvidenceRef`, `MissingInput`. Deferred to their phases: `ExposureRecord` (A-04), `RemediationProposal` (A-05), `TemporalMemoryFact` (A-07).
+**Stable types (v1, A-00):** `ChangeRequest`, `SourceRef`, `ChangeImpactMap`, `AttackSpec` (+ typed steps), `Observation` (+ `ActionRecord`, `ToolCallRecord`), `OracleVerdict`, `Finding`, `ReplaySpec`, `ReplayResult`, `HistoricalDecision`, `RecallTrigger`, `RecallVerdict`, `RunEvent`, `EvidenceRef`, `MissingInput`. A-03 adds `FixPlan`, `ApprovalDecision`, `ApprovalRecord`. Deferred to their phases: `ExposureRecord` (A-04), `RemediationProposal` (A-05), `TemporalMemoryFact` (A-07).
 
 **Where things live:** verdict/status vocabularies are `StrEnum`s in `domain/statuses.py` (stdlib only) and are re-used by the DTOs, so there is exactly one definition of every verdict. Pure classifiers are in `domain/verdicts.py`. Async `Protocol` ports for B's adapters and fakes are in `ports/`, with typed errors in `ports/errors.py`.
 
@@ -15,6 +15,15 @@ Python Pydantic DTOs in `services/gauntlet/src/gauntlet/contracts/` are canonica
 - `oracle_ids` are dotted references (`ui.primary_action_reachable`), unique per spec; executable assertions cannot be expressed.
 - `ChangeRequest.max_cost_usd_cents` is mandatory (integer minor units).
 - `RunEvent.event_type` is snake_case; `payload` is a flat map of scalars; `idempotency_key` and `snapshot_id` are optional envelope fields.
+
+## Approval invariants (A-03)
+
+- An approval binds to **one** `run_id`, `subject` (`scope`/`fix_plan`/`remediation`), `subject_id`, exact `plan_sha256`, `target_id` and `fixture_id`, and expires within 24h (default TTL 2h).
+- `channel` is `dashboard` or `api`; there is no voice channel, so voice can never approve.
+- `FixPlan.allowed_paths` and approved `fix_plan` records may only name patchable paths: never tests, oracles/verification, `bench/`, `.github/`, lockfiles or secrets (`domain/path_policy.py`).
+- `fix_plan_hash(plan)` covers everything except `created_at`; any edit to the diff, paths or test plan changes it, so an old approval cannot authorize a modified patch.
+- Approving a hash that is no longer current raises `StaleApprovalError`. `ApprovalService.authorize` checks every field, expiry, decision and touched paths, then **spends** the approval (single use).
+- Run lifecycles (`domain/state.py`) have no merged/released/deployed state; `planned → executing` and `fix_pending → patching` are impossible without the approval states in between.
 
 ## Verdict invariants (the contract refuses impossible claims)
 

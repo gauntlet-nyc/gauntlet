@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "approval_id": "approval-001",
+  "run_id": "run-001",
+  "subject": "fix_plan",
+  "subject_id": "fix-001",
+  "plan_sha256": "b6371633f77b1b2897c14d60c9c573237fe6d65d8d7d99cd53cbfe585426dcea",
+  "decision": "approved",
+  "reviewer_id": "reviewer-rudra",
+  "channel": "dashboard",
+  "decided_at": "2026-10-14T15:05:00Z",
+  "expires_at": "2026-10-14T17:05:00Z",
+  "target_id": "cartwheel-fixture",
+  "fixture_id": "baseline-v1",
+  "allowed_paths": [
+    "web/src/components/FloatingHelp.tsx"
+  ],
+  "reason": null
+}

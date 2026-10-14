@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from gauntlet.contracts import ChangeImpactMap, ChangeRequest, SourceRef
+from gauntlet.domain import is_path_allowed
 
 from .diff_parser import ParsedDiff, parse_unified_diff
 from .errors import (
@@ -21,7 +22,6 @@ from .errors import (
     RepositoryNotRegisteredError,
     SourceLimitExceededError,
 )
-from .path_policy import is_path_allowed
 from .surface_mapper import DEFAULT_RULES, SurfaceRule, map_surfaces
 
 

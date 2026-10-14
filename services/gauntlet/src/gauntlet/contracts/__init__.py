@@ -1,5 +1,12 @@
 """Canonical Pydantic wire contracts. Owner A; changes require three-party review."""
 
+from .approvals import (
+    ApprovalChannel,
+    ApprovalDecision,
+    ApprovalRecord,
+    ApprovalSubject,
+    FixPlan,
+)
 from .common import EvidenceRef, MissingInput, SourceRef, StrictDTO
 from .events import RunEvent
 from .gate import (
@@ -32,6 +39,10 @@ from .replay import ReplayMode, ReplayResult, ReplaySpec
 __all__ = [
     "ActionRecord",
     "ActionStep",
+    "ApprovalChannel",
+    "ApprovalDecision",
+    "ApprovalRecord",
+    "ApprovalSubject",
     "AffectedSurface",
     "ApiRequestStep",
     "AttackSpec",
@@ -42,6 +53,7 @@ __all__ = [
     "ClickStep",
     "EvidenceRef",
     "Finding",
+    "FixPlan",
     "HistoricalDecision",
     "InspectStep",
     "MissingInput",
