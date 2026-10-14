@@ -17,3 +17,19 @@ jobs:
       - run: PYTHONPATH=services/gauntlet/src python -m pytest -q services/gauntlet/tests
       - run: PYTHONPATH=services/gauntlet/src python scripts/export_schemas.py
       - run: git diff --exit-code packages/contracts/jsonschema
+  dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @gauntlet/dashboard typecheck
+      - run: pnpm --filter @gauntlet/dashboard lint
+      - run: pnpm --filter @gauntlet/dashboard test
+      - run: pnpm --filter @gauntlet/dashboard build
