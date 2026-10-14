@@ -10,6 +10,7 @@ from .errors import (
     SourceLimitExceededError,
 )
 from .git_inspector import GitLimits, GitRepositoryInspector
+from .signals import extract_signals
 from .surface_mapper import DEFAULT_RULES, SurfaceMapping, SurfaceRule, map_surfaces
 
 __all__ = [
@@ -26,6 +27,7 @@ __all__ = [
     "SourceLimitExceededError",
     "SurfaceMapping",
     "SurfaceRule",
+    "extract_signals",
     "is_path_allowed",
     "map_surfaces",
     "parse_unified_diff",

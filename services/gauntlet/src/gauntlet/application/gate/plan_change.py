@@ -14,7 +14,9 @@ from gauntlet.planning import (
     SourceExcerpt,
     compute_plan_hash,
 )
-from gauntlet.ports import PortError, RepositoryInspector, RunStore
+from gauntlet.ports import PortError, RepositoryInspector, RunStore, TargetCatalog
+
+from ..errors import TargetNotAuthorizedError
 
 ACTOR: Final = "gate-planner"
 
@@ -24,6 +26,7 @@ class PlanChangeDependencies:
     inspector: RepositoryInspector
     planner: AttackPlanner
     store: RunStore
+    targets: TargetCatalog
     clock: Callable[[], datetime]
     new_event_id: Callable[[], str]
     max_excerpts: int = 12
@@ -34,6 +37,11 @@ class PlanChangeUseCase:
         self._deps = deps
 
     async def execute(self, run_id: str, change: ChangeRequest) -> FrozenPlan:
+        target = await self._deps.targets.get(change.target_id)
+        if target is None:
+            raise TargetNotAuthorizedError("target is not registered")
+        if change.fixture_id not in target.fixture_ids:
+            raise TargetNotAuthorizedError("fixture is not registered for this target")
         impact = await self._deps.inspector.inspect_change(change)
         await self._append(
             run_id,
@@ -45,7 +53,7 @@ class PlanChangeUseCase:
             },
         )
         excerpts, unreadable = await self._read_excerpts(change.repository_id, impact)
-        draft = await self._deps.planner.plan(change, impact, excerpts)
+        draft = await self._deps.planner.plan(change, impact, excerpts, target)
         attacks = draft.validation.accepted
         frozen = FrozenPlan(
             run_id=run_id,

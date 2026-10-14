@@ -6,8 +6,16 @@ from dataclasses import dataclass
 
 from pydantic import ValidationError
 
-from gauntlet.contracts import AttackSpec, ChangeImpactMap, ChangeRequest, SourceRef
-from gauntlet.ports import TrustedOracleRegistry
+from gauntlet.contracts import (
+    ApiRequestStep,
+    AttackSpec,
+    ChangeImpactMap,
+    ChangeRequest,
+    ChatStep,
+    NavigateStep,
+    SourceRef,
+)
+from gauntlet.ports import TargetProfile, TrustedOracleRegistry
 
 from .worker_selector import allowed_workers
 
@@ -56,7 +64,11 @@ class PlanValidator:
         self._limits = limits
 
     def validate(
-        self, raw_text: str, change: ChangeRequest, impact: ChangeImpactMap
+        self,
+        raw_text: str,
+        change: ChangeRequest,
+        impact: ChangeImpactMap,
+        target: TargetProfile,
     ) -> PlanValidation:
         try:
             document = json.loads(_strip_code_fence(raw_text))
@@ -86,6 +98,7 @@ class PlanValidator:
                 rejected.append(RejectedAttack(fallback_id, errors[:10]))
                 continue
             reasons = self._policy_reasons(spec, change, workers, changed_refs, allowed_shas)
+            reasons.extend(_step_reasons(spec, target))
             if spec.attack_id in seen_ids:
                 reasons.append("duplicate attack_id")
             if runtime_used + spec.max_runtime_seconds > self._limits.max_total_runtime_seconds:
@@ -123,3 +136,18 @@ class PlanValidator:
         if not any(_overlaps(ref, changed_refs) for ref in spec.source_refs):
             reasons.append("no source_ref overlaps a changed line")
         return reasons
+
+
+def _step_reasons(spec: AttackSpec, target: TargetProfile) -> list[str]:
+    """Steps may only use the target's registered routes, synthetic actors and agents."""
+    reasons: list[str] = []
+    for index, step in enumerate(spec.steps):
+        if isinstance(step, NavigateStep | ApiRequestStep) and not target.allows_route(step.path):
+            reasons.append(f"step {index}: route is outside the target's registered routes")
+        if isinstance(step, ApiRequestStep | ChatStep) and (
+            step.actor_id not in target.synthetic_actor_ids
+        ):
+            reasons.append(f"step {index}: actor is not a registered synthetic identity")
+        if isinstance(step, ChatStep) and step.agent_id not in target.agent_ids:
+            reasons.append(f"step {index}: agent is not registered for this target")
+    return reasons
