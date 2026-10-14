@@ -139,3 +139,15 @@ C must regenerate from the combined routes during integration.
 Incoming C root lint settings also expose nine A-owned test import blocks.
 B fixes its four blocks only; full combined Ruff remains an integration gate.
 No owner branches or main were merged by this check.
+
+Final combined check with B `b4085a7`, A through #8 and C through #10:
+
+- `.venv/bin/python -m pytest -q -p no:asyncio`: 204 passed, one Starlette deprecation warning.
+- `.venv/bin/mypy services/gauntlet/src services/gauntlet/tests/test_b00_integration.py services/gauntlet/tests/test_b00_store_replay.py`: 61 files clean.
+- `.venv/bin/ruff check services/gauntlet/tests/test_b00_*.py`: passed.
+- `uv build --package gauntlet-control --out-dir /private/tmp/gauntlet-stack-dist`: sdist and wheel passed.
+- `corepack pnpm --filter @gauntlet/dashboard test`: 4 passed.
+- `corepack pnpm --filter @gauntlet/dashboard build`: passed, including lint/type checking.
+- Real process smoke: `.venv/bin/python -m uvicorn gauntlet.api.main:app --host 127.0.0.1 --port 18080`, then `curl --fail --silent http://127.0.0.1:18080/runs/offline-gate`: HTTP success, fail/fail/pass, confirmed_regression/introduced, two ordered events.
+- Dashboard started with `NEXT_PUBLIC_GAUNTLET_API_URL=http://127.0.0.1:18080 corepack pnpm --filter @gauntlet/dashboard exec next start --hostname 127.0.0.1 --port 18081`. Existing Chrome ran `--headless=new --disable-gpu --no-first-run --dump-dom --timeout=15000` with a disposable profile against `/gate/offline`. Exit 0; DOM and visually inspected screenshot showed the offline label, verdict, three outcomes, and both events. Local evidence: `artifacts/b00-browser/checkpoint/{page.html,offline-gate.png}`. This tests real rendering of an offline recording, not live worker/browser execution.
+- Both GitHub Python jobs for B `b4085a7` passed. #10 needs the updated B commits; its remote CI is still on the older tests.
