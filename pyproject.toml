@@ -16,6 +16,7 @@ gauntlet-control = { workspace = true }
 
 [tool.ruff]
 line-length = 100
+src = ["services/gauntlet/src"]
 target-version = "py312"
 
 [tool.ruff.lint]

@@ -11,6 +11,9 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install 'pydantic>=2.9' 'fastapi>=0.115' 'httpx>=0.27' 'pytest>=8'
+      - run: python -m pip install 'ruff>=0.7' 'mypy>=1.12'
+      - run: ruff check services/gauntlet/src/gauntlet/api services/gauntlet/tests/test_api.py
+      - run: mypy services/gauntlet/src/gauntlet/api
       - run: PYTHONPATH=services/gauntlet/src python -m pytest -q services/gauntlet/tests
       - run: PYTHONPATH=services/gauntlet/src python scripts/export_schemas.py
       - run: git diff --exit-code packages/contracts/jsonschema
