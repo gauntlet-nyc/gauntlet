@@ -1,9 +1,62 @@
 {
+  "$defs": {
+    "MissingInput": {
+      "additionalProperties": false,
+      "description": "A replay/historical input that was not recorded, and why. Missing never means safe.",
+      "properties": {
+        "critical": {
+          "title": "Critical",
+          "type": "boolean"
+        },
+        "field": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Field",
+          "type": "string"
+        },
+        "reason": {
+          "maxLength": 2500,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "field",
+        "reason",
+        "critical"
+      ],
+      "title": "MissingInput",
+      "type": "object"
+    }
+  },
   "additionalProperties": false,
   "properties": {
+    "actor_ref": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "title": "Actor Ref",
+      "type": "string"
+    },
+    "agent_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "title": "Agent Id",
+      "type": "string"
+    },
     "amount_minor": {
       "anyOf": [
         {
+          "minimum": 0,
           "type": "integer"
         },
         {
@@ -14,13 +67,16 @@
       "title": "Amount Minor"
     },
     "decision_id": {
+      "maxLength": 128,
       "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
       "title": "Decision Id",
       "type": "string"
     },
     "kb_snapshot_hash": {
       "anyOf": [
         {
+          "pattern": "^[0-9a-f]{64}$",
           "type": "string"
         },
         {
@@ -33,6 +89,7 @@
     "memory_snapshot_hash": {
       "anyOf": [
         {
+          "pattern": "^[0-9a-f]{64}$",
           "type": "string"
         },
         {
@@ -45,12 +102,15 @@
     "missing_inputs": {
       "default": [],
       "items": {
-        "type": "string"
+        "$ref": "#/$defs/MissingInput"
       },
       "title": "Missing Inputs",
       "type": "array"
     },
     "model_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
       "title": "Model Id",
       "type": "string"
     },
@@ -60,10 +120,16 @@
       "type": "string"
     },
     "policy_version": {
+      "maxLength": 64,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
       "title": "Policy Version",
       "type": "string"
     },
     "prompt_version": {
+      "maxLength": 64,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
       "title": "Prompt Version",
       "type": "string"
     },
@@ -76,18 +142,37 @@
     "source_ids": {
       "default": [],
       "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
         "type": "string"
       },
+      "maxItems": 100,
       "title": "Source Ids",
       "type": "array"
     },
     "structured_action": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
       "title": "Structured Action",
       "type": "string"
+    },
+    "tool_names": {
+      "default": [],
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+        "type": "string"
+      },
+      "title": "Tool Names",
+      "type": "array"
     },
     "tool_results_hash": {
       "anyOf": [
         {
+          "pattern": "^[0-9a-f]{64}$",
           "type": "string"
         },
         {
@@ -101,6 +186,8 @@
   "required": [
     "decision_id",
     "occurred_at",
+    "agent_id",
+    "actor_ref",
     "model_id",
     "prompt_version",
     "policy_version",

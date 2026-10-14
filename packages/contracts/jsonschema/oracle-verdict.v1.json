@@ -1,0 +1,99 @@
+{
+  "$defs": {
+    "OracleKind": {
+      "description": "Master plan Section 8.2 priorities. Only HARD oracles may confirm a Gate finding.",
+      "enum": [
+        "hard",
+        "differential",
+        "semantic_judge",
+        "model_only"
+      ],
+      "title": "OracleKind",
+      "type": "string"
+    },
+    "OracleOutcome": {
+      "enum": [
+        "pass",
+        "fail",
+        "inconclusive"
+      ],
+      "title": "OracleOutcome",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "criterion_version": {
+      "maxLength": 64,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
+      "title": "Criterion Version",
+      "type": "string"
+    },
+    "evidence_ids": {
+      "default": [],
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+        "type": "string"
+      },
+      "title": "Evidence Ids",
+      "type": "array"
+    },
+    "expected": {
+      "maxLength": 2000,
+      "title": "Expected",
+      "type": "string"
+    },
+    "observation_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "title": "Observation Id",
+      "type": "string"
+    },
+    "observed": {
+      "maxLength": 2000,
+      "title": "Observed",
+      "type": "string"
+    },
+    "oracle_id": {
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$",
+      "title": "Oracle Id",
+      "type": "string"
+    },
+    "oracle_kind": {
+      "$ref": "#/$defs/OracleKind"
+    },
+    "outcome": {
+      "$ref": "#/$defs/OracleOutcome"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "verdict_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "title": "Verdict Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "verdict_id",
+    "oracle_id",
+    "oracle_kind",
+    "criterion_version",
+    "observation_id",
+    "outcome",
+    "observed",
+    "expected"
+  ],
+  "title": "OracleVerdict",
+  "type": "object"
+}

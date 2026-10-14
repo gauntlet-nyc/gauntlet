@@ -2,7 +2,7 @@
   "additionalProperties": false,
   "properties": {
     "base_sha": {
-      "minLength": 7,
+      "pattern": "^[0-9a-f]{7,64}$",
       "title": "Base Sha",
       "type": "string"
     },
@@ -20,17 +20,27 @@
       "title": "Feature Intent"
     },
     "fixture_id": {
+      "maxLength": 128,
       "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
       "title": "Fixture Id",
       "type": "string"
     },
     "head_sha": {
-      "minLength": 7,
+      "pattern": "^[0-9a-f]{7,64}$",
       "title": "Head Sha",
       "type": "string"
     },
+    "max_cost_usd_cents": {
+      "maximum": 100000,
+      "minimum": 1,
+      "title": "Max Cost Usd Cents",
+      "type": "integer"
+    },
     "repository_id": {
+      "maxLength": 128,
       "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
       "title": "Repository Id",
       "type": "string"
     },
@@ -41,7 +51,9 @@
       "type": "string"
     },
     "target_id": {
+      "maxLength": 128,
       "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
       "title": "Target Id",
       "type": "string"
     }
@@ -51,7 +63,8 @@
     "base_sha",
     "head_sha",
     "fixture_id",
-    "target_id"
+    "target_id",
+    "max_cost_usd_cents"
   ],
   "title": "ChangeRequest",
   "type": "object"

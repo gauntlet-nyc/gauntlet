@@ -1,12 +1,65 @@
 """Canonical Pydantic wire contracts. Owner A; changes require three-party review."""
 
-from .gate import AttackSpec, ChangeImpactMap, ChangeRequest, Finding, Observation, SourceRef
-from .recall import HistoricalDecision, RecallTrigger, RecallVerdict
-from .replay import ReplayResult, ReplaySpec
+from .common import EvidenceRef, MissingInput, SourceRef, StrictDTO
 from .events import RunEvent
+from .gate import (
+    ActionRecord,
+    ActionStep,
+    AffectedSurface,
+    ApiRequestStep,
+    AttackSpec,
+    CaptureStep,
+    ChangeImpactMap,
+    ChangeRequest,
+    ChatStep,
+    ClickStep,
+    Finding,
+    InspectStep,
+    NavigateStep,
+    Observation,
+    OracleVerdict,
+    PressStep,
+    ResizeStep,
+    ScrollStep,
+    ToolCallRecord,
+    TypeStep,
+    WorkerKind,
+)
+from .recall import HistoricalDecision, RecallMode, RecallTrigger, RecallVerdict
+from .replay import ReplayMode, ReplayResult, ReplaySpec
 
 __all__ = [
-    "AttackSpec", "ChangeImpactMap", "ChangeRequest", "Finding", "Observation",
-    "SourceRef", "HistoricalDecision", "RecallTrigger", "RecallVerdict",
-    "ReplayResult", "ReplaySpec", "RunEvent",
+    "ActionRecord",
+    "ActionStep",
+    "AffectedSurface",
+    "ApiRequestStep",
+    "AttackSpec",
+    "CaptureStep",
+    "ChangeImpactMap",
+    "ChangeRequest",
+    "ChatStep",
+    "ClickStep",
+    "EvidenceRef",
+    "Finding",
+    "HistoricalDecision",
+    "InspectStep",
+    "MissingInput",
+    "NavigateStep",
+    "Observation",
+    "OracleVerdict",
+    "PressStep",
+    "RecallMode",
+    "RecallTrigger",
+    "RecallVerdict",
+    "ReplayMode",
+    "ReplayResult",
+    "ReplaySpec",
+    "ResizeStep",
+    "RunEvent",
+    "ScrollStep",
+    "SourceRef",
+    "StrictDTO",
+    "ToolCallRecord",
+    "TypeStep",
+    "WorkerKind",
 ]

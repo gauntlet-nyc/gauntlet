@@ -1,57 +1,22 @@
 {
   "$defs": {
-    "ActionStep": {
+    "ApiRequestStep": {
       "additionalProperties": false,
       "properties": {
         "action": {
-          "enum": [
-            "navigate",
-            "resize",
-            "click",
-            "scroll",
-            "type",
-            "press",
-            "inspect",
-            "capture",
-            "test_api",
-            "chat"
-          ],
+          "const": "test_api",
+          "default": "test_api",
           "title": "Action",
           "type": "string"
         },
-        "height": {
-          "anyOf": [
-            {
-              "maximum": 2160,
-              "minimum": 240,
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Height"
-        },
-        "schema_version": {
-          "const": "1.0",
-          "default": "1.0",
-          "title": "Schema Version",
+        "actor_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Actor Id",
           "type": "string"
         },
-        "target": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Target"
-        },
-        "value": {
+        "body_json": {
           "anyOf": [
             {
               "maxLength": 5000,
@@ -62,27 +27,304 @@
             }
           ],
           "default": null,
-          "title": "Value"
+          "title": "Body Json"
         },
-        "width": {
+        "method": {
+          "enum": [
+            "GET",
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE"
+          ],
+          "title": "Method",
+          "type": "string"
+        },
+        "path": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Path",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "method",
+        "path",
+        "actor_id"
+      ],
+      "title": "ApiRequestStep",
+      "type": "object"
+    },
+    "CaptureStep": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "capture",
+          "default": "capture",
+          "title": "Action",
+          "type": "string"
+        },
+        "label": {
           "anyOf": [
             {
-              "maximum": 3840,
-              "minimum": 240,
-              "type": "integer"
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "type": "string"
             },
             {
               "type": "null"
             }
           ],
           "default": null,
-          "title": "Width"
+          "title": "Label"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "title": "CaptureStep",
+      "type": "object"
+    },
+    "ChatStep": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "chat",
+          "default": "chat",
+          "title": "Action",
+          "type": "string"
+        },
+        "actor_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Actor Id",
+          "type": "string"
+        },
+        "agent_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "title": "Agent Id",
+          "type": "string"
+        },
+        "message": {
+          "maxLength": 5000,
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
         }
       },
       "required": [
-        "action"
+        "agent_id",
+        "actor_id",
+        "message"
       ],
-      "title": "ActionStep",
+      "title": "ChatStep",
+      "type": "object"
+    },
+    "ClickStep": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "click",
+          "default": "click",
+          "title": "Action",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "target": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "target"
+      ],
+      "title": "ClickStep",
+      "type": "object"
+    },
+    "InspectStep": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "inspect",
+          "default": "inspect",
+          "title": "Action",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "target": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "target"
+      ],
+      "title": "InspectStep",
+      "type": "object"
+    },
+    "NavigateStep": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "navigate",
+          "default": "navigate",
+          "title": "Action",
+          "type": "string"
+        },
+        "path": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Path",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "title": "NavigateStep",
+      "type": "object"
+    },
+    "PressStep": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "press",
+          "default": "press",
+          "title": "Action",
+          "type": "string"
+        },
+        "key": {
+          "pattern": "^[A-Za-z0-9+]{1,32}$",
+          "title": "Key",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "title": "PressStep",
+      "type": "object"
+    },
+    "ResizeStep": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "resize",
+          "default": "resize",
+          "title": "Action",
+          "type": "string"
+        },
+        "height": {
+          "maximum": 2160,
+          "minimum": 240,
+          "title": "Height",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "width": {
+          "maximum": 3840,
+          "minimum": 240,
+          "title": "Width",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "width",
+        "height"
+      ],
+      "title": "ResizeStep",
+      "type": "object"
+    },
+    "ScrollStep": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "scroll",
+          "default": "scroll",
+          "title": "Action",
+          "type": "string"
+        },
+        "delta_y": {
+          "maximum": 20000,
+          "minimum": -20000,
+          "title": "Delta Y",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "target": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target"
+        }
+      },
+      "required": [
+        "delta_y"
+      ],
+      "title": "ScrollStep",
       "type": "object"
     },
     "SourceRef": {
@@ -91,6 +333,7 @@
         "content_hash": {
           "anyOf": [
             {
+              "pattern": "^[0-9a-f]{64}$",
               "type": "string"
             },
             {
@@ -106,6 +349,7 @@
           "type": "integer"
         },
         "path": {
+          "maxLength": 512,
           "minLength": 1,
           "title": "Path",
           "type": "string"
@@ -117,7 +361,7 @@
           "type": "string"
         },
         "sha": {
-          "minLength": 7,
+          "pattern": "^[0-9a-f]{7,64}$",
           "title": "Sha",
           "type": "string"
         },
@@ -135,17 +379,61 @@
       ],
       "title": "SourceRef",
       "type": "object"
+    },
+    "TypeStep": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "const": "type",
+          "default": "type",
+          "title": "Action",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "target": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Target",
+          "type": "string"
+        },
+        "value": {
+          "maxLength": 5000,
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "target",
+        "value"
+      ],
+      "title": "TypeStep",
+      "type": "object"
     }
   },
   "additionalProperties": false,
   "properties": {
     "attack_id": {
+      "maxLength": 128,
       "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
       "title": "Attack Id",
       "type": "string"
     },
-    "fixture_id": {
+    "expected_observation": {
+      "maxLength": 2500,
       "minLength": 1,
+      "title": "Expected Observation",
+      "type": "string"
+    },
+    "fixture_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
       "title": "Fixture Id",
       "type": "string"
     },
@@ -169,6 +457,8 @@
     },
     "oracle_ids": {
       "items": {
+        "maxLength": 128,
+        "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$",
         "type": "string"
       },
       "maxItems": 12,
@@ -186,12 +476,60 @@
       "items": {
         "$ref": "#/$defs/SourceRef"
       },
+      "maxItems": 100,
+      "minItems": 1,
       "title": "Source Refs",
       "type": "array"
     },
     "steps": {
       "items": {
-        "$ref": "#/$defs/ActionStep"
+        "discriminator": {
+          "mapping": {
+            "capture": "#/$defs/CaptureStep",
+            "chat": "#/$defs/ChatStep",
+            "click": "#/$defs/ClickStep",
+            "inspect": "#/$defs/InspectStep",
+            "navigate": "#/$defs/NavigateStep",
+            "press": "#/$defs/PressStep",
+            "resize": "#/$defs/ResizeStep",
+            "scroll": "#/$defs/ScrollStep",
+            "test_api": "#/$defs/ApiRequestStep",
+            "type": "#/$defs/TypeStep"
+          },
+          "propertyName": "action"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/NavigateStep"
+          },
+          {
+            "$ref": "#/$defs/ResizeStep"
+          },
+          {
+            "$ref": "#/$defs/ClickStep"
+          },
+          {
+            "$ref": "#/$defs/ScrollStep"
+          },
+          {
+            "$ref": "#/$defs/TypeStep"
+          },
+          {
+            "$ref": "#/$defs/PressStep"
+          },
+          {
+            "$ref": "#/$defs/InspectStep"
+          },
+          {
+            "$ref": "#/$defs/CaptureStep"
+          },
+          {
+            "$ref": "#/$defs/ApiRequestStep"
+          },
+          {
+            "$ref": "#/$defs/ChatStep"
+          }
+        ]
       },
       "maxItems": 100,
       "minItems": 1,
@@ -199,7 +537,9 @@
       "type": "array"
     },
     "target_id": {
+      "maxLength": 128,
       "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
       "title": "Target Id",
       "type": "string"
     },
@@ -226,6 +566,7 @@
     "attack_id",
     "hypothesis",
     "why_this_change",
+    "expected_observation",
     "source_refs",
     "worker_kind",
     "target_id",

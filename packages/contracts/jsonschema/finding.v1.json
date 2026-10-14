@@ -1,11 +1,6 @@
 {
-  "additionalProperties": false,
-  "properties": {
-    "attack_id": {
-      "title": "Attack Id",
-      "type": "string"
-    },
-    "attribution": {
+  "$defs": {
+    "Attribution": {
       "enum": [
         "introduced",
         "pre_existing",
@@ -13,6 +8,44 @@
       ],
       "title": "Attribution",
       "type": "string"
+    },
+    "GateStatus": {
+      "enum": [
+        "confirmed_regression",
+        "confirmed_pre_existing",
+        "confirmed_policy_violation",
+        "suspected",
+        "not_reproducible",
+        "environment_error",
+        "passed",
+        "not_tested"
+      ],
+      "title": "GateStatus",
+      "type": "string"
+    },
+    "Severity": {
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ],
+      "title": "Severity",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "attack_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "title": "Attack Id",
+      "type": "string"
+    },
+    "attribution": {
+      "$ref": "#/$defs/Attribution"
     },
     "base_attempts": {
       "minimum": 0,
@@ -27,12 +60,18 @@
     "evidence_ids": {
       "default": [],
       "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
         "type": "string"
       },
       "title": "Evidence Ids",
       "type": "array"
     },
     "finding_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
       "title": "Finding Id",
       "type": "string"
     },
@@ -49,6 +88,8 @@
     "limitations": {
       "default": [],
       "items": {
+        "maxLength": 2500,
+        "minLength": 1,
         "type": "string"
       },
       "title": "Limitations",
@@ -56,10 +97,40 @@
     },
     "oracle_ids": {
       "items": {
+        "maxLength": 128,
+        "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$",
         "type": "string"
       },
+      "maxItems": 12,
+      "minItems": 1,
       "title": "Oracle Ids",
       "type": "array"
+    },
+    "oracle_verdict_ids": {
+      "default": [],
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+        "type": "string"
+      },
+      "title": "Oracle Verdict Ids",
+      "type": "array"
+    },
+    "repro_manifest_id": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Repro Manifest Id"
     },
     "schema_version": {
       "const": "1.0",
@@ -67,19 +138,22 @@
       "title": "Schema Version",
       "type": "string"
     },
+    "severity": {
+      "$ref": "#/$defs/Severity"
+    },
     "status": {
-      "enum": [
-        "confirmed_regression",
-        "confirmed_pre_existing",
-        "confirmed_policy_violation",
-        "suspected",
-        "not_reproducible",
-        "environment_error",
-        "passed",
-        "not_tested"
-      ],
-      "title": "Status",
-      "type": "string"
+      "$ref": "#/$defs/GateStatus"
+    },
+    "trace_ids": {
+      "default": [],
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+        "type": "string"
+      },
+      "title": "Trace Ids",
+      "type": "array"
     }
   },
   "required": [
@@ -87,6 +161,7 @@
     "attack_id",
     "status",
     "attribution",
+    "severity",
     "oracle_ids",
     "head_reproductions",
     "head_attempts",

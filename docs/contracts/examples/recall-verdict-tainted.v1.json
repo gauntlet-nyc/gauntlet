@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "verdict_id": "verdict-002",
+  "recall_id": "recall-001",
+  "decision_id": "decision-001",
+  "mode": "decision_counterfactual",
+  "classification": "tainted",
+  "rationale": "Control reproduced a 49.99 refund; without kb-117 the agent declined the refund",
+  "criterion_version": "materiality-1.0",
+  "control_matches": true,
+  "material_change": true,
+  "replay_ids": [
+    "replay-ctl-001",
+    "replay-cf-001"
+  ],
+  "evidence_ids": [
+    "art-replay-001",
+    "art-replay-002"
+  ],
+  "limitations": []
+}

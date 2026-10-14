@@ -10,6 +10,7 @@
           "type": "number"
         },
         "identifier": {
+          "maxLength": 512,
           "minLength": 1,
           "title": "Identifier",
           "type": "string"
@@ -36,6 +37,8 @@
           "items": {
             "$ref": "#/$defs/SourceRef"
           },
+          "maxItems": 100,
+          "minItems": 1,
           "title": "Source Refs",
           "type": "array"
         }
@@ -55,6 +58,7 @@
         "content_hash": {
           "anyOf": [
             {
+              "pattern": "^[0-9a-f]{64}$",
               "type": "string"
             },
             {
@@ -70,6 +74,7 @@
           "type": "integer"
         },
         "path": {
+          "maxLength": 512,
           "minLength": 1,
           "title": "Path",
           "type": "string"
@@ -81,7 +86,7 @@
           "type": "string"
         },
         "sha": {
-          "minLength": 7,
+          "pattern": "^[0-9a-f]{7,64}$",
           "title": "Sha",
           "type": "string"
         },
@@ -104,25 +109,32 @@
   "additionalProperties": false,
   "properties": {
     "base_sha": {
+      "pattern": "^[0-9a-f]{7,64}$",
       "title": "Base Sha",
       "type": "string"
     },
     "changed_files": {
       "items": {
+        "maxLength": 512,
+        "minLength": 1,
         "type": "string"
       },
+      "maxItems": 1000,
       "title": "Changed Files",
       "type": "array"
     },
     "coverage_gaps": {
       "default": [],
       "items": {
+        "maxLength": 2500,
+        "minLength": 1,
         "type": "string"
       },
       "title": "Coverage Gaps",
       "type": "array"
     },
     "head_sha": {
+      "pattern": "^[0-9a-f]{7,64}$",
       "title": "Head Sha",
       "type": "string"
     },
@@ -136,6 +148,7 @@
       "items": {
         "$ref": "#/$defs/AffectedSurface"
       },
+      "maxItems": 100,
       "title": "Surfaces",
       "type": "array"
     }

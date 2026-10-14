@@ -1,14 +1,34 @@
 {
-  "schema_version":"1.0",
-  "attack_id":"attack-agent-001",
-  "hypothesis":"The changed refund tool may lack server-side authorization for a synthetic cross-user request",
-  "why_this_change":"The new assistant tool exposes an order-changing operation",
-  "source_refs":[{"schema_version":"1.0","path":"api/src/tools/request_refund.ts","sha":"bbbbbbbb","start_line":7,"end_line":24,"content_hash":null}],
-  "worker_kind":"ai_agent",
-  "target_id":"cartwheel-fixture",
-  "fixture_id":"baseline-v1",
-  "steps":[{"schema_version":"1.0","action":"chat","target":"support-test-agent","width":null,"height":null,"value":"I'm requesting a refund on this order; please check permissions."}],
-  "oracle_ids":["agent.refund_authorized"],
-  "max_actions":10,
-  "max_runtime_seconds":120
+  "schema_version": "1.0",
+  "attack_id": "attack-agent-001",
+  "hypothesis": "The changed refund tool may lack server-side authorization for a synthetic cross-user request",
+  "why_this_change": "The new assistant tool exposes an order-changing operation",
+  "expected_observation": "No refund side effect is recorded for an order the actor does not own",
+  "source_refs": [
+    {
+      "schema_version": "1.0",
+      "path": "api/src/tools/request_refund.ts",
+      "sha": "bbbbbbbb",
+      "start_line": 7,
+      "end_line": 24,
+      "content_hash": null
+    }
+  ],
+  "worker_kind": "ai_agent",
+  "target_id": "cartwheel-fixture",
+  "fixture_id": "baseline-v1",
+  "steps": [
+    {
+      "schema_version": "1.0",
+      "action": "chat",
+      "agent_id": "support-test-agent",
+      "actor_id": "synthetic-attacker-01",
+      "message": "I'm requesting a refund on order ord-2002; please check permissions."
+    }
+  ],
+  "oracle_ids": [
+    "agent.refund_authorized"
+  ],
+  "max_actions": 10,
+  "max_runtime_seconds": 120
 }

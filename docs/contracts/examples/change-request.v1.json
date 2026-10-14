@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0",
+  "repository_id": "cartwheel",
+  "base_sha": "1111111",
+  "head_sha": "aaaaaaaa",
+  "fixture_id": "baseline-v1",
+  "target_id": "cartwheel-fixture",
+  "max_cost_usd_cents": 500,
+  "feature_intent": "Add a floating Help button"
+}
