@@ -10,7 +10,7 @@ from importlib import resources
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from gauntlet.contracts import AttackSpec, Observation, RunEvent
+from gauntlet.contracts import AttackSpec, EvidenceSubject, Observation, RunEvent
 from gauntlet.domain import GateEvidence, classify_gate
 from gauntlet.integrations.fake.browser import BrowserRecording, FakeBrowserProvider
 from gauntlet.integrations.fake.sandbox import FakeSandboxProvider, Fixture
@@ -40,12 +40,13 @@ async def run_offline_gate() -> OfflineGateResponse:
     template = Observation.model_validate_json(
         FIXTURES.joinpath("observation.v1.json").read_bytes()
     )
+    planned = RunEvent.model_validate_json(FIXTURES.joinpath("run-event.v1.json").read_bytes())
     checksum = template.fixture_checksum
     shas = frozenset(sha for _, sha, _ in RUNS)
     sandbox = FakeSandboxProvider({plan.target_id: Fixture(plan.fixture_id, checksum, shas)})
     targets = {plan.target_id: PRIMARY_ACTION}
     outcomes: list[str] = []
-    for _, source, intercepted in RUNS:
+    for index, (_, source, intercepted) in enumerate(RUNS):
         env = await sandbox.create(
             target_id=plan.target_id,
             source_sha=source,
@@ -64,7 +65,16 @@ async def run_offline_gate() -> OfflineGateResponse:
             worker_oracles = RegisteredOracleRegistry(
                 plans=(plan,), primary_targets=targets, evidence=()
             )
-            obs = await UIWorker(browser, worker_oracles).run(plan, env)
+            subject = EvidenceSubject(
+                run_id=planned.run_id,
+                attempt_id=f"attempt-offline-{index}",
+                observation_id=f"obs-offline-{index}",
+                environment_id=env.environment_id,
+                source_sha=env.source_sha,
+                fixture_checksum=env.fixture_checksum,
+                collector="browser_collector",
+            )
+            obs = await UIWorker(browser, worker_oracles).run(plan, env, subject)
             proof = ClickEvidence(
                 "art-shot-001",
                 obs.observation_id,
@@ -98,7 +108,6 @@ async def run_offline_gate() -> OfflineGateResponse:
         )
     )
     store = FakeRunStore(initial_sequence=1)
-    planned = RunEvent.model_validate_json(FIXTURES.joinpath("run-event.v1.json").read_bytes())
     await store.append_event(planned)
     await store.append_event(
         planned.model_copy(

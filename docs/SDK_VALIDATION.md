@@ -59,6 +59,17 @@ filesystem adapter, not an Anchor collector or a live provider smoke. The
 B-01d checkbox stays open until browser geometry, click receipts and screenshots
 are captured and bound to real base/head environments.
 
+### B-01c1 browser evidence identity (2026-10-15)
+
+The worker now requires a trusted, preallocated `EvidenceSubject` before it
+opens a browser and uses that subject's observation ID in its result. The
+browser port receives the subject at session open; the worker and fake reject
+environment/source/fixture mismatches, a non-browser collector, or a step index
+at session scope. The offline gate allocates distinct attempt and observation
+IDs for each recorded run. This establishes the input boundary for a live
+collector; no Anchor screenshot, action receipt, or Daytona environment has
+been captured by this ticket.
+
 ### Cartwheel local checkout workflow (2026-10-15)
 
 C's fixture now has a synthetic, in-process order endpoint. A successful

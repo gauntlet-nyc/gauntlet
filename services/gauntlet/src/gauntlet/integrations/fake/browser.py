@@ -4,7 +4,8 @@ from dataclasses import dataclass
 from urllib.parse import urlsplit
 from uuid import uuid4
 
-from gauntlet.contracts import ActionRecord, ActionStep, AttackSpec
+from gauntlet.contracts import ActionRecord, ActionStep, AttackSpec, EvidenceSubject
+from gauntlet.ports.browser import is_browser_subject_for
 from gauntlet.ports.errors import EnvironmentUnavailableError
 from gauntlet.ports.sandbox import EnvironmentHandle
 
@@ -21,6 +22,7 @@ class BrowserRecording:
 @dataclass
 class _Session:
     environment: EnvironmentHandle
+    subject: EvidenceSubject
     recording: BrowserRecording
     next_step: int = 0
 
@@ -40,7 +42,9 @@ class FakeBrowserProvider:
         self._recordings = recordings
         self._sessions: dict[str, _Session] = {}
 
-    async def open_session(self, environment: EnvironmentHandle) -> str:
+    async def open_session(self, environment: EnvironmentHandle, subject: EvidenceSubject) -> str:
+        if not is_browser_subject_for(environment, subject):
+            raise EnvironmentUnavailableError("browser evidence subject does not match environment")
         try:
             origin = urlsplit(environment.preview_origin)
         except ValueError:
@@ -67,7 +71,7 @@ class FakeBrowserProvider:
         if len(candidates) != 1:
             raise EnvironmentUnavailableError("no unique browser recording matches the environment")
         session_id = f"fake-browser-{uuid4().hex}"
-        self._sessions[session_id] = _Session(environment, candidates[0])
+        self._sessions[session_id] = _Session(environment, subject, candidates[0])
         return session_id
 
     async def perform(self, session_id: str, step_index: int, step: ActionStep) -> ActionRecord:

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from gauntlet.contracts import AttackSpec, Observation, RunEvent
+from gauntlet.contracts import AttackSpec, EvidenceSubject, Observation, RunEvent
 from gauntlet.domain import GateEvidence, classify_gate
 from gauntlet.domain.statuses import OracleOutcome
 from gauntlet.integrations.fake.browser import BrowserRecording, FakeBrowserProvider
@@ -29,6 +29,7 @@ def test_golden_plan_to_verified_event_without_network(
         monkeypatch.setattr(socket.socket, "connect", deny_network)
         plan = AttackSpec.model_validate_json((GOLDENS / "ui-plan.v1.json").read_text())
         template = Observation.model_validate_json((GOLDENS / "observation.v1.json").read_text())
+        event = RunEvent.model_validate_json((GOLDENS / "run-event.v1.json").read_text())
         sandbox = FakeSandboxProvider(
             {
                 plan.target_id: Fixture(
@@ -38,7 +39,9 @@ def test_golden_plan_to_verified_event_without_network(
         )
         targets = {plan.target_id: "checkout-primary-action"}
         outcomes = []
-        for source, intercepted in (("aaaaaaaa", True), ("aaaaaaaa", True), ("bbbbbbbb", False)):
+        for index, (source, intercepted) in enumerate(
+            (("aaaaaaaa", True), ("aaaaaaaa", True), ("bbbbbbbb", False))
+        ):
             environment = await sandbox.create(
                 target_id=plan.target_id,
                 source_sha=source,
@@ -59,7 +62,16 @@ def test_golden_plan_to_verified_event_without_network(
                 worker_registry = RegisteredOracleRegistry(
                     plans=(plan,), primary_targets=targets, evidence=()
                 )
-                obs = await UIWorker(browser, worker_registry).run(plan, environment)
+                subject = EvidenceSubject(
+                    run_id=event.run_id,
+                    attempt_id=f"attempt-offline-{index}",
+                    observation_id=f"obs-offline-{index}",
+                    environment_id=environment.environment_id,
+                    source_sha=environment.source_sha,
+                    fixture_checksum=environment.fixture_checksum,
+                    collector="browser_collector",
+                )
+                obs = await UIWorker(browser, worker_registry).run(plan, environment, subject)
                 proof = ClickEvidence(
                     "art-shot-001",
                     obs.observation_id,
@@ -102,7 +114,6 @@ def test_golden_plan_to_verified_event_without_network(
         assert verdict.status == "confirmed_regression"
         assert verdict.attribution == "introduced"
         store = FakeRunStore(initial_sequence=1)
-        event = RunEvent.model_validate_json((GOLDENS / "run-event.v1.json").read_text())
         await store.append_event(event)
         await store.append_event(
             event.model_copy(
