@@ -15,3 +15,352 @@
 **SDK notes:** Daytona's VM sandbox supports `fork()`; container sandboxes require snapshot/recreation. Agent Memory is prerelease and separate from core SurrealDB DB SDK. Bedrock model IDs/availability vary by region/account. Anchor browser runs in cloud and cannot reach localhost without approved preview/tunnel. Arize is evaluation visibility, not the trusted oracle.
 
 **Record format:** `Date / owner / provider / pinned version / test SHA / command (no tokens) / raw sanitized result / failure / fallback / next verification`.
+
+## 2026-10-14 / B-00 / offline implementation and documentation review
+
+The B branch consumes A-00 through `8396d8e` (including oracle descriptors).
+No provider SDK is installed, pinned, or smoke-tested by this ticket. These are
+published versions observed from public PyPI metadata, not approved dependencies:
+
+| Distribution | Published version observed | Installed / live smoke |
+|---|---|---|
+| daytona | 0.224.1 | absent / NOT RUN |
+| anchorbrowser | 1.0.1 | absent / NOT RUN |
+| arize-otel | 0.14.1 | absent / NOT RUN |
+| arize | 8.59.1 | absent / NOT RUN |
+| surrealdb | 2.0.0 | absent / NOT RUN |
+| surrealdb-memory | 1.0.0b1 | absent / NOT RUN |
+| boto3 | 1.43.113 | absent / NOT RUN |
+| playwright | 1.64.0 | absent / NOT RUN |
+
+Reproduce with `.venv/bin/python scripts/probe_sdk_inventory.py --published`.
+Omit `--published` for a local inventory without network access. The first urllib
+metadata attempt failed with a local CA trust error; the committed probe uses
+the existing httpx development dependency with certificate verification enabled.
+
+Documentation checked, without creating resources:
+
+- [Daytona Python](https://www.daytona.io/docs/en/python-sdk/): sync and async create/process APIs are documented. VM fork entitlement, signed preview policy, fixture reset, and cleanup still require live verification.
+- [Anchor Python SDK](https://github.com/anchorbrowser/AnchorBrowser-SDK-Python): current examples use `sessions.create_session` and `browser.create()`/`browser.connect()`. SDK default key name is `ANCHORBROWSER_API_KEY`; the repository uses `ANCHOR_API_KEY`, which a future adapter must explicitly pass as `api_key`. Never assume the SDK reads the repository variable automatically.
+- [Arize OTEL source documentation](https://github.com/Arize-ai/arize-otel-python): `arize.otel.register` accepts space, key, and project configuration. A successful export and evaluated experiment remain unverified; [evaluation documentation](https://arize.com/docs/ax/get-started/get-started-evaluations) is separate from tracing.
+- [SurrealDB Python](https://surrealdb.com/docs/languages/python): `AsyncSurreal`, connection/authentication, namespace/database selection, and parameterized queries are documented. No database was started or queried here.
+- [Agent Memory Python](https://surrealdb.com/docs/agent-memory/integrations/sdks/python): the independently versioned `surrealdb-memory` distribution is exposed through the prerelease `surrealdb[memory]` extra and `surrealdb.memory`. Endpoint, context, and API key are explicit constructor inputs. Stable core 2.0.0 is not evidence that the memory extra resolves; C must resolve and approve a compatible prerelease lock.
+- [Bedrock Converse](https://docs.aws.amazon.com/boto3/latest/reference/services/bedrock-runtime/client/converse.html): model ID, messages, inference/tool configuration are documented. Account/region/model access and genuine structured output remain unverified.
+
+### Offline B-00 composition
+
+`AttackSpec` golden → registered fake environment → recorded browser steps through
+`UIWorker` → `Observation` → fixed trusted oracle → A's pure `classify_gate` →
+`FakeRunStore` event. `test_b00_integration.py` runs this path with socket connections
+forbidden and explicitly labels the result `offline_recording`.
+
+- The store requires an explicit `initial_sequence`; use `1` for the current event golden. A/C must choose the production initial sequence before API integration. Stored payloads and returned events are copied so consumers cannot rewrite history.
+- The browser replays exact typed steps for the registered source/fixture/checksum, uses reserved `.invalid` origins, and blocks recorded off-origin redirects. It does not run a real browser.
+- The fixed UI oracle consumes trusted internal `ClickEvidence`, bound to observation, attack, environment, source, checksum, step, and registered primary target. Text in `detail` cannot establish failure. No runtime predicate registration exists. P1 must add a trusted collector/artifact binding; this is not a new public DTO.
+- Replay only returns an exact preloaded result. Missing historical pins, critical missing inputs, or an absent recording yield `not_replayable`. No tool execution callback exists.
+- `UIWorker` bounds actions/runtime and attempts session closure on success, failure, timeout, and cancellation. Cleanup has a separate timeout of at most five seconds (or the smaller execution budget); failed cleanup yields `environment_error`. Retried orphan cleanup remains a later integration requirement. It never assigns a Gate verdict.
+
+### Real local headless diagnostic (not the P1 acceptance gate)
+
+Source fixture templates: C branch commit `748b7be`.
+Built by C's `scripts/build_cartwheel_fixture.py` in a temporary detached worktree:
+
+- Base `584c6282d6274a3d5558d90884786f102972593c`.
+- Head `5d00edbe264336f97bad8b0073e581e99fca662d`.
+- Template checksum `9e16231c3617011fbc159da71d4b4acaa864d961e9fd1c9990ef6cf81243b5dc`.
+- Node v23.11.0, Next 15.5.28, Chrome 155.0.8059.41; both base and head `npm run build` passed with the same local dependency installation.
+
+Start the generated fixture on loopback with
+`node node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3100`, then:
+
+```bash
+node scripts/probe_headless_ui.mjs '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' artifacts/b00-browser/head 5d00edbe264336f97bad8b0073e581e99fca662d
+node scripts/probe_headless_ui.mjs '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' artifacts/b00-browser/base 584c6282d6274a3d5558d90884786f102972593c
+```
+
+Rebuild/restart the correct fixture revision before each command. Each probe
+starts a fresh headless Chrome profile, restricts page requests to that loopback
+origin, dispatches actual mouse input, and closes Chrome/removes its profile.
+Each width (375, 768, 1280; height 812) was repeated twice. All six head center
+clicks hit and were received by `help-button`; all six base center clicks hit
+and were received by `checkout-primary-action`. JSON reports and twelve PNGs
+are in the ignored `artifacts/b00-browser/{base,head}/` directories.
+
+The CLI revision is operator asserted: the probe does not verify the running
+server's build SHA. The captured initial reports used the field `sourceSha`;
+the current script names it `operatorAssertedSourceSha` to make that limitation
+explicit. The separate checkout/build/start command record establishes which
+fixture was served during this diagnostic; the probe alone cannot establish it.
+
+This is a directed local diagnostic, not blind planner discovery or Daytona /
+Anchor proof. The fixture has no order-submission handler, so results establish
+DOM click delivery only. Keyboard fallback, fixture runtime state checksums,
+legitimate order completion, and an unrelated clean PR remain P1 gates. The
+temporary fixture install reported two dependency advisories; C owns dependency
+review and lock changes.
+
+### Handoff and remaining gates
+
+2026-10-14 follow-up: A's review of PR #7 confirmed structural port compatibility
+and reported a clean merge/test run against the A stack, but did not approve the
+PR. GitHub's scaffold CI failed 25 B tests because it installs pytest without
+pytest-asyncio. B tests now use explicit `asyncio.run` scenarios, preserving all
+18 async test bodies and assertions. `.venv/bin/python -m pytest -q -p no:asyncio`
+passes all 113 tests; no CI/dependency ownership change is needed. All eight PRs
+were still open at this follow-up, so no phase gate has advanced on main.
+
+- C composes the B adapters into the real API; this branch does not change C's API/dashboard or generated contracts.
+- A plus another appropriate owner must review the oracle/evidence boundary; shared changes require the repository's A/B/C review.
+- Full main-tree integration tests/build happen after reviewed merges. A/B/C branches remain open; branch-local success does not complete that gate.
+- Repository-wide Ruff currently reports the existing C-owned `test_api.py` import ordering. Format check reports the two existing master-plan Markdown code blocks. B-owned Python lint/format and whole-source mypy are checked separately; these baseline failures are not silently fixed across ownership boundaries.
+- Independent review reproduced two edge cases, now covered by regression tests: missing/inconsistent click receipt must be inconclusive, and a hung browser close must time out. The main-tree baseline (before these branches are integrated) passed 11 tests and built a wheel; this does not verify the B changes on main.
+- Live provider setup requires C-approved pinned SDK dependencies, explicit `RUN_LIVE_INTEGRATIONS=1` opt-in and permitted spend, an authorized target/fixture, Daytona key/endpoint and runtime quota, Anchor key and reachable allowlisted preview, Arize key/space/project, Surreal core URL/namespace/database/auth, separate Memory endpoint/context/key/scopes, and AWS credential chain/region/model access. These prerequisites are phase-specific; B-00 requires no provider credentials.
+
+### Incoming PR compatibility follow-up (2026-10-14)
+
+PRs #9 (A-04 lineage), #10 (C offline joint checkpoint), and #11 (C-02
+refund fixture) arrived during validation; all eleven PRs remain open. #10
+supplies the proposed API/dashboard composition; its Python CI contains the
+older B tests and fails for the same missing async plugin fixed by `9c20af6`.
+B's two GitHub Python checks passed for that commit. C also reported six test
+mypy errors: B now uses `ReplayStatus.MATCHED` and `OracleOutcome.FAIL` at typed
+call sites. B test imports follow the incoming C root `src` configuration;
+on the older B root use Ruff's explicit `--config 'src = ["services/gauntlet/src"]'`.
+
+A temporary detached checkout merged B with A through #8 and C through #10
+without conflicts. Before #10 it passed 203 tests, source mypy (58 files),
+Python sdist/wheel, dashboard tests (3), and dashboard production build. With
+#10, `.venv/bin/python -m pytest -q -p no:asyncio` passed 204 tests. These are
+compatibility checks, not main-tree acceptance or live-provider evidence.
+The later-phase #9/#11 were inspected but excluded from this P0 check. #11
+explicitly reports an OpenAPI generation conflict with its sibling #10;
+C must regenerate from the combined routes during integration.
+
+Incoming C root lint settings also expose nine A-owned test import blocks.
+B fixes its four blocks only; full combined Ruff remains an integration gate.
+No owner branches or main were merged by this check.
+
+Final combined check with B `b4085a7`, A through #8 and C through #10:
+
+- `.venv/bin/python -m pytest -q -p no:asyncio`: 204 passed, one Starlette deprecation warning.
+- `.venv/bin/mypy services/gauntlet/src services/gauntlet/tests/test_b00_integration.py services/gauntlet/tests/test_b00_store_replay.py`: 61 files clean.
+- `.venv/bin/ruff check services/gauntlet/tests/test_b00_*.py`: passed.
+- `uv build --package gauntlet-control --out-dir /private/tmp/gauntlet-stack-dist`: sdist and wheel passed.
+- `corepack pnpm --filter @gauntlet/dashboard test`: 4 passed.
+- `corepack pnpm --filter @gauntlet/dashboard build`: passed, including lint/type checking.
+- Real process smoke: `.venv/bin/python -m uvicorn gauntlet.api.main:app --host 127.0.0.1 --port 18080`, then `curl --fail --silent http://127.0.0.1:18080/runs/offline-gate`: HTTP success, fail/fail/pass, confirmed_regression/introduced, two ordered events.
+- Dashboard started with `NEXT_PUBLIC_GAUNTLET_API_URL=http://127.0.0.1:18080 corepack pnpm --filter @gauntlet/dashboard exec next start --hostname 127.0.0.1 --port 18081`. Existing Chrome ran `--headless=new --disable-gpu --no-first-run --dump-dom --timeout=15000` with a disposable profile against `/gate/offline`. Exit 0; DOM and visually inspected screenshot showed the offline label, verdict, three outcomes, and both events. Local evidence: `artifacts/b00-browser/checkpoint/{page.html,offline-gate.png}`. This tests real rendering of an offline recording, not live worker/browser execution.
+- Both GitHub Python jobs for B `b4085a7` passed. #10 needs the updated B commits; its remote CI is still on the older tests.
+
+### B-00 malformed URL regression fix (2026-10-14)
+
+Offline browser review reproduced four failures: malformed IPv6 brackets and
+NFKC-invalid host delimiters in preview origins or captured redirects escaped
+as bare `ValueError` from `urlsplit`. The adapter now converts malformed origins
+to `EnvironmentUnavailableError` and malformed redirects to a blocked action
+without recording evidence. The worker reports environment_error or aborted,
+respectively; neither yields a conclusive oracle result. Valid same-origin
+redirects still return the captured action log. No public interface, origin
+allowlist, oracle rule, or live provider permission changed.
+
+Verification in B's worktree:
+
+- `.venv/bin/python -m pytest -q -p no:asyncio services/gauntlet/tests/test_b00_ui.py -k malformed --tb=short`: four failures before the implementation, four passes after.
+- `.venv/bin/python -m pytest -q -p no:asyncio`: 118 passed, one existing Starlette deprecation warning.
+- `.venv/bin/mypy services/gauntlet/src services/gauntlet/tests/test_b00_ui.py`: 35 files clean.
+- `.venv/bin/ruff check --config 'src = ["services/gauntlet/src"]' services/gauntlet/src/gauntlet/integrations/fake/browser.py services/gauntlet/tests/test_b00_ui.py`: passed.
+- `.venv/bin/ruff format --check services/gauntlet/src/gauntlet/integrations/fake/browser.py services/gauntlet/tests/test_b00_ui.py`: both files already formatted.
+- `uv build --package gauntlet-control --out-dir /private/tmp/gauntlet-b-url-fix-dist`: wheel and sdist passed.
+
+This change exercises only the offline adapter; no additional live-browser or
+provider claim is made. Main-tree acceptance remains pending reviewed integration.
+
+## B-01 readiness and execution sequence (2026-10-14)
+
+**Owner:** B. **Phase:** P1 preparation only; P0 main acceptance remains open.
+**Goal:** execute the existing typed UI plan against isolated Daytona base/head
+previews using Anchor, retain independently verifiable click evidence, and
+compare head repetitions against base without revealing hidden truth.
+**Spec:** DEVELOPMENT_PLAN.md sections 5, 16 and 18; PHASES.md P1; SECURITY.md.
+**Architecture:** preserve SandboxProvider, BrowserProvider, UIWorker and the
+independent oracle. Provider SDK objects stay inside integrations. Artifact
+storage and evidence collection require the shared contract freeze below.
+
+### Current dependency evidence
+
+- C checkpoint #10 at `3cdeddd` now has green Python/dashboard CI after C changed
+  setup to `uv sync --frozen`. Earlier statements that #10 CI is red are obsolete.
+- `git merge-base --is-ancestor 1f33292 origin/feat/c-00-gate-checkpoint`
+  returned 1: the checkpoint still lacks the latest B fixes.
+- All 18 PRs remain open; this is not main-tree acceptance.
+- `.venv/bin/python scripts/probe_sdk_inventory.py` completed successfully:
+  Daytona, Anchor and Playwright are absent; all live outcomes remain not_run.
+- `EvidenceRef` already supplies artifact_id, sha256, media_type, created_at and
+  optional trace_id. `ports/storage.py` supplies only RunStore. No ArtifactStore
+  port exists in B's current checkout or A's latest inspected branch
+  `origin/feat/a-09-dependency-map`. Do not substitute a private public DTO.
+
+### Contract freeze request for A/C (posted as issue #22)
+
+1. Input: trusted collector bytes plus run/attempt/observation identity, media
+   type, source SHA and fixture checksum; planner and target content cannot
+   supply trusted artifact provenance.
+2. Output: the existing EvidenceRef plus a reviewed lookup/binding mechanism
+   allowing the verifier to retrieve and hash-check the immutable bytes.
+3. Invariant: evidence cannot be overwritten, rebound to another attempt, or
+   promoted to trusted evidence from page text; missing/corrupt bytes yield
+   inconclusive verification. Credentials and signed preview tokens are excluded.
+4. Example existing reference JSON: `{"schema_version":"1.0","artifact_id":"art-shot-001","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","media_type":"image/png","created_at":"2026-10-14T19:00:00Z","trace_id":null}`.
+5. Consumers: B's Anchor collector, RegisteredOracleRegistry and artifact store;
+   C's evidence API/dashboard. A owns the port/schema decision and golden; all
+   three owners review it before B implements that boundary.
+
+### Ordered deliverables and acceptance
+
+- [ ] **P0 integration:** C incorporates B through `1f33292`; owners complete
+  reviews; full tests/build run from main. Existing local combined evidence is
+  supplementary and does not check this box.
+- [ ] **B-01a provider smoke:** C approves and pins `daytona`, `anchorbrowser`
+  and `playwright` in the local dependency lock. Verify signatures against the
+  installed versions and official documentation before writing external calls.
+  With explicit spend authorization, use one synthetic registered fixture:
+  create one Daytona environment, verify revision/checksum/readiness, open its
+  approved preview with Anchor, capture one screenshot, then close the browser
+  and destroy the environment in bounded cleanup. Record genuine resource IDs,
+  sanitized results, versions, elapsed time and cleanup outcome here. Failure
+  stays environment_error; an offline response cannot satisfy this acceptance.
+- [ ] **B-01b sandbox adapter:** implement existing `SandboxProvider.create`,
+  `verify_fixture` and `destroy` under `integrations/daytona/`; tests under
+  `services/gauntlet/tests/test_b01_sandbox.py`. Tests cover unknown target/SHA,
+  fixture mismatch, readiness timeout, partial-create failure and idempotent
+  destruction. Only registered build commands execute; no planner-provided
+  shell. Base/head must use equivalent image and fixture state. VM fork remains
+  optional; independent sandbox creation must not be described as a fork.
+- [ ] **B-01c browser adapter:** implement existing `BrowserProvider` under
+  `integrations/anchor/`; tests under `services/gauntlet/tests/test_b01_browser.py`.
+  Translate typed steps only. Test viewport bounds, off-origin redirects,
+  popups/subresource egress, malformed URLs, timeout, cancellation, failed close
+  and repeated cleanup. Generic planner JavaScript/shell is never accepted.
+  Navigation routing alone does not establish DNS or network egress isolation.
+- [ ] **B-01d trusted evidence:** after the ArtifactStore/binding contract freezes,
+  collect bounding rectangles, elementFromPoint, actual click delivery and
+  screenshots with artifact hashes. Bind to the actual environment, revision,
+  checksum, observation and step. Test missing/corrupt artifacts, wrong source,
+  another attempt's evidence, absent click receipt and contradictory hit/receipt;
+  each must stay inconclusive. Do not weaken the existing oracle.
+- [ ] **P1 acceptance:** A freezes hypotheses from the actual diff and normal
+  manifest before actions; repeat selected head attempts, replay the same plan
+  on base, and persist evidence/events. Include an unrelated clean change and
+  legitimate workflow checks. C's fixture currently establishes DOM click
+  delivery, not completed order submission; C must supply the required real
+  workflow behavior before claiming that broader acceptance.
+
+### Required operator/project setup
+
+C-approved pinned dependencies and isolated `.venv`; approved synthetic target
+repository, actual base/head revisions and runtime fixture checksum; explicit
+`RUN_LIVE_INTEGRATIONS=1` and authorized provider spend; Daytona API key, endpoint,
+runtime class/quota and preview/network policy; Anchor key and an approved,
+reachable preview. Pass repository `ANCHOR_API_KEY` explicitly to the SDK rather
+than relying on its differently named default. Keep provider credentials in the
+control plane, outside app sandboxes and artifacts. A's planner/model access and
+C's evidence/API composition are additional dependencies for the complete P1
+loop. No credential values were read or changed during this readiness check.
+
+### Validation commands after each approved implementation slice
+
+Use the approved worktree environment (`uv sync --frozen` once C's lock is in the
+checkout), then `.venv/bin/python -m pytest -q`,
+`.venv/bin/mypy services/gauntlet/src`, and
+`uv build --package gauntlet-control --out-dir /tmp/gauntlet-b01-dist`.
+Run the changed-path Ruff checks and the real provider smoke appropriate to that
+slice. Require full main-tree tests/build after reviewed integration. A plan or
+an SDK inventory is not evidence that these future commands passed.
+
+### Executable local UI preflight
+
+Run `.venv/bin/python scripts/probe_sdk_inventory.py --ui-preflight` before
+attempting B-01 live setup. It reads only installed distribution metadata and
+process environment, never provider APIs or dotenv files. It prints booleans
+for configuration presence, installed versions, and `status: not_tested`.
+Exit 2 means a local prerequisite is missing; exit 0 means only that local
+prerequisites are present, not that credentials work or live execution is
+approved. `--published` and `--ui-preflight` are mutually exclusive.
+
+Required process environment: `RUN_LIVE_INTEGRATIONS=1`, non-placeholder
+`DAYTONA_API_KEY`, non-placeholder `ANCHOR_API_KEY`, and
+`GAUNTLET_ALLOWED_TARGET_IDS` containing the exact `cartwheel-fixture` ID.
+Use the project's trusted environment-loading mechanism or export the variables
+in the launching shell; merely placing them in `.env.local` does not load them
+for this script. Never paste keys into a PR, command log or chat. C must pin
+Daytona, Anchor and Playwright in the approved local dependency mechanism. The
+runtime, quota, preview, fixture and review requirements above still apply.
+
+Actual run in B's worktree returned exit 2: all three SDKs, both keys, live
+opt-in and target configuration are absent. No keys were printed or network
+requests made. This reports unavailable local setup, not a provider outage.
+
+Verification:
+
+- Seven preflight tests failed before implementation and passed afterward.
+- `.venv/bin/python -m pytest -q -p no:asyncio`: 125 passed, one existing Starlette warning.
+- `.venv/bin/mypy scripts/probe_sdk_inventory.py services/gauntlet/tests/test_b01_preflight.py`: two files clean.
+- `.venv/bin/ruff check scripts/probe_sdk_inventory.py services/gauntlet/tests/test_b01_preflight.py`: passed.
+- `uv build --package gauntlet-control --out-dir /private/tmp/gauntlet-preflight-dist`: wheel and sdist passed.
+
+No headless run is needed for this metadata/configuration probe; previous
+headless evidence applies only to the recorded fixtures/checkpoint. Integrated
+main acceptance and genuine provider smoke remain outstanding.
+
+## Cross-owner review and SDK signature check (2026-10-14)
+
+B reviewed A-00 PR #1 (approved), A-03 PR #6 (approved), and A-04 PR #9
+(approved). A-02 PR #8 has a B change request: its route-prefix check accepts
+`/checkout/%2e%2e/admin` under `/checkout`, while a browser URL parser resolves
+it to `/admin`. A needs to reject or canonicalize encoded dot/path segments
+before accepting a model-proposed route. B's eventual live browser adapter must
+also verify the final URL after redirects. These reviews do not merge any PR.
+
+B approved C's optional SDK pin PR #21 for dependency installation and signature
+checking. In a detached, worktree-local Python 3.12 environment,
+`uv sync --frozen --group live-providers` resolved and installed Daytona 0.224.1,
+Anchor 1.0.1 and Playwright 1.64.0. The branch's 85 Python tests passed. The
+installed methods report:
+
+- `AsyncDaytona(DaytonaConfig(...))`; `AsyncDaytona.create(params, timeout=60)`
+  returns `AsyncSandbox`; `AsyncDaytona.delete(sandbox, timeout=60, wait=False)`.
+- `DaytonaConfig` accepts explicit `api_key`, `api_url`, `server_url` and `target`.
+  `AsyncSandbox.get_preview_link(port, request_timeout=None)` is present.
+- `AsyncAnchorbrowser(api_key=..., timeout=..., max_retries=0)` accepts the
+  repository's key explicitly. Its `browser.create()` and `browser.connect(id)`
+  are asynchronous context managers, not direct browser instances.
+- `async_playwright()` is available; no browser binary was downloaded here.
+
+These are inspected signatures, not a successful service call. No keys were read
+and no provider resource was created. A/C still need to review the shared
+root dependency change and resolve the stacked lockfiles.
+
+A temporary detached checkout combined B `03314ae`, A through A-09b
+`2df2193`, and C's P0 checkpoint `7c8bcc6` with no merge conflicts. With
+`uv sync --frozen` in that checkout:
+
+- `.venv/bin/python -m pytest -q -p no:asyncio`: 327 passed, one Starlette
+  deprecation warning.
+- `.venv/bin/mypy services/gauntlet/src`: 78 source files clean.
+- `.venv/bin/python scripts/export_schemas.py` followed by
+  `git diff --exit-code packages/contracts/jsonschema`: 24 schemas, no drift.
+- `uv build --package gauntlet-control --out-dir /private/tmp/gauntlet-abc-stack-dist`:
+  wheel and source distribution passed.
+- `corepack pnpm --filter @gauntlet/dashboard test`: 4 passed.
+- `corepack pnpm --filter @gauntlet/dashboard build`: passed.
+- `.venv/bin/ruff check . --output-format concise`: 16 import-order errors in
+  A-owned tests under C's root `src` setting. B's tests are clean; A/C must
+  resolve the whole-tree lint gate during integration.
+
+The first exploratory schema export in that temporary checkout used B's
+editable interpreter without its checkout source on `PYTHONPATH`, producing
+three local schema diffs. After restoring only those temporary generated files
+and using the checkout-local `.venv`, the 24-schema export was clean. No shared
+branch or main file was changed by the compatibility run.
+
+P1 artifact binding request is now tracked at https://github.com/rudraasakariya/gauntlet/issues/22; no shared port/schema was changed on B's branch.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseFakeRun } from "./api";
+import { parseFakeRun, parseOfflineGate } from "./api";
 
 const sample = {
   label: "FAKE RUN: x",
@@ -15,5 +15,10 @@ describe("parseFakeRun", () => {
   });
   it("rejects a payload missing the plan", () => {
     expect(() => parseFakeRun({ ...sample, plan: undefined })).toThrow();
+  });
+});
+describe("parseOfflineGate", () => {
+  it("rejects a payload without a verdict", () => {
+    expect(() => parseOfflineGate({ label: "x", events: [] })).toThrow();
   });
 });
