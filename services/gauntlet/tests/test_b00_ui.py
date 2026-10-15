@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from gauntlet.contracts import ActionRecord, AttackSpec, Observation
+from gauntlet.contracts import ActionRecord, AttackSpec, EvidenceSubject, Observation
 from gauntlet.contracts.gate import ActionStep, ChatStep, NavigateStep
 from gauntlet.integrations.fake.browser import BrowserRecording, FakeBrowserProvider
 from gauntlet.integrations.fake.sandbox import FakeSandboxProvider, Fixture
@@ -35,6 +35,20 @@ def environment() -> EnvironmentHandle:
         plan().fixture_id,
         obs.fixture_checksum,
         "https://fake-preview.invalid",
+    )
+
+
+def subject(env: EnvironmentHandle | None = None) -> EvidenceSubject:
+    env = env or environment()
+    return EvidenceSubject(
+        run_id="run-ui-001",
+        attempt_id="attempt-ui-001",
+        observation_id="obs-ui-bound-001",
+        environment_id=env.environment_id,
+        source_sha=env.source_sha,
+        fixture_checksum=env.fixture_checksum,
+        step_index=None,
+        collector="browser_collector",
     )
 
 
@@ -82,7 +96,7 @@ def test_planner_sees_read_only_descriptor_without_evidence_or_predicate() -> No
 def test_browser_executes_only_recorded_steps_and_closes_idempotently() -> None:
     async def scenario() -> None:
         browser = FakeBrowserProvider((recording(),))
-        session = await browser.open_session(environment())
+        session = await browser.open_session(environment(), subject())
         for index, step in enumerate(plan().steps):
             result = await browser.perform(session, index, step)
             assert result == observation().action_log[index]
@@ -98,8 +112,8 @@ def test_browser_rejects_different_fixture_and_unrecorded_action() -> None:
     async def scenario() -> None:
         browser = FakeBrowserProvider((recording(),))
         with pytest.raises(EnvironmentUnavailableError):
-            await browser.open_session(replace(environment(), fixture_checksum="f" * 64))
-        session = await browser.open_session(environment())
+            await browser.open_session(replace(environment(), fixture_checksum="f" * 64), subject())
+        session = await browser.open_session(environment(), subject())
         denied = await browser.perform(
             session, 0, ChatStep(agent_id="assistant", actor_id="synthetic-owner", message="refund")
         )
@@ -108,6 +122,16 @@ def test_browser_rejects_different_fixture_and_unrecorded_action() -> None:
         changed = await browser.perform(session, 0, NavigateStep(path="/different"))
         assert changed.outcome == "blocked"
         await browser.close_session(session)
+
+    asyncio.run(scenario())
+
+
+def test_browser_port_rejects_subject_for_another_attempt_environment() -> None:
+    async def scenario() -> None:
+        browser = FakeBrowserProvider((recording(),))
+        invalid = subject().model_copy(update={"environment_id": "env-other"})
+        with pytest.raises(EnvironmentUnavailableError):
+            await browser.open_session(environment(), invalid)
 
     asyncio.run(scenario())
 
@@ -125,7 +149,7 @@ def test_off_origin_redirect_is_blocked_without_using_recorded_success(url: str)
         browser = FakeBrowserProvider(
             (replace(recording(), redirects=(url, None, None, None, None)),)
         )
-        session = await browser.open_session(environment())
+        session = await browser.open_session(environment(), subject())
         result = await browser.perform(session, 0, plan().steps[0])
         assert result.outcome == "blocked"
         assert result.evidence_ids == ()
@@ -137,7 +161,7 @@ def test_off_origin_redirect_is_blocked_without_using_recorded_success(url: str)
 def test_worker_produces_golden_action_log_with_environment_binding() -> None:
     async def scenario() -> None:
         browser = FakeBrowserProvider((recording(),))
-        result = await UIWorker(browser, registry()).run(plan(), environment())
+        result = await UIWorker(browser, registry()).run(plan(), environment(), subject())
         assert result.status == "completed"
         assert result.action_log == observation().action_log
         assert result.evidence_ids == ("art-dom-001", "art-shot-001", "art-shot-002")
@@ -147,12 +171,63 @@ def test_worker_produces_golden_action_log_with_environment_binding() -> None:
     asyncio.run(scenario())
 
 
+def test_worker_allocates_observation_identity_before_opening_browser() -> None:
+    class CapturingBrowser(FakeBrowserProvider):
+        opened_subject: EvidenceSubject | None = None
+
+        async def open_session(
+            self, environment: EnvironmentHandle, capture_subject: EvidenceSubject
+        ) -> str:
+            self.opened_subject = capture_subject
+            return await super().open_session(environment, capture_subject)
+
+    async def scenario() -> None:
+        browser = CapturingBrowser((recording(),))
+        capture_subject = subject()
+        result = await UIWorker(browser, registry()).run(plan(), environment(), capture_subject)
+        assert browser.opened_subject == capture_subject
+        assert result.observation_id == capture_subject.observation_id
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("environment_id", "env-other"),
+        ("source_sha", "f" * 40),
+        ("fixture_checksum", "f" * 64),
+        ("collector", "replay_collector"),
+        ("step_index", 0),
+    ],
+)
+def test_worker_rejects_mismatched_capture_subject_before_open(field: str, value: object) -> None:
+    class CountingBrowser(FakeBrowserProvider):
+        opens = 0
+
+        async def open_session(
+            self, environment: EnvironmentHandle, capture_subject: EvidenceSubject
+        ) -> str:
+            self.opens += 1
+            return await super().open_session(environment, capture_subject)
+
+    async def scenario() -> None:
+        browser = CountingBrowser((recording(),))
+        invalid = EvidenceSubject.model_validate({**subject().model_dump(), field: value})
+        result = await UIWorker(browser, registry()).run(plan(), environment(), invalid)
+        assert result.status == "environment_error"
+        assert result.action_log == ()
+        assert browser.opens == 0
+
+    asyncio.run(scenario())
+
+
 def test_worker_rejects_unknown_oracle_before_browser_open() -> None:
     async def scenario() -> None:
         browser = FakeBrowserProvider(())
         bad = plan().model_copy(update={"oracle_ids": ("untrusted.model_assertion",)})
         with pytest.raises(UnknownOracleError):
-            await UIWorker(browser, registry()).run(bad, environment())
+            await UIWorker(browser, registry()).run(bad, environment(), subject())
 
     asyncio.run(scenario())
 
@@ -179,7 +254,9 @@ class InterruptibleBrowser(FakeBrowserProvider):
 def test_cancellation_closes_browser_and_propagates() -> None:
     async def scenario() -> None:
         browser = InterruptibleBrowser()
-        task = asyncio.create_task(UIWorker(browser, registry()).run(plan(), environment()))
+        task = asyncio.create_task(
+            UIWorker(browser, registry()).run(plan(), environment(), subject())
+        )
         await browser.started.wait()
         task.cancel()
         with pytest.raises(asyncio.CancelledError):
@@ -193,7 +270,7 @@ def test_timeout_closes_browser_and_reports_budget_exceeded() -> None:
     async def scenario() -> None:
         browser = InterruptibleBrowser()
         spec = plan().model_copy(update={"max_runtime_seconds": 1})
-        result = await UIWorker(browser, registry()).run(spec, environment())
+        result = await UIWorker(browser, registry()).run(spec, environment(), subject())
         assert result.status == "budget_exceeded"
         assert browser.closed
 
@@ -203,7 +280,7 @@ def test_timeout_closes_browser_and_reports_budget_exceeded() -> None:
 def test_environment_failure_is_not_a_successful_observation() -> None:
     async def scenario() -> None:
         browser = InterruptibleBrowser(failure=True)
-        result = await UIWorker(browser, registry()).run(plan(), environment())
+        result = await UIWorker(browser, registry()).run(plan(), environment(), subject())
         assert result.status == "environment_error"
         assert browser.closed
         assert registry().evaluate("ui.primary_action_reachable", result).outcome == "inconclusive"
@@ -220,7 +297,7 @@ def test_hung_cleanup_is_bounded_and_reports_environment_error() -> None:
         browser = HungCleanupBrowser((recording(),))
         spec = plan().model_copy(update={"max_runtime_seconds": 1})
         async with asyncio.timeout(2):
-            result = await UIWorker(browser, registry()).run(spec, environment())
+            result = await UIWorker(browser, registry()).run(spec, environment(), subject())
         assert result.status == "environment_error"
 
     asyncio.run(scenario())
@@ -299,9 +376,9 @@ def test_malformed_preview_origin_raises_typed_environment_error(url: str) -> No
     async def scenario() -> None:
         browser = FakeBrowserProvider((recording(),))
         with pytest.raises(EnvironmentUnavailableError):
-            await browser.open_session(replace(environment(), preview_origin=url))
+            await browser.open_session(replace(environment(), preview_origin=url), subject())
         result = await UIWorker(browser, registry()).run(
-            plan(), replace(environment(), preview_origin=url)
+            plan(), replace(environment(), preview_origin=url), subject()
         )
         assert result.status == "environment_error"
         assert result.action_log == ()
@@ -316,7 +393,7 @@ def test_malformed_redirect_aborts_worker_without_recorded_evidence(url: str) ->
         browser = FakeBrowserProvider(
             (replace(recording(), redirects=(url, None, None, None, None)),)
         )
-        result = await UIWorker(browser, registry()).run(plan(), environment())
+        result = await UIWorker(browser, registry()).run(plan(), environment(), subject())
         assert result.status == "aborted"
         assert len(result.action_log) == 1
         assert result.action_log[0].outcome == "blocked"
@@ -336,7 +413,7 @@ def test_valid_same_origin_redirect_preserves_recorded_action() -> None:
                 ),
             )
         )
-        result = await UIWorker(browser, registry()).run(plan(), environment())
+        result = await UIWorker(browser, registry()).run(plan(), environment(), subject())
         assert result.status == "completed"
         assert result.action_log == observation().action_log
 

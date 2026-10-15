@@ -1,10 +1,9 @@
 """Bounded typed UI execution through the browser port."""
 
 import asyncio
-from uuid import uuid4
 
-from gauntlet.contracts import ActionRecord, AttackSpec, Observation, WorkerKind
-from gauntlet.ports.browser import BrowserProvider
+from gauntlet.contracts import ActionRecord, AttackSpec, EvidenceSubject, Observation, WorkerKind
+from gauntlet.ports.browser import BrowserProvider, is_browser_subject_for
 from gauntlet.ports.errors import EnvironmentUnavailableError, UnknownOracleError
 from gauntlet.ports.oracle import TrustedOracleRegistry
 from gauntlet.ports.sandbox import EnvironmentHandle
@@ -19,7 +18,9 @@ class UIWorker:
     def kind(self) -> WorkerKind:
         return "ui"
 
-    async def run(self, spec: AttackSpec, environment: EnvironmentHandle) -> Observation:
+    async def run(
+        self, spec: AttackSpec, environment: EnvironmentHandle, subject: EvidenceSubject
+    ) -> Observation:
         for oracle_id in spec.oracle_ids:
             if not self._oracles.is_registered(oracle_id):
                 raise UnknownOracleError("plan references an unregistered oracle")
@@ -30,6 +31,7 @@ class UIWorker:
             spec.worker_kind != self.kind
             or spec.target_id != environment.target_id
             or spec.fixture_id != environment.fixture_id
+            or not is_browser_subject_for(environment, subject)
         ):
             status = "environment_error"
         elif any(step.action in {"chat", "test_api"} for step in spec.steps):
@@ -37,7 +39,7 @@ class UIWorker:
         else:
             try:
                 async with asyncio.timeout(spec.max_runtime_seconds):
-                    session = await self._browser.open_session(environment)
+                    session = await self._browser.open_session(environment, subject)
                     for index, step in enumerate(spec.steps):
                         if index >= spec.max_actions:
                             status = "budget_exceeded"
@@ -66,7 +68,7 @@ class UIWorker:
                         status = "environment_error"
         return Observation.model_validate(
             {
-                "observation_id": f"obs-{uuid4().hex}",
+                "observation_id": subject.observation_id,
                 "attack_id": spec.attack_id,
                 "environment_id": environment.environment_id,
                 "source_sha": environment.source_sha,
