@@ -40,13 +40,13 @@ The classifiers in `domain/verdicts.py` produce these outcomes: `classify_gate` 
 
 ## Browser evidence identity
 
-The trusted run coordinator allocates an `EvidenceSubject` before a UI attempt
-starts. It supplies the same subject to `UIWorker.run` and
+The trusted caller allocates an `EvidenceSubject` before a UI attempt starts.
+It supplies the same subject to `UIWorker.run` and
 `BrowserProvider.open_session`; page content and planner output never choose its
 IDs. The subject has a browser collector, no step index, and exact environment
 ID, source SHA and fixture checksum. The worker refuses a mismatch before
 opening a browser and returns an `Observation` with the preallocated
-`observation_id`. A browser collector derives a step-specific subject only for
-the action it records and writes bytes through `ArtifactStore`; the verifier
-checks the stored binding. The offline fake carries this subject but its
-recorded evidence IDs are synthetic and do not prove a live capture.
+`observation_id`. A future browser collector must derive a step-specific
+subject only for the action it records and write bytes through `ArtifactStore`;
+the verifier checks the stored binding. The offline fake carries this subject,
+but its recorded evidence IDs are synthetic and do not prove a live capture.
