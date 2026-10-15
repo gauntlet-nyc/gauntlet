@@ -102,6 +102,38 @@ No Daytona or Anchor resource was used. Re-run the probe with
 --origin http://127.0.0.1:3100 --chrome <local-chrome-path>
 --fixture-repo <generated-fixture-checkout> --output <local-output-dir>`.
 
+### B-01c3 local browser port (2026-10-15)
+
+`LocalBrowserProvider` implements the frozen `BrowserProvider` port around an
+injected Playwright browser and the B-01c2 collector. It accepts only an exact
+loopback HTTP preview origin, opens an isolated context with service workers
+and downloads disabled, aborts cross-origin requests and all redirects,
+closes popups, and
+translates the typed UI steps. A prohibited key chord or out-of-order step is
+blocked; context cleanup is idempotent. The adapter makes no Daytona or Anchor
+call. Context routing is not a DNS/network egress boundary for a cloud run.
+Playwright only routes the first request in a redirect chain, so this adapter
+fetches with `max_redirects=0`, denies 3xx responses, and fulfills only the
+non-redirect response. The Chrome scope probe recorded blocked redirect,
+subresource and popup attempts with zero requests reaching a second loopback
+server: `uv run --frozen --group live-providers python
+scripts/probe_local_browser_scope.py --chrome <local-chrome-path>`.
+
+With Playwright 1.64.0 and Google Chrome 155.0.8059.41, the local port probe
+ran navigate, resize, inspect, click and capture on the generated Cartwheel
+base/head commits at 375×812. Base outcomes were five `ok` records; head
+outcomes were `ok`, `ok`, `ok`, `blocked`, `ok`. Both runs verified four stored
+artifacts against their exact step subjects. The base final screenshot shows
+an order receipt; the head final screenshot shows Help over the CTA. Reports
+and screenshots are `/tmp/gauntlet-b01c3-{base,head}-final/{report.json,final.png}`.
+The checkout SHA is verified, while the running server source is operator
+asserted. No hard-oracle or provider acceptance checkbox is closed. Repeat
+with `uv sync --frozen --group live-providers`, the built synthetic fixture on
+port 3100, and `uv run --frozen --group live-providers python
+scripts/probe_local_browser_provider.py {base|head} --origin
+http://127.0.0.1:3100 --chrome <local-chrome-path> --fixture-repo
+<generated-fixture-checkout> --output <local-output-dir>`.
+
 ### Cartwheel local checkout workflow (2026-10-15)
 
 C's fixture now has a synthetic, in-process order endpoint. A successful
