@@ -113,6 +113,50 @@ execution. Offline tests use the fake sandbox only; no Daytona resource was
 created. Server revision attestation, snapshot registration, signed previews,
 Anchor sessions and genuine provider cleanup still require live validation.
 
+### B-01g provider-smoke runner preparation (2026-10-15)
+
+`scripts/probe_b01_provider_smoke.py` now has a credential-free preflight and
+an explicit `--execute --authorize-spend` path. The latter composes the pinned
+Daytona/Anchor adapters with B's paired environment manager and a fixed
+`/checkout` navigate-and-capture probe. It verifies each stored PNG hash,
+media type and exact evidence subject, then reports sanitized environment and
+artifact IDs plus pending cleanup IDs. It never logs API keys, proxy password or
+signed preview origins. `gate_status` remains `not_tested` even if this narrow
+provider connectivity smoke passes; no click oracle, server-source attestation
+or proxy-policy proof is included. No provider call has yet been run.
+
+The operator registration is a JSON file outside Git containing exactly the
+fields of `RegisteredTarget`: `target_id`, `fixture_id`, `fixture_checksum`,
+`fixture_state_digest`, `fixture_state_path`, `repo_path`, `preview_port`,
+`preview_domain_suffix`, `ready_path` and `snapshots` (two entries with
+`source_sha`, `snapshot`, `image_digest`). The two SHAs, target, fixture ID and
+checksum must equal `apps/cartwheel/fixture-manifest.v1.json`; both snapshots
+must declare the same pinned image digest. The signed preview must serve the
+registered readiness path. This file must contain no credentials.
+
+Before a paid run, provision those base/head Daytona snapshots and the exact
+fixture-state file in each; configure a reachable Anchor custom proxy that
+enforces the signed preview origin; set `RUN_LIVE_INTEGRATIONS=1`,
+`GAUNTLET_ALLOWED_TARGET_IDS=cartwheel-fixture`, `DAYTONA_API_KEY`, the HTTPS
+`DAYTONA_API_URL`, `DAYTONA_TARGET`, `ANCHOR_API_KEY`, `ANCHOR_PROXY_SERVER`,
+`ANCHOR_PROXY_USERNAME` and `ANCHOR_PROXY_PASSWORD` in the process environment.
+`DAYTONA_TARGET` and the three `ANCHOR_PROXY_*` variables are not in
+`.env.example` and must stay local. The command is
+`uv run --frozen --no-sync --group live-providers python scripts/probe_b01_provider_smoke.py --registration <local-json> --output <local-dir> --execute --authorize-spend`.
+Without `--execute`, the command only prints missing prerequisite names and
+pinned SDK versions. The `--authorize-spend` flag is an operator opt-in, not a
+cost limiter. A full P1 Gate run also needs server revision attestation,
+verified egress policy, a genuinely model-selected frozen plan, click evidence,
+and base/head attribution.
+
+The local preflight with `--execute` and no registration or credentials exited
+2 with `not_tested` and only missing prerequisite names; it created no provider
+resource. The new port composition passed 8 focused offline tests, and an
+independent headless Chrome loopback probe produced two distinct PNG artifacts
+for base/head through the same capture function. The Chrome probe used fake
+sandboxes and a local static page, so it does not establish Daytona/Anchor
+connectivity or Cartwheel behavior.
+
 ### B-01c1 browser evidence identity (2026-10-15)
 
 The worker now requires a trusted, preallocated `EvidenceSubject` before it
