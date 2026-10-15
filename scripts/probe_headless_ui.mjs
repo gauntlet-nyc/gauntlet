@@ -87,19 +87,44 @@ try {
         return { x, y, rect: rect.toJSON(), hitTarget: hit?.closest('[data-testid]')?.dataset.testid,
           scrollX, scrollY, viewport: { width: innerWidth, height: innerHeight } };
       })()`);
+      if (width === 1280 && before.hitTarget !== 'checkout-primary-action') {
+        throw new Error('Desktop checkout action is not reachable');
+      }
       await call('Input.dispatchMouseEvent', { type: 'mousePressed', x: before.x, y: before.y, button: 'left', clickCount: 1 });
       await call('Input.dispatchMouseEvent', { type: 'mouseReleased', x: before.x, y: before.y, button: 'left', clickCount: 1 });
       const clicks = await evaluate('window.__probeClicks');
       if (!clicks.length || !clicks.every(click => click.trusted)) throw new Error('No trusted click recorded');
+      let orderReceipt = null;
+      if (before.hitTarget === 'checkout-primary-action') {
+        for (let attempt = 0; attempt < 100; attempt++) {
+          orderReceipt = await evaluate(`document.querySelector('[data-testid="order-receipt"]')?.getAttribute('data-order-id') ?? null`);
+          if (orderReceipt) break;
+          await delay(100);
+        }
+        if (!orderReceipt) throw new Error('Checkout click did not produce a server order receipt');
+        const receiptPath = `/api/orders/${encodeURIComponent(orderReceipt)}`;
+        const persisted = await evaluate(`(async () => {
+          const response = await fetch(${JSON.stringify(receiptPath)});
+          return response.ok ? await response.json() : null;
+        })()`);
+        if (persisted?.order_id !== orderReceipt || persisted?.item_id !== 'demo-wheel') {
+          throw new Error('Order receipt was not retrievable from the synthetic server');
+        }
+      } else {
+        await delay(300);
+        const unexpected = await evaluate(`document.querySelector('[data-testid="order-receipt"]')?.getAttribute('data-order-id') ?? null`);
+        if (unexpected) throw new Error('An intercepted click produced an order receipt');
+      }
       const image = await call('Page.captureScreenshot', { format: 'png' });
       const filename = `${width}-${repeat}.png`;
       await writeFile(join(output, filename), Buffer.from(image.data, 'base64'));
-      measurements.push({ operatorAssertedSourceSha: sourceSha, width, repeat, ...before, clicks, screenshot: filename });
+      measurements.push({ operatorAssertedSourceSha: sourceSha, width, repeat, ...before, clicks,
+        orderReceipt, screenshot: filename });
     }
   }
   const report = { mode: 'local_headless_diagnostic', operatorAssertedSourceSha: sourceSha, browser: version.product,
     limitations: ['Running server revision is operator asserted, not verified by this probe',
-      'No Daytona/Anchor integration', 'DOM click receipt only; fixture has no order handler'], measurements };
+      'No Daytona/Anchor integration', 'Synthetic orders live only in this server process; no payment or durable database'], measurements };
   await writeFile(join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify(report, null, 2));
 } finally {

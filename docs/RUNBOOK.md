@@ -27,6 +27,12 @@ dependency/lock changes. `scripts/probe_sdk_inventory.py` reports installed and
 optional published versions without calling provider services or reading keys.
 For local headless diagnostics, Node 22+ and an existing Chrome executable are
 required; see `docs/SDK_VALIDATION.md`. This probe adds no npm dependency.
+The generated Cartwheel fixture is a separate project without a committed Node
+lockfile or `packageManager` field. In that generated temporary checkout, run
+`npm install --no-package-lock --ignore-scripts`, then `npm run build` and
+`./node_modules/.bin/next start -p 3100` for the local probe. Keep these
+installed packages and build outputs outside the tracked fixture templates;
+Corepack may otherwise try to add its own package-manager version there.
 
 ## Offline check (implemented scaffold)
 

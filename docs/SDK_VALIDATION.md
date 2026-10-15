@@ -59,6 +59,22 @@ filesystem adapter, not an Anchor collector or a live provider smoke. The
 B-01d checkbox stays open until browser geometry, click receipts and screenshots
 are captured and bound to real base/head environments.
 
+### Cartwheel local checkout workflow (2026-10-15)
+
+C's fixture now has a synthetic, in-process order endpoint. A successful
+Checkout click produces a server receipt retrievable by ID; invalid item input
+returns 400 and an unknown receipt returns 404. The deterministic rebuilt
+base/head SHAs are `2265fb61e3fcd71c2def54f739adcf5adf2ade99` and
+`ab4f82048a9e673dd0bf1150bbebbbb4cdbc1f68`; the template checksum is
+`99871717d61ee4d0b1bfd105b983bee4330ea425d92c537d2acb7022b6529b59`.
+Chrome 155 local headless runs at 375, 768 and 1280 px, twice per width, show
+base Checkout receipts at all widths; head Help receives the mobile/tablet
+clicks without an order, while desktop Checkout creates retrievable receipts.
+The probe records DOM hit target, trusted click recipient, screenshots and
+receipt IDs. Source SHA is operator asserted, orders are process-local, and
+no Daytona or Anchor resource was used. These results are local diagnostics,
+not P1 hard-oracle confirmation.
+
 ## 2026-10-14 / B-00 / offline implementation and documentation review
 
 The B branch consumes A-00 through `8396d8e` (including oracle descriptors).
