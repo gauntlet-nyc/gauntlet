@@ -29,7 +29,9 @@ def checkout(tmp_path: Path) -> tuple[Path, dict[str, str]]:
     return repo, refs
 
 
-def load_config(repo: Path, *, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+def load_config(
+    repo: Path, *, env: dict[str, str] | None = None
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [
             "node",
