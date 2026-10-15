@@ -8,6 +8,7 @@ from typing import Any
 
 from conftest import DemoRepo
 from fakes import FakeOracleRegistry, InMemoryRunStore, ScriptedModelGateway
+
 from gauntlet.analysis import GitRepositoryInspector
 from gauntlet.application.gate import PlanChangeDependencies, PlanChangeUseCase
 from gauntlet.contracts import ChangeImpactMap, ChangeRequest
