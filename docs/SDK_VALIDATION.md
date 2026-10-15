@@ -77,6 +77,31 @@ source revision is still operator asserted, and no Daytona/Anchor session or
 independent diff-driven plan was used. These verdicts do not close P1 live
 acceptance or establish a confirmed Gate regression.
 
+### B-01 P1 local frozen-plan diagnostic (2026-10-15)
+
+The B-owned `probe_p1_local_gate.py` composes A's real `GitRepositoryInspector`,
+`AttackPlanner`, validator and `PlanChangeUseCase` with B's typed `UIWorker`,
+local Playwright browser, stored evidence verifier and hard click oracle. A
+scripted model response proposes the same narrow Checkout probe for a cited UI
+surface; the validator accepts or rejects it, and `plan_frozen` is persisted
+before browser execution. This measures the integration path, not model
+hypothesis quality. No Bedrock, Daytona or Anchor call occurs.
+
+The generated Cartwheel base (`2265fb61`) and Help-button head (`ab4f8204`)
+used the same frozen plan hash
+`ad172235a3be83ae1238b944fbf4cdaca7ed52f4a77a9f37e24471e020661cc2`.
+Two independent Chrome attempts passed on base; two failed on head. A separate
+synthetic clean commit (`7af5232f`) changed only product-page copy; its own
+diff-cited UI plan produced two passes. Reports with observation and artifact
+IDs are `/tmp/gauntlet-b01e-{base,head,clean}/report.json`; a checked
+cross-report summary is `/tmp/gauntlet-b01e-summary.json`. The clean control
+checkout is `/tmp/gauntlet-clean-fixture`.
+
+Each checkout SHA was verified before its local Next.js build and browser run.
+The server's running source remains operator asserted; the planner response is
+scripted, not an independent model hypothesis, and cloud isolation was not
+tested. The full P1 acceptance gate and confirmed regression status remain open.
+
 ### B-01c1 browser evidence identity (2026-10-15)
 
 The worker now requires a trusted, preallocated `EvidenceSubject` before it
