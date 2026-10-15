@@ -1,6 +1,7 @@
 import importlib.util
 import json
 import shutil
+from importlib import resources
 from pathlib import Path
 from types import ModuleType
 
@@ -11,6 +12,13 @@ from gauntlet.api.main import app
 
 ROOT = Path(__file__).resolve().parents[3]
 MANIFEST = ROOT / "apps/cartwheel/fixture-manifest.v1.json"
+
+
+def test_packaged_manifest_matches_registered_fixture() -> None:
+    packaged = resources.files("gauntlet.api").joinpath(
+        "fixtures", "cartwheel-fixture-manifest.v1.json"
+    )
+    assert packaged.read_bytes() == MANIFEST.read_bytes()
 
 
 def _builder() -> ModuleType:

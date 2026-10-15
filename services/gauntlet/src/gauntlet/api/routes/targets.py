@@ -1,7 +1,7 @@
 """Cartwheel target fixture routes. Reads the generated manifest; runs nothing."""
 
 import json
-from pathlib import Path
+from importlib import resources
 
 from fastapi import APIRouter, HTTPException
 
@@ -9,7 +9,9 @@ from gauntlet.contracts import ChangeRequest
 
 router = APIRouter(prefix="/targets")
 
-MANIFEST = Path(__file__).resolve().parents[6] / "apps/cartwheel/fixture-manifest.v1.json"
+MANIFEST = resources.files("gauntlet.api").joinpath(
+    "fixtures", "cartwheel-fixture-manifest.v1.json"
+)
 FEATURE_INTENT = "Add a floating Help button"
 
 
