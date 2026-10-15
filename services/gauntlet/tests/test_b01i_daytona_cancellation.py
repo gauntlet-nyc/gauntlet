@@ -185,3 +185,34 @@ def test_retry_does_not_double_delete_while_timed_out_cleanup_is_running() -> No
         assert adapter.pending_cleanup_ids == ()
 
     asyncio.run(scenario())
+
+
+def test_cancelled_destroy_of_ready_sandbox_remains_retryable() -> None:
+    class ReadySandbox(Sandbox):
+        async def checkout_sha(self, repo_path: str) -> str:
+            return SHA
+
+    async def scenario() -> None:
+        runtime = Runtime()
+        runtime.sandbox = ReadySandbox()
+        adapter = provider(runtime)
+        environment = await adapter.create(
+            target_id="fixture",
+            source_sha=SHA,
+            fixture_id="baseline",
+            mode="gate_compare",
+        )
+        closing = asyncio.create_task(adapter.destroy(environment.environment_id))
+        await runtime.deleting.wait()
+        closing.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await closing
+        assert adapter.pending_cleanup_ids == (environment.environment_id,)
+        assert not await adapter.verify_fixture(environment.environment_id, "c" * 64)
+        runtime.finish_delete.set()
+        await adapter.destroy(environment.environment_id)
+        assert runtime.delete_calls == 2
+        assert runtime.deleted
+        assert adapter.pending_cleanup_ids == ()
+
+    asyncio.run(scenario())
