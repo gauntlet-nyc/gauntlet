@@ -25,6 +25,23 @@ INSTRUCTIONS = ROOT / "docs/prompts/p1-ui-planner.md"
 PINNED_BOTO3 = "1.43.114"
 
 
+def _owns_reservation(path: Path, descriptor: int) -> bool:
+    try:
+        current = os.stat(path, follow_symlinks=False)
+        reserved = os.fstat(descriptor)
+    except OSError:
+        return False
+    return (current.st_dev, current.st_ino) == (reserved.st_dev, reserved.st_ino)
+
+
+def _release_reservation(path: Path, descriptor: int, *, published: bool) -> None:
+    try:
+        if not published and _owns_reservation(path, descriptor):
+            path.unlink()
+    finally:
+        os.close(descriptor)
+
+
 async def freeze_live_plan(
     repository: Path, change: ChangeRequest, gateway: ModelGateway, instructions: str
 ) -> tuple[FrozenPlan, tuple[RunEvent, ...]]:
@@ -72,7 +89,7 @@ def main(argv: list[str] | None = None) -> int:
         "--model-id": bool(args.model_id),
         "--region": bool(args.region),
         "--output": args.output is not None,
-        "unused --output": args.output is None or not args.output.exists(),
+        "unused --output": args.output is None or not os.path.lexists(args.output),
         f"boto3=={PINNED_BOTO3}": sdk_version == PINNED_BOTO3,
     }
     missing = [name for name, ready in required.items() if not ready]
@@ -90,10 +107,26 @@ def main(argv: list[str] | None = None) -> int:
     assert args.repository is not None
     assert args.change_request is not None
     assert args.output is not None
+    try:
+        change = ChangeRequest.model_validate_json(args.change_request.read_text())
+    except Exception as exc:
+        report.update(status="environment_error", missing=[], error_type=type(exc).__name__)
+        print(json.dumps(report, sort_keys=True))
+        return 1
+    try:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        reservation = os.open(
+            args.output,
+            os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, "O_NOFOLLOW", 0),
+            0o600,
+        )
+    except OSError as exc:
+        report.update(missing=["usable --output"], error_type=type(exc).__name__)
+        print(json.dumps(report, sort_keys=True))
+        return 2
     gateway = None
     error_type: str | None = None
     try:
-        change = ChangeRequest.model_validate_json(args.change_request.read_text())
         gateway = create_bedrock_gateway(model_id=args.model_id, region=args.region)
         frozen, events = asyncio.run(
             freeze_live_plan(args.repository, change, gateway, INSTRUCTIONS.read_text())
@@ -107,6 +140,7 @@ def main(argv: list[str] | None = None) -> int:
             except EnvironmentUnavailableError:
                 error_type = "EnvironmentUnavailableError"
     if error_type is not None:
+        _release_reservation(args.output, reservation, published=False)
         report.update(status="environment_error", missing=[], error_type=error_type)
         print(json.dumps(report, sort_keys=True))
         return 1
@@ -130,22 +164,29 @@ def main(argv: list[str] | None = None) -> int:
             for event in events
         ],
     )
+    published = False
+    temp_path: Path | None = None
     try:
-        args.output.parent.mkdir(parents=True, exist_ok=True)
         with tempfile.NamedTemporaryFile(
             mode="w", encoding="utf-8", dir=args.output.parent, delete=False
         ) as temp:
+            temp_path = Path(temp.name)
             json.dump(report, temp, indent=2, sort_keys=True)
             temp.write("\n")
-            temp_path = Path(temp.name)
-        try:
-            os.link(temp_path, args.output)
-        finally:
-            temp_path.unlink(missing_ok=True)
-    except OSError as exc:
+        if not _owns_reservation(args.output, reservation):
+            raise OSError("output reservation changed before publication")
+        os.replace(temp_path, args.output)
+        published = True
+    except Exception as exc:
         report.update(status="environment_error", error_type=type(exc).__name__)
         print(json.dumps({key: value for key, value in report.items() if key != "attacks"}))
         return 1
+    finally:
+        try:
+            if temp_path is not None:
+                temp_path.unlink(missing_ok=True)
+        finally:
+            _release_reservation(args.output, reservation, published=published)
     print(
         json.dumps(
             {key: value for key, value in report.items() if key != "attacks"}, sort_keys=True

@@ -1,4 +1,4 @@
-"""One bounded Bedrock Converse request through the model gateway port."""
+"""One Bedrock Converse request with explicit SDK I/O and token limits."""
 
 import asyncio
 import importlib
@@ -17,12 +17,16 @@ class ConverseClient(Protocol):
     def converse(self, **kwargs: object) -> Mapping[str, object]: ...
 
 
+def _validate_model_id(model_id: str) -> None:
+    if not model_id or len(model_id) > 256 or any(ch.isspace() for ch in model_id):
+        raise ValueError("Bedrock model ID must be a nonempty single token")
+
+
 class BedrockConverseGateway:
-    """Synchronous SDK calls run off the event loop; the SDK bounds I/O and retries."""
+    """SDK connect/read limits and one attempt; no total wall-clock deadline."""
 
     def __init__(self, client: ConverseClient, model_id: str) -> None:
-        if not model_id or len(model_id) > 256 or any(ch.isspace() for ch in model_id):
-            raise ValueError("Bedrock model ID must be a nonempty single token")
+        _validate_model_id(model_id)
         self._client = client
         self._model_id = model_id
 
@@ -92,6 +96,7 @@ class BedrockConverseGateway:
 
 def create_bedrock_gateway(*, model_id: str, region: str) -> BedrockConverseGateway:
     """Construct the optional SDK client only after the caller's spend preflight."""
+    _validate_model_id(model_id)
     if not region or not re.fullmatch(r"[a-z]{2}(?:-gov)?-[a-z]+-\d", region):
         raise ValueError("AWS region must be explicit")
     try:

@@ -2,19 +2,27 @@
 
 import asyncio
 import json
+from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 
 import pytest
 from conftest import DemoRepo
-from scripts import probe_p1_model_plan
-from scripts.probe_p1_model_plan import freeze_live_plan, main
 
 from gauntlet.analysis import GitRepositoryInspector
 from gauntlet.contracts import ChangeImpactMap, ChangeRequest
-from gauntlet.integrations.bedrock import BedrockConverseGateway
+from gauntlet.integrations.bedrock import BedrockConverseGateway, create_bedrock_gateway
 from gauntlet.planning import compute_plan_hash
 from gauntlet.ports.errors import EnvironmentUnavailableError
 from gauntlet.ports.model import ModelRequest
+
+_SCRIPT = Path(__file__).resolve().parents[3] / "scripts/probe_p1_model_plan.py"
+_SPEC = spec_from_file_location("probe_p1_model_plan", _SCRIPT)
+if _SPEC is None or _SPEC.loader is None:
+    raise RuntimeError("planner probe script could not be loaded")
+probe_p1_model_plan = module_from_spec(_SPEC)
+_SPEC.loader.exec_module(probe_p1_model_plan)
+freeze_live_plan = probe_p1_model_plan.freeze_live_plan
+main = probe_p1_model_plan.main
 
 
 def response(text: str, *, request_id: str = "request-123") -> dict[str, object]:
@@ -252,6 +260,109 @@ def test_preflight_rejects_existing_output_before_spend(
     assert result == 2
     assert "unused --output" in report["missing"]
     assert output.read_text() == "existing frozen plan"
+
+
+@pytest.mark.parametrize("invalid_output", ["dangling_symlink", "parent_is_file"])
+def test_preflight_rejects_unusable_output_before_client_construction(
+    invalid_output: str,
+    demo_repo: DemoRepo,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setenv("RUN_LIVE_INTEGRATIONS", "1")
+    monkeypatch.setattr(probe_p1_model_plan.importlib.metadata, "version", lambda _: "1.43.114")
+    monkeypatch.setattr(
+        probe_p1_model_plan,
+        "create_bedrock_gateway",
+        lambda **_: pytest.fail("client constructed with unusable output"),
+    )
+    change_path = tmp_path / "change.json"
+    change_path.write_text(change(demo_repo).model_dump_json())
+    if invalid_output == "dangling_symlink":
+        output = tmp_path / "dangling.json"
+        output.symlink_to(tmp_path / "missing.json")
+    else:
+        parent = tmp_path / "regular-file"
+        parent.write_text("not a directory")
+        output = parent / "frozen.json"
+    result = main(
+        [
+            "--repository",
+            str(demo_repo.path),
+            "--change-request",
+            str(change_path),
+            "--model-id",
+            "test-model",
+            "--region",
+            "us-east-1",
+            "--output",
+            str(output),
+            "--execute",
+            "--authorize-spend",
+        ]
+    )
+    report = json.loads(capsys.readouterr().out)
+    assert result == 2
+    assert report["status"] == "not_tested"
+    assert report["plan_hash"] is None
+    if invalid_output == "dangling_symlink":
+        assert output.is_symlink()
+    else:
+        assert parent.read_text() == "not a directory"
+
+
+def test_reserved_output_is_removed_when_client_construction_fails(
+    demo_repo: DemoRepo,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setenv("RUN_LIVE_INTEGRATIONS", "1")
+    monkeypatch.setattr(probe_p1_model_plan.importlib.metadata, "version", lambda _: "1.43.114")
+
+    reserved_at_construction: list[bool] = []
+
+    def failed_client(**kwargs: object) -> None:
+        reserved_at_construction.append(output.exists())
+        raise RuntimeError("private error")
+
+    monkeypatch.setattr(probe_p1_model_plan, "create_bedrock_gateway", failed_client)
+    change_path = tmp_path / "change.json"
+    change_path.write_text(change(demo_repo).model_dump_json())
+    output = tmp_path / "reserved.json"
+    result = main(
+        [
+            "--repository",
+            str(demo_repo.path),
+            "--change-request",
+            str(change_path),
+            "--model-id",
+            "test-model",
+            "--region",
+            "us-east-1",
+            "--output",
+            str(output),
+            "--execute",
+            "--authorize-spend",
+        ]
+    )
+    report = json.loads(capsys.readouterr().out)
+    assert result == 1
+    assert report["status"] == "environment_error"
+    assert reserved_at_construction == [True]
+    assert not output.exists()
+
+
+def test_factory_rejects_invalid_model_id_before_client_construction(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    boto3 = pytest.importorskip("boto3")
+    calls: list[object] = []
+    monkeypatch.setattr(boto3, "client", lambda *args, **kwargs: calls.append((args, kwargs)))
+    with pytest.raises(ValueError, match="model ID"):
+        create_bedrock_gateway(model_id="bad model id", region="us-east-1")
+    assert calls == []
 
 
 def test_execute_writes_reproducible_frozen_inputs_and_closes_client(
