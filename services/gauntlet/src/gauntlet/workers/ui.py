@@ -1,12 +1,16 @@
 """Bounded typed UI execution through the browser port."""
 
 import asyncio
+import logging
+import sys
 
 from gauntlet.contracts import ActionRecord, AttackSpec, EvidenceSubject, Observation, WorkerKind
 from gauntlet.ports.browser import BrowserProvider, is_browser_subject_for
 from gauntlet.ports.errors import EnvironmentUnavailableError, UnknownOracleError
 from gauntlet.ports.oracle import TrustedOracleRegistry
 from gauntlet.ports.sandbox import EnvironmentHandle
+
+logger = logging.getLogger(__name__)
 
 
 class UIWorker:
@@ -61,11 +65,34 @@ class UIWorker:
                 status = "environment_error"
             finally:
                 if session is not None:
-                    try:
+                    active_error = sys.exception()
+
+                    async def close_session() -> None:
                         async with asyncio.timeout(min(5, spec.max_runtime_seconds)):
                             await self._browser.close_session(session)
-                    except (EnvironmentUnavailableError, TimeoutError):
+
+                    cleanup = asyncio.create_task(close_session())
+                    cancelled_during_cleanup = False
+                    while not cleanup.done():
+                        try:
+                            await asyncio.wait((cleanup,))
+                        except asyncio.CancelledError:
+                            cancelled_during_cleanup = True
+                    try:
+                        cleanup.result()
+                    except (Exception, asyncio.CancelledError) as exc:
                         status = "environment_error"
+                        reason = "timeout" if isinstance(exc, TimeoutError) else "error"
+                        logger.error(
+                            "UI browser session cleanup failed (%s): attempt=%s environment=%s",
+                            reason,
+                            subject.attempt_id,
+                            environment.environment_id,
+                        )
+                        if isinstance(active_error, asyncio.CancelledError):
+                            active_error.add_note("UI browser session cleanup failed")
+                    if cancelled_during_cleanup:
+                        raise asyncio.CancelledError
         return Observation.model_validate(
             {
                 "observation_id": subject.observation_id,
