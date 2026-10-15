@@ -277,6 +277,9 @@ class DaytonaSandboxProvider:
         sandbox = active[0]
         try:
             await self._runtime.delete(sandbox, self._delete_timeout)
+        except asyncio.CancelledError:
+            self._pending_cleanup.add(environment_id)
+            raise
         except Exception as exc:
             self._pending_cleanup.add(environment_id)
             raise EnvironmentUnavailableError("Daytona environment deletion failed") from exc
