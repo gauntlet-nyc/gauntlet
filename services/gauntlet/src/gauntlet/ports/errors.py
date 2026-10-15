@@ -19,3 +19,7 @@ class EventSequenceConflictError(PortError):
 
 class DuplicateIdempotencyKeyError(PortError):
     """A RunEvent reused an idempotency key already recorded for its run."""
+
+
+class ArtifactRejectedError(PortError):
+    """Evidence bytes were empty, oversized or of a disallowed media type; nothing was stored."""
