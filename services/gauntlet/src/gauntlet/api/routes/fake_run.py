@@ -2,7 +2,7 @@
 
 import html
 import json
-from pathlib import Path
+from importlib import resources
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
@@ -12,7 +12,7 @@ from gauntlet.contracts import AttackSpec, RunEvent
 
 router = APIRouter()
 
-GOLDEN_DIR = Path(__file__).resolve().parents[6] / "docs/contracts/examples"
+FIXTURES = resources.files("gauntlet.api").joinpath("fixtures")
 
 
 class FakeRunResponse(BaseModel):
@@ -24,8 +24,8 @@ class FakeRunResponse(BaseModel):
 
 def load_fake_run() -> FakeRunResponse:
     try:
-        plan = AttackSpec.model_validate_json((GOLDEN_DIR / "ui-plan.v1.json").read_bytes())
-        event = RunEvent.model_validate_json((GOLDEN_DIR / "run-event.v1.json").read_bytes())
+        plan = AttackSpec.model_validate_json(FIXTURES.joinpath("ui-plan.v1.json").read_bytes())
+        event = RunEvent.model_validate_json(FIXTURES.joinpath("run-event.v1.json").read_bytes())
     except OSError as exc:
         raise HTTPException(status_code=503, detail="frozen golden not found") from exc
     return FakeRunResponse(
