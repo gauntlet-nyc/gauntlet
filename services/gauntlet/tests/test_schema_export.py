@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+
 from gauntlet.contracts.common import StrictDTO
 from gauntlet.contracts.registry import EXPORTED_MODELS, render_schema, schema_filename
 

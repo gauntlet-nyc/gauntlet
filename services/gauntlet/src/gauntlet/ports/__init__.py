@@ -1,7 +1,9 @@
 """Async Protocol ports. Adapters (owner B) implement these; application code uses only these."""
 
+from .artifacts import ArtifactStore, StoredArtifact
 from .browser import BrowserProvider
 from .errors import (
+    ArtifactRejectedError,
     DuplicateIdempotencyKeyError,
     EnvironmentUnavailableError,
     EventSequenceConflictError,
@@ -17,6 +19,8 @@ from .storage import RunStore
 from .worker import TestWorker
 
 __all__ = [
+    "ArtifactRejectedError",
+    "ArtifactStore",
     "BrowserProvider",
     "DuplicateIdempotencyKeyError",
     "EnvironmentHandle",
@@ -31,6 +35,7 @@ __all__ = [
     "RepositoryInspector",
     "RunStore",
     "SandboxProvider",
+    "StoredArtifact",
     "TestWorker",
     "TrustedOracleRegistry",
     "UnknownOracleError",

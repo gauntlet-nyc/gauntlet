@@ -4,10 +4,12 @@ import json
 from pathlib import Path
 
 import pytest
+
 from gauntlet.contracts import (
     AttackSpec,
     ChangeImpactMap,
     ChangeRequest,
+    EvidenceBinding,
     Finding,
     HistoricalDecision,
     Observation,
@@ -26,6 +28,7 @@ GOLDENS: dict[str, type[StrictDTO]] = {
     "ai-plan.v1.json": AttackSpec,
     "change-impact-map.v1.json": ChangeImpactMap,
     "change-request.v1.json": ChangeRequest,
+    "evidence-binding.v1.json": EvidenceBinding,
     "finding.v1.json": Finding,
     "historical-decision.v1.json": HistoricalDecision,
     "observation.v1.json": Observation,
