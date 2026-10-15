@@ -107,9 +107,18 @@ class AnchorBrowserProvider:
         try:
             scoped_id = await scoped.open_session(environment, subject)
         except (Exception, asyncio.CancelledError):
+            close_task = asyncio.create_task(connection.close())
+            # A second cancellation must not interrupt deletion of a paid session.
+            while not close_task.done():
+                try:
+                    await asyncio.shield(close_task)
+                except asyncio.CancelledError:
+                    continue
+                except Exception:
+                    break
             try:
-                await connection.close()
-            except Exception:
+                close_task.result()
+            except (Exception, asyncio.CancelledError):
                 self._orphans[f"anchor-orphan-{uuid4().hex}"] = connection
             raise
         session_id = f"anchor-browser-{uuid4().hex}"
