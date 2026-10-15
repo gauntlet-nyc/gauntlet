@@ -76,16 +76,23 @@ async def verify_fixture_build_receipt(
                 async with client.stream(
                     "GET",
                     f"{base}/api/build-info",
-                    headers={"accept": "application/json", "cache-control": "no-store"},
+                    headers={
+                        "accept": "application/json",
+                        "accept-encoding": "identity",
+                        "cache-control": "no-store",
+                    },
                 ) as response:
                     if response.status_code != 200:
                         raise EnvironmentUnavailableError("Cartwheel build receipt is unavailable")
+                    encoding = response.headers.get("content-encoding")
+                    if encoding is not None and encoding.strip().lower() != "identity":
+                        raise EnvironmentUnavailableError("Cartwheel build receipt is encoded")
                     if response.headers.get("content-type", "").split(";", 1)[0].lower() != (
                         "application/json"
                     ):
                         raise EnvironmentUnavailableError("Cartwheel build receipt is malformed")
                     body = bytearray()
-                    async for chunk in response.aiter_bytes(chunk_size=1024):
+                    async for chunk in response.aiter_raw(chunk_size=1024):
                         if len(body) + len(chunk) > _MAX_RECEIPT_BYTES:
                             raise EnvironmentUnavailableError(
                                 "Cartwheel build receipt is oversized"
