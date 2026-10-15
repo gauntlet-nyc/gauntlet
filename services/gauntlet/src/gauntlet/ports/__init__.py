@@ -8,7 +8,8 @@ from .errors import (
     PortError,
     UnknownOracleError,
 )
-from .oracle import TrustedOracleRegistry
+from .model import ModelGateway, ModelRequest, ModelResponse
+from .oracle import OracleDescriptor, TrustedOracleRegistry
 from .replay import ReplayEngine
 from .repository import RepositoryInspector
 from .sandbox import EnvironmentHandle, SandboxProvider
@@ -21,6 +22,10 @@ __all__ = [
     "EnvironmentHandle",
     "EnvironmentUnavailableError",
     "EventSequenceConflictError",
+    "ModelGateway",
+    "ModelRequest",
+    "ModelResponse",
+    "OracleDescriptor",
     "PortError",
     "ReplayEngine",
     "RepositoryInspector",
