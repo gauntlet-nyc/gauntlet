@@ -1,7 +1,7 @@
-"""Loopback-only Playwright adapter for synthetic browser diagnostics.
+"""Scoped Playwright adapter for synthetic browser diagnostics.
 
-The caller supplies an already launched browser. This adapter never imports a
-provider SDK, accepts planner JavaScript or expands its preview origin.
+The caller supplies an already launched browser and trusted origin validator.
+This adapter never imports a provider SDK or accepts planner JavaScript.
 Browser routing is a local guard, not DNS/network isolation for a cloud run.
 """
 
@@ -109,7 +109,7 @@ class _Context(Protocol):
     async def close(self) -> None: ...
 
 
-class _Browser(Protocol):
+class PlaywrightBrowser(Protocol):
     async def new_context(self, **options: object) -> _Context: ...
 
 
@@ -155,18 +155,24 @@ class _Session:
     popup_attempted: bool = False
 
 
-class LocalBrowserProvider:
-    """Execute validated UI DTOs in one isolated Playwright browser context."""
+class ScopedPlaywrightProvider:
+    """Execute typed UI DTOs in one isolated, exact-origin browser context."""
 
-    def __init__(self, browser: _Browser, collector: BrowserEvidenceCollector) -> None:
+    def __init__(
+        self,
+        browser: PlaywrightBrowser,
+        collector: BrowserEvidenceCollector,
+        origin_validator: Callable[[str], str],
+    ) -> None:
         self._browser = browser
         self._collector = collector
+        self._origin_validator = origin_validator
         self._sessions: dict[str, _Session] = {}
 
     async def open_session(self, environment: EnvironmentHandle, subject: EvidenceSubject) -> str:
         if not is_browser_subject_for(environment, subject):
             raise EnvironmentUnavailableError("browser evidence subject does not match environment")
-        origin = _loopback_origin(environment.preview_origin)
+        origin = self._origin_validator(environment.preview_origin)
         try:
             context = await self._browser.new_context(
                 viewport={"width": 1280, "height": 720},
@@ -321,3 +327,10 @@ class LocalBrowserProvider:
         except Exception as exc:
             raise EnvironmentUnavailableError("local browser context could not close") from exc
         self._sessions.pop(session_id, None)
+
+
+class LocalBrowserProvider(ScopedPlaywrightProvider):
+    """Loopback-only implementation for the local Cartwheel probes."""
+
+    def __init__(self, browser: PlaywrightBrowser, collector: BrowserEvidenceCollector) -> None:
+        super().__init__(browser, collector, _loopback_origin)

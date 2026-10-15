@@ -134,6 +134,26 @@ scripts/probe_local_browser_provider.py {base|head} --origin
 http://127.0.0.1:3100 --chrome <local-chrome-path> --fixture-repo
 <generated-fixture-checkout> --output <local-output-dir>`.
 
+### B-01c4 Anchor offline browser adapter (2026-10-15)
+
+`AnchorBrowserProvider` implements the browser port using the same typed-step
+and exact-origin Playwright guard as `LocalBrowserProvider`. It validates the
+evidence subject and signed HTTPS preview origin before opening a paid cloud
+session. It closes the isolated context, CDP connection, then Anchor session;
+failed cleanup stays retriable. The SDK wrapper requires
+`RUN_LIVE_INTEGRATIONS=1`, an explicit API key, and a configured custom egress
+proxy before session creation. Anchor 1.0.1 installed signatures were checked
+for `sessions.create_session`, `browser.connect`, and
+`sessions.delete_session`. No provider call was made.
+
+The Anchor SDK exposes custom proxy configuration but no verified per-session
+domain allowlist. Playwright routing is an additional guard, not a network
+isolation proof. B-01c live acceptance remains open until an operator-supplied
+egress proxy enforces the exact Daytona preview origin and a live smoke test
+covers redirect, popup, subresource and non-HTTP egress from the cloud session. An
+approved Daytona preview, Anchor credentials, proxy policy, and authorized
+provider spend are required for that smoke.
+
 ### B-01b registered Daytona sandbox adapter (2026-10-15)
 
 The B-owned `DaytonaSandboxProvider` now consumes operator-registered snapshot
