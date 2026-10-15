@@ -655,3 +655,55 @@ and using the checkout-local `.venv`, the 24-schema export was clean. No shared
 branch or main file was changed by the compatibility run.
 
 P1 artifact binding request is now tracked at https://github.com/rudraasakariya/gauntlet/issues/22; no shared port/schema was changed on B's branch.
+
+## Parallel P1 implementation and local evidence (2026-10-15)
+
+A-01c adds an opt-in Bedrock planning probe using boto3/botocore 1.43.114.
+Installed Converse signatures and a botocore Stubber request were checked against
+AWS's Converse and Config documentation; this was an offline SDK shape check,
+not an AWS response. The adapter limits input/output size and SDK connect/read
+waits (5/60 seconds, one attempt); those are not a total wall-clock deadline.
+The neutral prompt supplies no known fixture defect or viewport answer. Accepted
+plans pass existing validation and freeze before any execution; this probe does
+not execute them or claim a Gate verdict.
+
+C-01c embeds a clean generated fixture commit in `/api/build-info`. Registered
+base is `e5ab64c85d3080b2982c68da23ab677ce8cb5a69`; head is
+`d3ebde5c6d71cfde1acae7be768438a241afd19b`. Existing fixture snapshots must be
+rebuilt for these revisions. B-01k checks the receipt before local planning or
+browser work, rejects redirects/compressed/oversized/malformed responses and
+mismatched revisions. This trusted synthetic build receipt does not attest to
+hostile source or a container image.
+
+Real production Next builds and local headless Chrome runs on the integrated
+branch produced two failing head observations and two passing base observations.
+Both used frozen plan hash
+`659662f940dd7235d3f4a9e7de723aaadab99253e642edf8841183afd854fd4f`.
+Reports: `/tmp/gauntlet-parallel-head/report.json` and
+`/tmp/gauntlet-parallel-base/report.json` (ephemeral local evidence).
+Checking out base while the compiled head server still ran was rejected before
+browser execution. These are scripted local probes, not blind model acceptance.
+
+B-01h/B-01i/B-01j add cancellation and cleanup regressions for the UI worker,
+Daytona sandbox adapter and Anchor browser adapter. Cleanup retains retryable
+resources and bounds caller waits; an SDK task that ignores cancellation can
+remain in the background until it cooperates. No genuine cloud resources were
+created, so cloud cleanup behavior remains unverified.
+
+### Complete prerequisites for the next genuine planning run
+
+- Install project-local dependencies: `uv sync --frozen --group live-providers`.
+- Configure the AWS credential chain (profile or role), Bedrock model access and
+  invocation permission, explicit approved model ID and AWS region.
+- Supply an authorized repository and matching ChangeRequest JSON, and a new
+  writable output destination.
+- Run `scripts/probe_p1_model_plan.py` with `--repository`, `--change-request`,
+  `--model-id`, `--region`, `--output`, `--execute`, `--authorize-spend` and
+  `RUN_LIVE_INTEGRATIONS=1`. Do not place credential values in command arguments
+  or commit them. The probe reports plan acceptance separately from Gate status.
+- For subsequent hosted execution, the existing provider smoke additionally
+  needs Daytona and Anchor credentials, approved snapshots for these exact
+  revisions, and approved preview/network configuration. A successful planning
+  call alone does not satisfy hosted execution or P1 acceptance.
+
+AWS, Daytona and Anchor live results remain NOT RUN. P1 is not yet accepted.
