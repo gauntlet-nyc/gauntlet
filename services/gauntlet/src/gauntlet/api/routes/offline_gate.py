@@ -5,7 +5,7 @@ route only composes owner modules and never decides a verdict itself.
 """
 
 from dataclasses import replace
-from pathlib import Path
+from importlib import resources
 
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -20,7 +20,7 @@ from gauntlet.workers.ui import UIWorker
 
 router = APIRouter()
 
-GOLDENS = Path(__file__).resolve().parents[6] / "docs/contracts/examples"
+FIXTURES = resources.files("gauntlet.api").joinpath("fixtures")
 PRIMARY_ACTION = "checkout-primary-action"
 # (source sha in the golden recording, whether the click is intercepted by the Help button)
 RUNS = (("head", "aaaaaaaa", True), ("head", "aaaaaaaa", True), ("base", "bbbbbbbb", False))
@@ -36,8 +36,10 @@ class OfflineGateResponse(BaseModel):
 
 
 async def run_offline_gate() -> OfflineGateResponse:
-    plan = AttackSpec.model_validate_json((GOLDENS / "ui-plan.v1.json").read_bytes())
-    template = Observation.model_validate_json((GOLDENS / "observation.v1.json").read_bytes())
+    plan = AttackSpec.model_validate_json(FIXTURES.joinpath("ui-plan.v1.json").read_bytes())
+    template = Observation.model_validate_json(
+        FIXTURES.joinpath("observation.v1.json").read_bytes()
+    )
     checksum = template.fixture_checksum
     shas = frozenset(sha for _, sha, _ in RUNS)
     sandbox = FakeSandboxProvider({plan.target_id: Fixture(plan.fixture_id, checksum, shas)})
@@ -96,7 +98,7 @@ async def run_offline_gate() -> OfflineGateResponse:
         )
     )
     store = FakeRunStore(initial_sequence=1)
-    planned = RunEvent.model_validate_json((GOLDENS / "run-event.v1.json").read_bytes())
+    planned = RunEvent.model_validate_json(FIXTURES.joinpath("run-event.v1.json").read_bytes())
     await store.append_event(planned)
     await store.append_event(
         planned.model_copy(

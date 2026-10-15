@@ -1,8 +1,21 @@
+from importlib import resources
+from pathlib import Path
+
+import pytest
 from fastapi.testclient import TestClient
 
 from gauntlet.api.main import app
 
 client = TestClient(app)
+GOLDENS = Path(__file__).resolve().parents[3] / "docs/contracts/examples"
+
+
+@pytest.mark.parametrize(
+    "name", ("ui-plan.v1.json", "observation.v1.json", "run-event.v1.json")
+)
+def test_packaged_offline_fixtures_match_canonical_goldens(name: str) -> None:
+    packaged = resources.files("gauntlet.api").joinpath("fixtures", name).read_bytes()
+    assert packaged == (GOLDENS / name).read_bytes()
 
 
 def test_health_is_explicit_about_scaffold_state() -> None:
