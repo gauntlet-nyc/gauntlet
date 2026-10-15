@@ -141,6 +141,7 @@ class DaytonaSandboxProvider:
         self._poll_interval = poll_interval
         self._active: dict[str, tuple[DaytonaSandbox, RegisteredTarget, str]] = {}
         self._pending_cleanup: set[str] = set()
+        self._cleanup_tasks: dict[str, asyncio.Task[None]] = {}
 
     @property
     def pending_cleanup_ids(self) -> tuple[str, ...]:
@@ -157,6 +158,44 @@ class DaytonaSandboxProvider:
             and 0 < len(fixture_bytes) <= 1_000_000
             and hashlib.sha256(fixture_bytes).hexdigest() == target.fixture_state_digest
         )
+
+    async def _cleanup_failed_create(self, environment_id: str) -> bool:
+        """Finish one bounded deletion despite further caller cancellation.
+
+        Return whether another cancellation arrived while cleanup was running.
+        Keep the resource visible for a scoped retry until deletion succeeds.
+        """
+        self._pending_cleanup.add(environment_id)
+        cleanup = asyncio.create_task(self.destroy(environment_id))
+        self._cleanup_tasks[environment_id] = cleanup
+
+        def cleanup_finished(task: asyncio.Task[None]) -> None:
+            if self._cleanup_tasks.get(environment_id) is task:
+                self._cleanup_tasks.pop(environment_id)
+            if not task.cancelled():
+                task.exception()
+
+        cleanup.add_done_callback(cleanup_finished)
+        deadline = asyncio.get_running_loop().time() + self._delete_timeout
+        cancelled = False
+        while not cleanup.done():
+            remaining = deadline - asyncio.get_running_loop().time()
+            if remaining <= 0:
+                break
+            try:
+                await asyncio.wait_for(asyncio.shield(cleanup), remaining)
+            except asyncio.CancelledError:
+                cancelled = True
+            except (TimeoutError, EnvironmentUnavailableError):
+                break
+        if not cleanup.done():
+            cleanup.cancel()
+        else:
+            try:
+                cleanup.result()
+            except (EnvironmentUnavailableError, asyncio.CancelledError):
+                pass
+        return cancelled
 
     async def create(
         self, *, target_id: str, source_sha: str, fixture_id: str, mode: ReplayMode
@@ -198,12 +237,9 @@ class DaytonaSandboxProvider:
                 preview_origin=origin,
             )
         except (Exception, asyncio.CancelledError) as exc:
-            try:
-                await self.destroy(sandbox.id)
-            except EnvironmentUnavailableError:
-                self._pending_cleanup.add(sandbox.id)
-            if isinstance(exc, asyncio.CancelledError):
-                raise
+            cancelled_during_cleanup = await self._cleanup_failed_create(sandbox.id)
+            if isinstance(exc, asyncio.CancelledError) or cancelled_during_cleanup:
+                raise asyncio.CancelledError() from exc
             raise EnvironmentUnavailableError(
                 "Daytona environment failed validation or readiness"
             ) from exc
@@ -221,12 +257,29 @@ class DaytonaSandboxProvider:
             return False
 
     async def destroy(self, environment_id: str) -> None:
+        cleanup = self._cleanup_tasks.get(environment_id)
+        if cleanup is not None and cleanup is not asyncio.current_task():
+            try:
+                await asyncio.wait_for(asyncio.shield(cleanup), self._delete_timeout)
+            except TimeoutError:
+                self._pending_cleanup.add(environment_id)
+                raise EnvironmentUnavailableError(
+                    "Daytona environment deletion is still in progress"
+                ) from None
+            except EnvironmentUnavailableError:
+                pass
+            except asyncio.CancelledError:
+                if not cleanup.cancelled():
+                    raise
         active = self._active.get(environment_id)
         if active is None:
             return
         sandbox = active[0]
         try:
             await self._runtime.delete(sandbox, self._delete_timeout)
+        except asyncio.CancelledError:
+            self._pending_cleanup.add(environment_id)
+            raise
         except Exception as exc:
             self._pending_cleanup.add(environment_id)
             raise EnvironmentUnavailableError("Daytona environment deletion failed") from exc

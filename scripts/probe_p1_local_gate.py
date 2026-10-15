@@ -1,8 +1,9 @@
 """Freeze a diff-cited scripted UI plan and run it in local headless Chrome.
 
 This is an offline diagnostic. The operator selects and builds the synthetic
-checkout; this script verifies its checkout SHA but cannot attest the server's
-running source. No model or cloud provider is called.
+checkout; this script verifies its checkout SHA and the trusted fixture's
+compiled build receipt before browser actions. The receipt does not attest a
+hostile target's running source. No model or cloud provider is called.
 """
 
 import argparse
@@ -14,6 +15,7 @@ from uuid import uuid4
 
 from gauntlet.contracts import ChangeRequest, EvidenceSubject
 from gauntlet.integrations.browser_evidence import BrowserEvidenceCollector
+from gauntlet.integrations.fixture_identity import verify_fixture_build_receipt
 from gauntlet.integrations.local_artifacts import LocalArtifactStore
 from gauntlet.integrations.local_browser import LocalBrowserProvider
 from gauntlet.integrations.local_gate_diagnostic import freeze_diagnostic_plan
@@ -53,6 +55,7 @@ async def probe(
     execute_sha = base_sha if scenario == "base" else head_sha
     if _checkout_sha(fixture_repo) != execute_sha:
         raise ValueError("fixture checkout is not at the selected execution revision")
+    await verify_fixture_build_receipt(origin, execute_sha)
     change = ChangeRequest(
         repository_id="cartwheel",
         base_sha=base_sha,
@@ -142,6 +145,7 @@ async def probe(
         "change_head_sha": head_sha,
         "execute_sha": execute_sha,
         "fixture_checkout_verified": True,
+        "fixture_build_receipt_verified": True,
         "server_source_verified": False,
         "changed_files": frozen.impact.changed_files,
         "coverage_gaps": frozen.impact.coverage_gaps,
