@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseFakeRun, parseOfflineGate } from "./api";
+import { parseChangeRequest, parseFakeRun, parseOfflineGate } from "./api";
 
 const sample = {
   label: "FAKE RUN: x",
@@ -17,6 +17,13 @@ describe("parseFakeRun", () => {
     expect(() => parseFakeRun({ ...sample, plan: undefined })).toThrow();
   });
 });
+
+describe("parseChangeRequest", () => {
+  it("rejects a payload without SHAs", () => {
+    expect(() => parseChangeRequest({ repository_id: "cartwheel" })).toThrow();
+  });
+});
+
 describe("parseOfflineGate", () => {
   it("rejects a payload without a verdict", () => {
     expect(() => parseOfflineGate({ label: "x", events: [] })).toThrow();

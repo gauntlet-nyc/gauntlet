@@ -30,6 +30,27 @@ export async function getFakeRun(): Promise<FakeRun> {
   return parseFakeRun(await res.json());
 }
 
+export type ChangeRequest = components["schemas"]["ChangeRequest"];
+
+const changeRequestSchema = z.object({
+  repository_id: z.string(),
+  base_sha: z.string(),
+  head_sha: z.string(),
+  fixture_id: z.string(),
+  target_id: z.string(),
+  feature_intent: z.string().nullable().optional(),
+});
+
+export function parseChangeRequest(data: unknown): ChangeRequest {
+  return changeRequestSchema.parse(data) as unknown as ChangeRequest;
+}
+
+export async function getCartwheelChange(): Promise<ChangeRequest> {
+  const res = await fetch(`${API_URL}/targets/cartwheel/change-request`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`API returned ${res.status}`);
+  return parseChangeRequest(await res.json());
+}
+
 export type OfflineGate = components["schemas"]["OfflineGateResponse"];
 
 const offlineGateSchema = z.object({

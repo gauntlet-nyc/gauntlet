@@ -2,13 +2,14 @@
 
 from fastapi import FastAPI
 
-from .routes import fake_run, health, offline_gate
+from .routes import fake_run, health, offline_gate, targets
 
 
 def create_app() -> FastAPI:
     app = FastAPI(title="Gauntlet Unified API", version="0.1.0")
     app.include_router(health.router)
     app.include_router(fake_run.router)
+    app.include_router(targets.router)
     app.include_router(offline_gate.router)
     return app
 

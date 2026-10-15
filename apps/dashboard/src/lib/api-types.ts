@@ -72,6 +72,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/targets/cartwheel/change-request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cartwheel Change Request */
+        get: operations["cartwheel_change_request_targets_cartwheel_change_request_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -152,6 +169,29 @@ export interface components {
              * @constant
              */
             schema_version: "1.0";
+        };
+        /** ChangeRequest */
+        ChangeRequest: {
+            /** Base Sha */
+            base_sha: string;
+            /** Feature Intent */
+            feature_intent?: string | null;
+            /** Fixture Id */
+            fixture_id: string;
+            /** Head Sha */
+            head_sha: string;
+            /** Max Cost Usd Cents */
+            max_cost_usd_cents: number;
+            /** Repository Id */
+            repository_id: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /** Target Id */
+            target_id: string;
         };
         /** ChatStep */
         ChatStep: {
@@ -463,6 +503,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OfflineGateResponse"];
+                };
+            };
+        };
+    };
+    cartwheel_change_request_targets_cartwheel_change_request_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChangeRequest"];
                 };
             };
         };

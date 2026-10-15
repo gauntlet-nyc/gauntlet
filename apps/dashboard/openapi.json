@@ -259,6 +259,76 @@
         "title": "CaptureStep",
         "type": "object"
       },
+      "ChangeRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "base_sha": {
+            "pattern": "^[0-9a-f]{7,64}$",
+            "title": "Base Sha",
+            "type": "string"
+          },
+          "feature_intent": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feature Intent"
+          },
+          "fixture_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Fixture Id",
+            "type": "string"
+          },
+          "head_sha": {
+            "pattern": "^[0-9a-f]{7,64}$",
+            "title": "Head Sha",
+            "type": "string"
+          },
+          "max_cost_usd_cents": {
+            "maximum": 100000.0,
+            "minimum": 1.0,
+            "title": "Max Cost Usd Cents",
+            "type": "integer"
+          },
+          "repository_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Repository Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "target_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Target Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "repository_id",
+          "base_sha",
+          "head_sha",
+          "fixture_id",
+          "target_id",
+          "max_cost_usd_cents"
+        ],
+        "title": "ChangeRequest",
+        "type": "object"
+      },
       "ChatStep": {
         "additionalProperties": false,
         "properties": {
@@ -881,6 +951,24 @@
           }
         },
         "summary": "Offline Gate"
+      }
+    },
+    "/targets/cartwheel/change-request": {
+      "get": {
+        "operationId": "cartwheel_change_request_targets_cartwheel_change_request_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeRequest"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Cartwheel Change Request"
       }
     }
   }
