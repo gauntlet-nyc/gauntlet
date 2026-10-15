@@ -102,6 +102,17 @@ The server's running source remains operator asserted; the planner response is
 scripted, not an independent model hypothesis, and cloud isolation was not
 tested. The full P1 acceptance gate and confirmed regression status remain open.
 
+### B-01f paired environment lifecycle (2026-10-15)
+
+The B-owned `gate_environment_pair` context manager provisions base and head
+through the existing `SandboxProvider` port. It rejects a mismatched target,
+revision, fixture ID or checksum, verifies both fixture states after both
+environments exist, and releases both handles on normal exit, partial failure
+or cancellation. This prevents an unverified base/head pair from reaching UI
+execution. Offline tests use the fake sandbox only; no Daytona resource was
+created. Server revision attestation, snapshot registration, signed previews,
+Anchor sessions and genuine provider cleanup still require live validation.
+
 ### B-01c1 browser evidence identity (2026-10-15)
 
 The worker now requires a trusted, preallocated `EvidenceSubject` before it
