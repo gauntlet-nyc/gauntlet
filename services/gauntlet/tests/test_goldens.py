@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
+
 from gauntlet.contracts import (
     AttackSpec,
     ChangeImpactMap,

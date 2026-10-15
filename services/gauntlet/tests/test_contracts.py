@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
+
 from gauntlet.contracts import (
     AttackSpec,
     Finding,
@@ -13,7 +15,6 @@ from gauntlet.contracts import (
     RunEvent,
     SourceRef,
 )
-from pydantic import ValidationError
 
 EXAMPLES_DIR = Path(__file__).resolve().parents[3] / "docs" / "contracts" / "examples"
 
@@ -37,11 +38,35 @@ def test_unknown_action_is_rejected() -> None:
 
 
 @pytest.mark.parametrize(
-    "path", ["https://evil.example/x", "//evil.example/x", "javascript:alert(1)", "/a/../../etc"]
+    "path",
+    [
+        "https://evil.example/x",
+        "//evil.example/x",
+        "javascript:alert(1)",
+        "/a/../../etc",
+        # percent-encoded forms the browser resolves to the same thing
+        "/%2e%2e/admin",
+        "/checkout/%2E%2e/x",
+        "/a/%2e%2e%2fb",
+        "/%2f%2fevil.example",
+        "/a%5cb",
+        "/%252e%252e/admin",
+        "/%25252e%25252e/admin",
+        "/\x00",
+        "/a%00b",
+        "/a\nb",
+    ],
 )
 def test_navigate_only_accepts_origin_relative_routes(path: str) -> None:
     with pytest.raises(ValidationError):
         AttackSpec.model_validate(ui_plan_with_steps({"action": "navigate", "path": path}))
+
+
+@pytest.mark.parametrize(
+    "path", ["/checkout", "/products/demo?x=1", "/ok?next=//evil.example", "/a%20b"]
+)
+def test_navigate_accepts_ordinary_routes(path: str) -> None:
+    AttackSpec.model_validate(ui_plan_with_steps({"action": "navigate", "path": path}))
 
 
 def test_resize_requires_dimensions() -> None:

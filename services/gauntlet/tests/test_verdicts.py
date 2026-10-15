@@ -1,4 +1,5 @@
 import pytest
+
 from gauntlet.domain import (
     Attribution,
     AuditEvidence,
