@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "target_id": "cartwheel-fixture",
+  "fixture_id": "baseline-v1",
+  "status": "plan-only: no app code, SHAs or checksum exist yet",
+  "synthetic_only": true,
+  "git_refs": {
+    "base_sha": null,
+    "head_sha": null,
+    "note": "Filled in C-01 from real commits of the Cartwheel repo; never placeholders."
+  },
+  "fixture_checksum_sha256": null,
+  "routes": [
+    {"id": "product", "path": "/products/demo"},
+    {"id": "checkout", "path": "/checkout", "primary_action": "checkout-primary-action"}
+  ],
+  "identities": [
+    {"id": "owner-alice", "role": "customer", "email": "alice@example.invalid"},
+    {"id": "owner-bob", "role": "customer", "email": "bob@example.invalid"},
+    {"id": "support-agent", "role": "assistant", "email": null}
+  ],
+  "forbidden_content": [
+    "hidden benchmark labels or answer keys",
+    "real customer data, payment details or secrets"
+  ]
+}
