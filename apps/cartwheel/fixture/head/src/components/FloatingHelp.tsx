@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 
+import styles from "./FloatingHelp.module.css";
+
 export function FloatingHelp() {
   const [open, setOpen] = useState(false);
   return (
-    <div style={{ position: "fixed", bottom: 16, right: 16, zIndex: 50 }}>
+    <div className={styles.floatingHelp}>
       {open && (
         <div role="dialog" aria-label="Help" style={{ background: "#fff", border: "1px solid #ccc", padding: 12, marginBottom: 8 }}>
           Questions? Email help@example.invalid
