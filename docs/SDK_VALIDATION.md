@@ -134,6 +134,45 @@ scripts/probe_local_browser_provider.py {base|head} --origin
 http://127.0.0.1:3100 --chrome <local-chrome-path> --fixture-repo
 <generated-fixture-checkout> --output <local-output-dir>`.
 
+### B-01b registered Daytona sandbox adapter (2026-10-15)
+
+The B-owned `DaytonaSandboxProvider` now consumes operator-registered snapshot
+IDs for specific target/source SHA pairs. Registration requires one declared
+image digest across base/head, the same fixture template checksum, an expected
+SHA-256 of actual fixture-state bytes, fixed checkout and fixture-state paths,
+a preview domain suffix and a readiness path. Unknown target, SHA, fixture or
+unsupported replay mode is rejected before a create call. After create, the
+adapter reads `git rev-parse HEAD` in the registered checkout directory,
+downloads and hashes the fixture-state file, validates the signed preview
+origin, and polls a 200 readiness response. Any mismatch or timeout deletes
+the partial sandbox; failed deletion leaves its resource ID in
+`pending_cleanup_ids` for a scoped retry. `verify_fixture` reads source and
+state again. The SDK wrapper uses `CreateSandboxFromSnapshotParams` with
+`public=False` and `network_block_all=True`, requires
+`RUN_LIVE_INTEGRATIONS=1` before create, and deletion waits for completion.
+No planner-provided build or shell command is run.
+
+Daytona 0.224.1 installed signature inspection matched the calls used here:
+`AsyncDaytona.create(params, timeout=...)`,
+`AsyncDaytona.delete(sandbox, timeout=..., wait=True)`,
+`AsyncSandbox.process.exec(command, cwd=..., timeout=...)`,
+`AsyncSandbox.fs.download_file(path, timeout=...)` and
+`AsyncSandbox.create_signed_preview_url(port, expires_in_seconds=...,
+request_timeout=...)`. Nine offline tests pass with a fake runtime and a real
+loopback HTTP readiness probe;
+this is not a provider smoke. The B-01b and B-01a live checkboxes stay open.
+
+The current Cartwheel generated repository has no Daytona snapshots or
+`fixture-state.json`, and no server revision attestation or ready endpoint is
+currently provisioned in Daytona. Before a live run, build and register two
+private snapshots from the pinned base/head commits with the same actual image
+digest, include the same deterministic fixture-state file in each, provide a
+running synthetic app and health path, and register the preview proxy domain.
+Then supply `DAYTONA_API_KEY`, Daytona HTTPS API URL/region, the approved target
+allowlist, `RUN_LIVE_INTEGRATIONS=1` and explicit provider spend authorization.
+The signed preview URL contains a bearer token in its hostname; never log the
+full `EnvironmentHandle.preview_origin`. VM fork is not used or claimed.
+
 ### Cartwheel local checkout workflow (2026-10-15)
 
 C's fixture now has a synthetic, in-process order endpoint. A successful
