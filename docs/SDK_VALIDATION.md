@@ -47,6 +47,18 @@ spend authorization, those local inputs, a permitted Daytona runtime/preview,
 and the one-environment screenshot/cleanup smoke are recorded here. The
 2026-10-14 readiness and branch notes below are historical snapshots.
 
+### B-01d local evidence storage (2026-10-15)
+
+The B-owned `LocalArtifactStore` implements the frozen `ArtifactStore` port for
+sanitized collector bytes. It assigns IDs, hashes content, writes a complete
+binding and bytes as one file before publishing the ID, and reads them back
+after a new store instance opens the same directory. Local tests exercise
+cross-attempt rejection, malformed IDs, invalid media/empty bytes and tampered
+content through the independent `check_evidence` function. This is a local
+filesystem adapter, not an Anchor collector or a live provider smoke. The
+B-01d checkbox stays open until browser geometry, click receipts and screenshots
+are captured and bound to real base/head environments.
+
 ## 2026-10-14 / B-00 / offline implementation and documentation review
 
 The B branch consumes A-00 through `8396d8e` (including oracle descriptors).
