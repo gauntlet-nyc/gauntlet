@@ -4,6 +4,30 @@
 
 Python 3.12+, `uv`, Node >=22, pnpm, Docker and Git recommended. Copy `.env.example` to `.env.local` and privately fill only the required provider keys. First prove offline contracts and pure tests before any paid calls. Local scripts MUST NOT invoke real provider endpoints unless `RUN_LIVE_INTEGRATIONS=1` and explicit operator consent.
 
+## Dev environment (worktree bootstrap)
+
+Use the worktree-local `.venv`; never install dependencies globally. On B-00,
+Python 3.14 and uv 0.11.28 were used (project requirement: Python 3.12+).
+The existing root dependency groups define the offline tools. Until C's lockfile
+is integrated, a fresh worktree can bootstrap without writing a competing lock:
+
+```bash
+uv venv .venv
+uv pip install --python .venv/bin/python -e services/gauntlet --group dev
+.venv/bin/python -m pytest -q
+.venv/bin/ruff check .
+.venv/bin/ruff format --check .
+.venv/bin/mypy services/gauntlet/src
+uv build --package gauntlet-control --out-dir /tmp/gauntlet-build
+```
+
+After the approved `uv.lock` lands, use `uv sync --frozen` instead of the unlocked
+bootstrap above. Provider SDKs are not part of B-00's offline environment; C owns
+dependency/lock changes. `scripts/probe_sdk_inventory.py` reports installed and
+optional published versions without calling provider services or reading keys.
+For local headless diagnostics, Node 22+ and an existing Chrome executable are
+required; see `docs/SDK_VALIDATION.md`. This probe adds no npm dependency.
+
 ## Offline check (implemented scaffold)
 
 ```bash
@@ -28,3 +52,11 @@ A demo reset should only delete **scoped synthetic** state for a known `fixture_
 ## Operational support
 
 Log UTC/run_id/attempt_id/replay_id/trace_id for every attempt. Track sandbox leaked resources, token spend and browser session TTL. Keep artifacts restricted; rotate leaked keys; do not store raw historical customer content in Arize traces.
+
+## Approved provider dependencies (C, 2026-10-14)
+
+Approved and pinned for B-01a only, in the non-default dependency group `live-providers` (root `pyproject.toml`, resolved in `uv.lock`): `daytona==0.224.1`, `anchorbrowser==1.0.1`, `playwright==1.64.0`. Default `uv sync` and CI do not install them; use `uv sync --frozen --group live-providers`. Checked: PyPI publisher metadata matches the vendors, none are yanked, and `pip-audit` on the resolved set reported no known vulnerabilities. Approval is for installing and signature checking only. Live calls still need `RUN_LIVE_INTEGRATIONS=1`, explicit spend authorization and an approved synthetic target. `playwright install` (browser download) is not part of this approval.
+
+Not yet approved: `surrealdb`/`surrealdb[memory]` (the memory extra is a prerelease that needs a separately resolved lock), `arize`/`arize-otel`, `boto3`, ElevenLabs. Each needs its own owner proposal. New packages need A/B/C review per CONTRIBUTING.
+
+Dashboard: `pnpm audit --prod` found four postcss advisories (two high, two moderate) bundled by Next 15.5.28, the latest 15.x. A root `pnpm.overrides` entry forces `postcss>=8.5.23`; typecheck, lint, tests and build pass and the audit is clean. Revisit when Next ships a patched dependency.
