@@ -59,6 +59,24 @@ filesystem adapter, not an Anchor collector or a live provider smoke. The
 B-01d checkbox stays open until browser geometry, click receipts and screenshots
 are captured and bound to real base/head environments.
 
+### B-01d2 stored browser oracle bridge (2026-10-15)
+
+`StoredBrowserOracle` reads every artifact named by a completed browser
+observation, checks the stored bytes and binding against the trusted run,
+attempt, environment, revision, fixture and step, and validates the fixed
+measurement format before constructing `ClickEvidence` for the existing hard
+oracle. Missing or corrupted JSON/PNG, absent trusted click receipt, and an
+identity mismatch return `inconclusive`. The verifier also hashes the exact
+bytes it parses, so inconsistent consecutive store reads cannot create a pass.
+
+The local Chrome diagnostic now runs this bridge after the typed browser
+steps. At 375×812, Cartwheel base returned `pass` and head returned `fail`:
+`/tmp/gauntlet-b01d2-{base,head}/report.json` and `final.png`. These are
+local generated checkouts with a fixed diagnostic plan. The running server's
+source revision is still operator asserted, and no Daytona/Anchor session or
+independent diff-driven plan was used. These verdicts do not close P1 live
+acceptance or establish a confirmed Gate regression.
+
 ### B-01c1 browser evidence identity (2026-10-15)
 
 The worker now requires a trusted, preallocated `EvidenceSubject` before it

@@ -1,7 +1,8 @@
 """Fixed primary-action oracle with evidence injected by the trusted composition root.
 
 ClickEvidence is internal trusted evidence, never parsed from planner/page text.
-P0 supplies synthetic records; a P1 collector and artifact store are still required.
+P0 supplies synthetic records; P1 constructs records after stored artifact
+bindings and collector measurements pass independent verification.
 """
 
 from collections.abc import Mapping
