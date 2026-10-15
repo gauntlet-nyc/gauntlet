@@ -16,6 +16,37 @@
 
 **Record format:** `Date / owner / provider / pinned version / test SHA / command (no tokens) / raw sanitized result / failure / fallback / next verification`.
 
+## Current checkpoint (2026-10-15)
+
+P0's joint offline gate is integrated on main: dashboard #3 (`d5255f3`)
+and the P0-only checkpoint #29 (`4c12476`). The API consumes A's frozen
+goldens, B's fake worker and trusted oracle, and C's route/dashboard displays
+the resulting recorded fail/fail/pass outcomes. The response and page explicitly
+say `offline_recording`; this is not live browser or provider evidence. The
+goldens are packaged as resources so both fake and offline routes also work
+from an installed wheel. The three packaged copies are checked byte-for-byte
+against A's canonical files in the test suite.
+
+P1 preparation is now in main: C's optional live-provider pins #21 (`3b0592b`)
+and registered Cartwheel fixture #4 (`5a8d93f`). The manifest carries distinct
+base/head SHAs and checksum; its API route also works from an installed wheel.
+On main at `5a8d93f`, `.venv/bin/python -m pytest -q` passed 149 tests,
+`.venv/bin/ruff check .` passed, `.venv/bin/mypy services/gauntlet/src` checked
+39 files, dashboard lint/typecheck/4 tests/build passed, and
+`uv build --package gauntlet-control --out-dir /tmp/gauntlet-main-c01-dist` produced a
+wheel and sdist. A booted local API returned HTTP 200 for the Cartwheel change
+request, and headless Chrome rendered its actual base/head SHAs with the honest
+`not_tested` finding status.
+
+`.venv/bin/python scripts/probe_sdk_inventory.py --ui-preflight` on main exits
+2: Daytona 0.224.1, Anchor 1.0.1 and Playwright 1.64.0 are installed, while
+`RUN_LIVE_INTEGRATIONS=1`, both provider keys and
+`GAUNTLET_ALLOWED_TARGET_IDS=cartwheel-fixture` are absent from the process.
+No provider call or spend occurred. B-01a remains `not_tested` until explicit
+spend authorization, those local inputs, a permitted Daytona runtime/preview,
+and the one-environment screenshot/cleanup smoke are recorded here. The
+2026-10-14 readiness and branch notes below are historical snapshots.
+
 ## 2026-10-14 / B-00 / offline implementation and documentation review
 
 The B branch consumes A-00 through `8396d8e` (including oracle descriptors).
@@ -217,9 +248,9 @@ storage and evidence collection require the shared contract freeze below.
 
 ### Ordered deliverables and acceptance
 
-- [ ] **P0 integration:** C incorporates B through `1f33292`; owners complete
-  reviews; full tests/build run from main. Existing local combined evidence is
-  supplementary and does not check this box.
+- [x] **P0 integration:** A's golden, B's fake worker/oracle and C's offline
+  API/dashboard checkpoint are merged and verified from main as recorded in
+  the current checkpoint above. This is an offline gate only.
 - [ ] **B-01a provider smoke:** C approves and pins `daytona`, `anchorbrowser`
   and `playwright` in the local dependency lock. Verify signatures against the
   installed versions and official documentation before writing external calls.
