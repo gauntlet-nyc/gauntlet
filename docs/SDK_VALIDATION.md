@@ -70,6 +70,38 @@ IDs for each recorded run. This establishes the input boundary for a live
 collector; no Anchor screenshot, action receipt, or Daytona environment has
 been captured by this ticket.
 
+### B-01c2 local browser evidence capture (2026-10-15)
+
+`BrowserEvidenceCollector` uses fixed inspection and click instrumentation on
+an authorized synthetic page. It records the CTA rectangle and center hit
+target, dispatches a real browser mouse click, records its trusted recipient,
+and stores JSON plus screenshots through `LocalArtifactStore`. Inspection is
+bound to step 2, click JSON/PNG to step 3, and a final-state PNG to step 4.
+The local probe reopens each artifact and calls `check_evidence` with the
+expected run/attempt/observation/environment/source/fixture/step subject.
+
+With Playwright 1.64.0 and Google Chrome 155.0.8059.41, the local 375×812
+headless probe against the generated Cartwheel commits recorded:
+
+- Base `2265fb61e3fcd71c2def54f739adcf5adf2ade99`: inspect `ok`, click
+  `ok`, one order POST, one server-retrievable receipt and four verified
+  artifacts. Report and final screenshot:
+  `/tmp/gauntlet-b01c2-base-final-v2/{report.json,final.png}`.
+- Head `ab4f82048a9e673dd0bf1150bbebbbb4cdbc1f68`: inspect `ok`, click
+  `blocked` by Help, zero order POSTs, zero receipts and four verified
+  artifacts. Report and final screenshot:
+  `/tmp/gauntlet-b01c2-head-final-v2/{report.json,final.png}`.
+
+The probe checks the fixture checkout SHA, confines page requests to one
+loopback origin and blocks service workers. It does not verify the revision of
+the running server. Its click listener runs in the target page's JavaScript
+world, so this remains a local diagnostic, not independent hard-oracle proof.
+No Daytona or Anchor resource was used. Re-run the probe with
+`uv sync --frozen --group live-providers`, a built synthetic fixture on port
+3100, and `uv run python scripts/probe_browser_evidence.py {base|head}
+--origin http://127.0.0.1:3100 --chrome <local-chrome-path>
+--fixture-repo <generated-fixture-checkout> --output <local-output-dir>`.
+
 ### Cartwheel local checkout workflow (2026-10-15)
 
 C's fixture now has a synthetic, in-process order endpoint. A successful
