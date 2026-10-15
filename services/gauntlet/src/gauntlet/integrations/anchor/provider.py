@@ -5,6 +5,7 @@ egress proxy must enforce the same origin outside Playwright's route guard.
 """
 
 import asyncio
+import math
 import re
 from dataclasses import dataclass
 from typing import Protocol
@@ -65,12 +66,24 @@ class AnchorBrowserProvider:
         collector: BrowserEvidenceCollector,
         *,
         preview_domain_suffix: str,
+        cleanup_timeout_seconds: float = 20.0,
     ) -> None:
         if not re.fullmatch(r"\.[a-z0-9.-]+", preview_domain_suffix):
             raise ValueError("preview domain suffix is invalid")
+        if isinstance(cleanup_timeout_seconds, bool) or not isinstance(
+            cleanup_timeout_seconds, (int, float)
+        ):
+            raise ValueError("cleanup timeout must be finite and positive")
+        try:
+            cleanup_timeout_seconds = float(cleanup_timeout_seconds)
+        except OverflowError:
+            raise ValueError("cleanup timeout must be finite and positive") from None
+        if not math.isfinite(cleanup_timeout_seconds) or cleanup_timeout_seconds <= 0:
+            raise ValueError("cleanup timeout must be finite and positive")
         self._runtime = runtime
         self._collector = collector
         self._suffix = preview_domain_suffix
+        self._cleanup_timeout_seconds = cleanup_timeout_seconds
         self._sessions: dict[str, _Session] = {}
         self._pending_cleanup: set[str] = set()
         self._orphans: dict[str, AnchorConnection] = {}
@@ -108,18 +121,30 @@ class AnchorBrowserProvider:
             scoped_id = await scoped.open_session(environment, subject)
         except (Exception, asyncio.CancelledError):
             close_task = asyncio.create_task(connection.close())
-            # A second cancellation must not interrupt deletion of a paid session.
+            loop = asyncio.get_running_loop()
+            deadline = loop.time() + self._cleanup_timeout_seconds
+            # Repeated caller cancellations cannot reset the cleanup deadline.
             while not close_task.done():
+                remaining = deadline - loop.time()
+                if remaining <= 0:
+                    break
                 try:
-                    await asyncio.shield(close_task)
+                    await asyncio.wait_for(asyncio.shield(close_task), remaining)
                 except asyncio.CancelledError:
                     continue
                 except Exception:
                     break
-            try:
-                close_task.result()
-            except (Exception, asyncio.CancelledError):
+            if close_task.done():
+                try:
+                    close_task.result()
+                except (Exception, asyncio.CancelledError):
+                    self._orphans[f"anchor-orphan-{uuid4().hex}"] = connection
+            else:
                 self._orphans[f"anchor-orphan-{uuid4().hex}"] = connection
+                close_task.cancel()
+                close_task.add_done_callback(
+                    lambda task: task.exception() if not task.cancelled() else None
+                )
             raise
         session_id = f"anchor-browser-{uuid4().hex}"
         self._sessions[session_id] = _Session(connection, scoped, scoped_id)
