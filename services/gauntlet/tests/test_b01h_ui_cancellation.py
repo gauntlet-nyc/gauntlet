@@ -62,6 +62,25 @@ class SlowCloseBrowser:
         self.closed = True
 
 
+class CancellationResistantBrowser(SlowCloseBrowser):
+    def __init__(self, *, fail_close: bool = False) -> None:
+        super().__init__(fail_close=fail_close)
+        self.close_finished = asyncio.Event()
+        self.suppressed_cancellations = 0
+
+    async def close_session(self, session_id: str) -> None:
+        self.close_started.set()
+        while not self.release_close.is_set():
+            try:
+                await self.release_close.wait()
+            except asyncio.CancelledError:
+                self.suppressed_cancellations += 1
+        self.close_finished.set()
+        if self.fail_close:
+            raise EnvironmentUnavailableError("private provider detail")
+        self.closed = True
+
+
 def test_repeated_cancellation_finishes_browser_cleanup() -> None:
     async def scenario() -> None:
         spec, environment, subject, registry = setup()
@@ -116,3 +135,36 @@ def test_timed_out_cleanup_during_cancellation_is_logged(
 
     asyncio.run(scenario())
     assert "UI browser session cleanup failed (timeout)" in caplog.text
+
+
+@pytest.mark.parametrize("fail_close", [False, True])
+def test_cancellation_resistant_close_cannot_hold_caller_forever(
+    fail_close: bool, caplog: pytest.LogCaptureFixture
+) -> None:
+    async def scenario() -> tuple[bool, CancellationResistantBrowser]:
+        spec, environment, subject, registry = setup()
+        spec = spec.model_copy(update={"max_runtime_seconds": 1})
+        browser = CancellationResistantBrowser(fail_close=fail_close)
+        task = asyncio.create_task(UIWorker(browser, registry).run(spec, environment, subject))
+        await asyncio.wait_for(browser.perform_started.wait(), 1)
+        task.cancel()
+        await asyncio.wait_for(browser.close_started.wait(), 1)
+        task.cancel()
+        done, _ = await asyncio.wait((task,), timeout=1.5)
+        returned_before_release = task in done
+        browser.release_close.set()
+        with pytest.raises(asyncio.CancelledError):
+            await asyncio.wait_for(task, 1)
+        await asyncio.wait_for(browser.close_finished.wait(), 1)
+        await asyncio.sleep(0)
+        return returned_before_release, browser
+
+    returned, browser = asyncio.run(scenario())
+    assert returned
+    assert browser.suppressed_cancellations >= 1
+    assert "UI browser session cleanup failed (timeout)" in caplog.text
+    assert "private provider detail" not in caplog.text
+    if fail_close:
+        assert "UI browser session cleanup eventually failed" in caplog.text
+    else:
+        assert browser.closed
