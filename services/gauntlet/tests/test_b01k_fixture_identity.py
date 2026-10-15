@@ -1,6 +1,7 @@
 """A local Gate probe accepts only the selected Cartwheel build receipt."""
 
 import asyncio
+import gzip
 import importlib.util
 from pathlib import Path
 from types import ModuleType
@@ -25,7 +26,11 @@ def check_response(response: httpx.Response, *, origin: str = ORIGIN, sha: str =
 
     def respond(request: httpx.Request) -> httpx.Response:
         requests.append(request)
-        return response
+        return httpx.Response(
+            response.status_code,
+            headers=response.headers,
+            stream=httpx.ByteStream(response.content),
+        )
 
     asyncio.run(verify_fixture_build_receipt(origin, sha, transport=httpx.MockTransport(respond)))
     assert len(requests) == 1
@@ -35,6 +40,10 @@ def check_response(response: httpx.Response, *, origin: str = ORIGIN, sha: str =
 
 def test_valid_receipt_matches_selected_build() -> None:
     check_response(httpx.Response(200, json=receipt()))
+
+
+def test_explicit_identity_encoding_is_accepted() -> None:
+    check_response(httpx.Response(200, json=receipt(), headers={"content-encoding": "identity"}))
 
 
 @pytest.mark.parametrize(
@@ -94,6 +103,28 @@ def test_oversized_body_is_rejected() -> None:
         check_response(
             httpx.Response(200, content=b"x" * 4097, headers={"content-type": "application/json"})
         )
+
+
+def test_compressed_receipt_is_rejected_before_decoding() -> None:
+    plain = b'{"schema_version":"1.0","source_sha":"' + SHA.encode() + b'"}'
+    compressed = gzip.compress(plain + b" " * 1_000_000)
+    assert len(compressed) < 4096
+    requests: list[httpx.Request] = []
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(
+            200,
+            stream=httpx.ByteStream(compressed),
+            headers={"content-type": "application/json", "content-encoding": "gzip"},
+        )
+
+    with pytest.raises(EnvironmentUnavailableError, match="encoded"):
+        asyncio.run(
+            verify_fixture_build_receipt(ORIGIN, SHA, transport=httpx.MockTransport(respond))
+        )
+    assert len(requests) == 1
+    assert requests[0].headers["accept-encoding"] == "identity"
 
 
 def test_duplicate_json_fields_are_rejected() -> None:
