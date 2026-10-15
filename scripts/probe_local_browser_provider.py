@@ -15,17 +15,20 @@ from playwright.async_api import async_playwright
 
 from gauntlet.application.evidence import check_evidence
 from gauntlet.contracts import (
+    AttackSpec,
     CaptureStep,
     ClickStep,
     EvidenceSubject,
     InspectStep,
     NavigateStep,
+    Observation,
     ResizeStep,
 )
 from gauntlet.integrations.browser_evidence import BrowserEvidenceCollector
 from gauntlet.integrations.local_artifacts import LocalArtifactStore
 from gauntlet.integrations.local_browser import LocalBrowserProvider
 from gauntlet.ports.sandbox import EnvironmentHandle
+from gauntlet.verification.stored_browser import StoredBrowserOracle
 
 
 async def probe(
@@ -84,6 +87,29 @@ async def probe(
     expected = "ok" if variant == "base" else "blocked"
     if [record.outcome for record in records] != ["ok", "ok", "ok", expected, "ok"]:
         raise RuntimeError("local browser port disagrees with the selected fixture")
+    diagnostic_plan = json.loads(Path("docs/contracts/examples/ui-plan.v1.json").read_text())
+    diagnostic_plan.update(
+        target_id=environment.target_id,
+        fixture_id=environment.fixture_id,
+        steps=[step.model_dump(mode="json") for step in steps],
+    )
+    spec = AttackSpec.model_validate(diagnostic_plan)
+    observation = Observation(
+        observation_id=subject.observation_id,
+        attack_id=spec.attack_id,
+        environment_id=environment.environment_id,
+        source_sha=environment.source_sha,
+        fixture_checksum=environment.fixture_checksum,
+        status="completed",
+        action_log=tuple(records),
+        evidence_ids=tuple(dict.fromkeys(e for record in records for e in record.evidence_ids)),
+    )
+    verdict = await StoredBrowserOracle(
+        store, primary_targets={environment.target_id: "checkout-primary-action"}
+    ).evaluate("ui.primary_action_reachable", spec, observation, subject)
+    expected_verdict = "pass" if variant == "base" else "fail"
+    if verdict.outcome != expected_verdict:
+        raise RuntimeError("stored browser oracle disagrees with the selected fixture")
     artifacts: list[dict[str, object]] = []
     for record in records:
         expected_subject = subject.model_copy(update={"step_index": record.step_index})
@@ -112,6 +138,9 @@ async def probe(
         "server_source_verified": False,
         "subject": subject.model_dump(mode="json"),
         "outcomes": [record.outcome for record in records],
+        "oracle_outcome": verdict.outcome,
+        "oracle_evidence_ids": verdict.evidence_ids,
+        "plan_source": "fixed_local_diagnostic",
         "artifacts": artifacts,
     }
     (output / "report.json").write_text(json.dumps(report, indent=2) + "\n")
