@@ -57,7 +57,9 @@ export async function decide(form: FormData): Promise<void> {
     cache: "no-store",
   });
   const sep = back.includes("?") ? "&" : "?";
-  redirect(`${back}${sep}approval=${res.ok ? "recorded" : String(res.status)}`);
+  // Return the reviewer to the card they acted on, not the top of the page.
+  const anchor = String(form.get("subject")) === "fix_plan" ? "#next-step" : "";
+  redirect(`${back}${sep}approval=${res.ok ? "recorded" : String(res.status)}${anchor}`);
 }
 
 export async function runRepair(form: FormData): Promise<void> {
@@ -70,5 +72,5 @@ export async function runRepair(form: FormData): Promise<void> {
     headers: { authorization: `Bearer ${token}` },
     cache: "no-store",
   });
-  redirect(`${back}?repair=${res.ok ? "done" : String(res.status)}`);
+  redirect(`${back}?repair=${res.ok ? "done" : String(res.status)}#next-step`);
 }

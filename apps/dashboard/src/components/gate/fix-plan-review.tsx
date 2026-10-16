@@ -4,6 +4,7 @@ import { humanize } from "@/components/gate/copy";
 import { MonoId } from "@/components/gate/mono-id";
 import { PatchDisclosure } from "@/components/gate/patch-disclosure";
 import { PendingButton } from "@/components/gate/pending-button";
+import { ScrollIntoView } from "@/components/gate/scroll-into-view";
 import { DecideForm, DiffView, TONE_CLASSES } from "@/components/shared";
 import type { GateRunView } from "@/lib/gauntlet";
 import { cn } from "@/lib/utils";
@@ -50,6 +51,7 @@ export function FixPlanReview({
   repair,
   back,
   repairStatus,
+  approvalStatus,
   decide,
   runRepair,
 }: {
@@ -58,12 +60,13 @@ export function FixPlanReview({
   repair: GateRunView["repair"];
   back: string;
   repairStatus: string | undefined;
+  approvalStatus?: string | undefined;
   decide: (form: FormData) => Promise<void>;
   runRepair: (form: FormData) => Promise<void>;
 }) {
   const { plan } = fixPlan;
   return (
-    <section aria-label="Next step" className="bg-card space-y-5 rounded-xl border p-6">
+    <section id="next-step" aria-label="Next step" className="bg-card scroll-mt-20 space-y-5 rounded-xl border p-6">
       <div>
         <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
           <Wrench className="size-3.5" aria-hidden />
@@ -79,6 +82,30 @@ export function FixPlanReview({
           ))}
         </ol>
       </PatchDisclosure>
+      {(approvalStatus !== undefined || repairStatus !== undefined) && <ScrollIntoView targetId="next-step" />}
+      {approvalStatus === "recorded" && (
+        <div
+          role="status"
+          className="border-passed/30 bg-passed/[0.07] text-passed flex items-start gap-2.5 rounded-lg border px-4 py-3 text-sm"
+        >
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0" aria-hidden />
+          <span>
+            Decision recorded for plan <span className="font-mono text-xs">{fixPlan.plan_sha256.slice(0, 12)}…</span>.
+            It is single-use and expires; nothing was merged or deployed.
+          </span>
+        </div>
+      )}
+      {approvalStatus !== undefined && approvalStatus !== "recorded" && (
+        <div
+          role="alert"
+          className="border-regression/30 bg-regression/[0.07] text-regression flex items-start gap-2.5 rounded-lg border px-4 py-3 text-sm"
+        >
+          <XCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+          <span>
+            Decision refused (HTTP {approvalStatus}). {approvalStatus === "401" ? "Log in as a reviewer first." : "The plan changed; review it again."}
+          </span>
+        </div>
+      )}
       <DecideForm
         action={decide}
         runId={runId}
