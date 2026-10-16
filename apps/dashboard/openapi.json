@@ -4143,6 +4143,45 @@
         ]
       }
     },
+    "/gate/runs/{run_id}/briefing/audio": {
+      "get": {
+        "description": "MP3 of the templated briefing voiced by ElevenLabs (live mode only).",
+        "operationId": "get_gate_briefing_audio_gate_runs__run_id__briefing_audio_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "audio/mpeg": {}
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Gate Briefing Audio",
+        "tags": [
+          "gate"
+        ]
+      }
+    },
     "/gate/runs/{run_id}/check-run": {
       "get": {
         "description": "Preview of the GitHub check run (checks-only; never comments, approves or merges).",

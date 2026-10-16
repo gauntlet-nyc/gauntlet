@@ -15,7 +15,7 @@ import { Reveal } from "@/components/motion/reveal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VoiceBriefingButton } from "@/components/VoiceBriefing";
 import { Banner, EmptyState, ErrorPanel, OfflineBadge, PageHeader, ProvenanceList, StatusPill, toneOf } from "@/components/shared";
-import { api, artifactUrl, executionProvenance } from "@/lib/gauntlet";
+import { api, artifactUrl, briefingAudioUrl, executionProvenance } from "@/lib/gauntlet";
 
 export const dynamic = "force-dynamic";
 
@@ -86,7 +86,11 @@ export default async function GateRunPage({
         actions={
           <>
             <OfflineBadge provenance={executionProvenance(run.provenance)} />
-            <VoiceBriefingButton text={briefing.briefing.spoken_summary} providerLabel={briefing.provenance.label} />
+            <VoiceBriefingButton
+              text={briefing.briefing.spoken_summary}
+              providerLabel={briefing.provenance.label}
+              audioUrl={briefing.audio_available ? briefingAudioUrl(run.run_id) : undefined}
+            />
           </>
         }
       />
