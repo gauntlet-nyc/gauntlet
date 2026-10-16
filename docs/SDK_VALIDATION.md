@@ -1127,3 +1127,25 @@ Offline/local result: patched commit verified, all checks pass, verdict
 stale hash and an unknown token are refused; a reused approval is refused; a
 fix that blocks every refund is `fix_rejected` (legitimate workflow broke).
 Model fix proposer (`--model azure`): offline-tested shape only, **live NOT RUN**.
+
+### Session 1: P7 memory-informed planning (2026-10-16)
+
+`LearnFromGateUseCase` writes one `TemporalMemoryFact` per confirmed finding
+(`verification=confirmed`, `trust=verified_test`, provenance = finding id,
+oracle id, head commit). Plans read memory through `MemoryReader` with
+`as_of` = plan time, and `select_memory` re-filters (confirmed, trusted,
+known and valid at `as_of`, not superseded).
+
+Offline sequence with `--memory local` (file `artifacts/memory/facts.json`):
+1. `run_gate.py --memory local --learn` -> `confirmed_regression`, fact
+   `fact-finding-attack-ui-primary-action-375-fd32708bcd61` written.
+2. `run_gate.py --clean --memory local` -> planner cites the fact and adds a
+   768 px attack; both pass (`passed`).
+3. `run_gate.py --memory local` -> the memory-added 768 px attack is also a
+   `confirmed_regression` (Help covers Checkout below 900 px), which the
+   memory-free plan did not test.
+
+`--memory surreal` uses Session 2's `SurrealTemporalMemory`: offline-tested by
+Session 2, **live NOT RUN** (`RUN_LIVE_INTEGRATIONS=1 uv run python
+scripts/run_gate.py --memory surreal --learn`). The scripted planner's use of
+memory is a fixed rule (widen the viewport sweep), not model judgement.

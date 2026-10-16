@@ -621,3 +621,24 @@ def refund_verification_suite(target: GateTarget, original: "AttackSpec") -> "Ve
         legitimate=legitimate,
         legitimate_ok=lambda obs: bool(obs.tool_calls) and all(c.succeeded for c in obs.tool_calls),
     )
+
+
+# --- Memory (P7) ------------------------------------------------------------------------------
+
+MemoryKindSetting = Literal["none", "local", "surreal"]
+LOCAL_MEMORY_FILE: Final = REPO_ROOT / "artifacts" / "memory" / "facts.json"
+
+
+def build_memory(kind: MemoryKindSetting, settings: Settings) -> tuple[Any, str]:
+    """Return (reader+writer, label). ``surreal`` is Session 2's SurrealDB memory adapter."""
+    if kind == "none":
+        return None, "none"
+    if kind == "local":
+        from gauntlet.integrations.fake.memory import JsonFileTemporalMemory
+
+        return JsonFileTemporalMemory(LOCAL_MEMORY_FILE), "offline_local_file"
+    settings.require_live("SurrealDB Agent Memory")
+    from gauntlet.memory.surreal_memory import SurrealTemporalMemory
+    from gauntlet.persistence.factory import memory_client
+
+    return SurrealTemporalMemory(memory_client(settings.integrations())), "live_surreal_memory"

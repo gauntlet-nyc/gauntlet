@@ -4,6 +4,8 @@
                                                             # simulated layout (offline)
     uv run python scripts/run_gate.py --clean               # unrelated change: expect passed
     uv run python scripts/run_gate.py --change refund-tool  # AI-agent attack, real tool code
+    uv run python scripts/run_gate.py --memory local --learn   # remember confirmed findings
+    uv run python scripts/run_gate.py --memory local --clean   # next plan reads that memory
     RUN_LIVE_INTEGRATIONS=1 uv run python scripts/run_gate.py --model azure
     RUN_LIVE_INTEGRATIONS=1 uv run --group live-providers python scripts/run_gate.py \
         --model azure --sandbox daytona --browser anchor
@@ -19,6 +21,7 @@ import json
 import sys
 import tempfile
 from dataclasses import replace
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
@@ -28,7 +31,8 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from build_cartwheel_clean_fixture import build_clean  # noqa: E402
 from build_cartwheel_refund_fixture import build_refund  # noqa: E402
 
-from gauntlet.composition import GateTarget, build_gate, readiness  # noqa: E402
+from gauntlet.application.gate.learn import LearnFromGateUseCase  # noqa: E402
+from gauntlet.composition import GateTarget, build_gate, build_memory, readiness  # noqa: E402
 from gauntlet.settings import MissingSettingError, Settings  # noqa: E402
 
 
@@ -60,6 +64,7 @@ async def run(args: argparse.Namespace) -> dict[str, object]:
     change = target.change(intent=intent)
     run_id = args.run_id or f"gate-{uuid4().hex[:12]}"
     output = Path(args.output) if args.output else ROOT / "artifacts" / "gate-runs" / run_id
+    memory, memory_label = build_memory(args.memory, settings)
     runtime = await build_gate(
         settings,
         target,
@@ -67,11 +72,17 @@ async def run(args: argparse.Namespace) -> dict[str, object]:
         sandbox=args.sandbox,
         browser=args.browser,
         artifact_root=output / "evidence",
+        memory=memory,
     )
+    runtime.labels["memory"] = memory_label
     try:
         report = await runtime.use_case.execute(run_id, change, target.fixture_checksum)
     finally:
         await runtime.aclose()
+    learned: tuple[str, ...] = ()
+    if args.learn and memory is not None:
+        facts = await LearnFromGateUseCase(memory, lambda: datetime.now(UTC)).remember(report)
+        learned = tuple(f.fact_id for f in facts)
     offline = all(
         runtime.labels[part].startswith("offline") for part in ("model", "sandbox", "browser")
     )
@@ -91,6 +102,8 @@ async def run(args: argparse.Namespace) -> dict[str, object]:
             {"attack_id": r.attack_id, "reasons": list(r.reasons)} for r in report.plan.rejected
         ],
         "overall_status": report.overall.value,
+        "memory_facts_used": report.events[1].payload.get("memory_fact_ids"),
+        "memory_facts_learned": list(learned),
         "findings": [f.model_dump(mode="json") for f in report.findings],
         "events": [
             {"sequence": e.sequence, "type": e.event_type, "payload": e.payload}
@@ -107,6 +120,8 @@ def main() -> int:
     parser.add_argument("--browser", choices=("fake", "local", "anchor"), default="fake")
     parser.add_argument("--change", choices=("help-button", "refund-tool"), default="help-button")
     parser.add_argument("--clean", action="store_true", help="use the unrelated clean change")
+    parser.add_argument("--memory", choices=("none", "local", "surreal"), default="none")
+    parser.add_argument("--learn", action="store_true", help="remember confirmed findings")
     parser.add_argument("--run-id")
     parser.add_argument("--output")
     args = parser.parse_args()

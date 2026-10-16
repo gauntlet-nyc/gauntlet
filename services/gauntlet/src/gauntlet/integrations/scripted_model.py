@@ -95,6 +95,29 @@ class ScriptedModelGateway:
                         "max_runtime_seconds": 90,
                     }
                 )
+        # Memory-informed planning: a verified past occlusion widens the viewport sweep.
+        memory = [m for m in payload.get("verified_memory", ()) if isinstance(m, dict)]
+        occlusions = [m for m in memory if m.get("kind") == "ui_occlusion"]
+        if self._ui and ui_ref and "ui" in allowed and occlusions and attacks:
+            fact = occlusions[0]
+            remembered = dict(attacks[0])
+            remembered.update(
+                {
+                    "attack_id": "attack-ui-primary-action-768-memory",
+                    "hypothesis": "A positioned element may cover the primary action at a "
+                    "tablet viewport as well",
+                    "why_this_change": f"Cited change alters UI; verified memory "
+                    f"{fact.get('fact_id')} recorded a primary-action occlusion before",
+                    "steps": [
+                        {"action": "navigate", "path": self._ui.route},
+                        {"action": "resize", "width": 768, "height": 1024},
+                        {"action": "inspect", "target": self._ui.primary_test_id},
+                        {"action": "click", "target": self._ui.primary_test_id},
+                        {"action": "capture", "label": "after-click"},
+                    ],
+                }
+            )
+            attacks.append(remembered)
         agent_ref = _first_ref(impact, ("agent_tool", "api"))
         if self._agent and agent_ref and "ai_agent" in allowed and self._agent.oracle_id in oracles:
             attacks.append(
