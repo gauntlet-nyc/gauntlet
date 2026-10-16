@@ -83,6 +83,16 @@ export function provenanceBadge(provenance: readonly Provenance[]): { text: stri
   }
 }
 
+/** Gate's static fixture diff is report context, not an execution adapter. */
+export function executionProvenance(provenance: readonly Provenance[]): Provenance[] {
+  return provenance.filter((p) => p.provider !== "cartwheel-templates");
+}
+
+/** The summary boolean covers offline and missing adapters, so it is not a live/offline verdict. */
+export function gateSummaryEvidence(offline: boolean): string {
+  return offline ? "Offline or unreported evidence" : "No offline execution reported";
+}
+
 export function shortSha(sha: string): string {
   return sha.slice(0, 7);
 }
