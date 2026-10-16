@@ -5,14 +5,15 @@ import asyncio
 import json
 import subprocess
 from pathlib import Path
+from typing import cast
 from uuid import uuid4
 
 from gauntlet.contracts import ChangeRequest, EvidenceSubject
 from gauntlet.integrations.browser_evidence import BrowserEvidenceCollector
 from gauntlet.integrations.fixture_identity import verify_fixture_build_receipt
 from gauntlet.integrations.local_artifacts import LocalArtifactStore
-from gauntlet.integrations.local_browser import LocalBrowserProvider
-from gauntlet.planning import FrozenPlan
+from gauntlet.integrations.local_browser import LocalBrowserProvider, PlaywrightBrowser
+from gauntlet.planning import FrozenPlan, PlanningLimits
 from gauntlet.ports.sandbox import EnvironmentHandle
 from gauntlet.verification.registry import RegisteredOracleRegistry
 from gauntlet.verification.stored_browser import StoredBrowserOracle
@@ -67,6 +68,15 @@ async def probe(
         raise ValueError("revision must be base or head")
     if any(attack.worker_kind != "ui" for attack in frozen.attacks):
         raise ValueError("local consumer accepts UI attacks only")
+    limits = PlanningLimits()
+    if (
+        len(frozen.attacks) > limits.max_attacks
+        or sum(attack.max_runtime_seconds for attack in frozen.attacks)
+        > limits.max_total_runtime_seconds
+    ):
+        raise ValueError("plan exceeds local execution bounds")
+    if any(attack.oracle_ids != ("ui.primary_action_reachable",) for attack in frozen.attacks):
+        raise ValueError("local consumer requires the registered browser oracle")
     manifest = json.loads((ROOT / "apps/cartwheel/fixture-manifest.v1.json").read_text())
     change = frozen.change
     if (
@@ -102,7 +112,10 @@ async def probe(
         browser = await playwright.chromium.launch(executable_path=str(chrome), headless=True)
         try:
             worker = UIWorker(
-                LocalBrowserProvider(browser, BrowserEvidenceCollector(store)), registry
+                LocalBrowserProvider(
+                    cast(PlaywrightBrowser, browser), BrowserEvidenceCollector(store)
+                ),
+                registry,
             )
             observations = await run_attacks(frozen, environment, worker, oracle)
         finally:
