@@ -3,6 +3,7 @@
 import asyncio
 
 from conftest import DemoRepo
+from fakes import StaticTargetCatalog
 
 from gauntlet.contracts import ChangeRequest
 from gauntlet.integrations.local_gate_diagnostic import freeze_diagnostic_plan
@@ -22,7 +23,11 @@ def change(repo: DemoRepo, head: str) -> ChangeRequest:
 
 def test_real_diff_is_cited_and_plan_event_precedes_execution(demo_repo: DemoRepo) -> None:
     result = asyncio.run(
-        freeze_diagnostic_plan(demo_repo.path, change(demo_repo, demo_repo.ui_head))
+        freeze_diagnostic_plan(
+            demo_repo.path,
+            change(demo_repo, demo_repo.ui_head),
+            targets=StaticTargetCatalog(),
+        )
     )
     assert len(result.frozen.attacks) == 1
     attack = result.frozen.attacks[0]
@@ -36,7 +41,9 @@ def test_real_diff_is_cited_and_plan_event_precedes_execution(demo_repo: DemoRep
 
 
 def test_no_changed_surface_freezes_not_tested_without_model_call(demo_repo: DemoRepo) -> None:
-    result = asyncio.run(freeze_diagnostic_plan(demo_repo.path, change(demo_repo, demo_repo.base)))
+    result = asyncio.run(freeze_diagnostic_plan(
+            demo_repo.path, change(demo_repo, demo_repo.base), targets=StaticTargetCatalog()
+        ))
     assert result.frozen.attacks == ()
     assert result.frozen.not_tested_reason == "no testable surface in the change"
     assert result.events[-1].event_type == "plan_frozen"

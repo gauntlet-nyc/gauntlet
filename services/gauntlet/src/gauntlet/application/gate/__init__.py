@@ -10,6 +10,7 @@ from .approvals import (
     fix_plan_hash,
 )
 from .plan_change import PlanChangeDependencies, PlanChangeUseCase
+from .targets import StaticTargetCatalog, profile_from_manifest
 
 __all__ = [
     "DEFAULT_APPROVAL_TTL",
@@ -19,6 +20,8 @@ __all__ = [
     "ExecutionRequest",
     "PlanChangeDependencies",
     "PlanChangeUseCase",
+    "StaticTargetCatalog",
     "approval_mismatches",
     "fix_plan_hash",
+    "profile_from_manifest",
 ]

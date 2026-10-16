@@ -13,6 +13,7 @@ import subprocess
 from pathlib import Path
 from uuid import uuid4
 
+from gauntlet.application.gate import StaticTargetCatalog, profile_from_manifest
 from gauntlet.contracts import ChangeRequest, EvidenceSubject
 from gauntlet.integrations.browser_evidence import BrowserEvidenceCollector
 from gauntlet.integrations.fixture_identity import verify_fixture_build_receipt
@@ -65,7 +66,9 @@ async def probe(
         max_cost_usd_cents=500,
         feature_intent="Synthetic UI update",
     )
-    frozen_result = await freeze_diagnostic_plan(fixture_repo, change)
+    frozen_result = await freeze_diagnostic_plan(
+        fixture_repo, change, targets=StaticTargetCatalog(profile_from_manifest(manifest))
+    )
     frozen = frozen_result.frozen
     if (
         len(frozen.attacks) != 1

@@ -12,17 +12,24 @@ from pathlib import Path
 from uuid import uuid4
 
 from gauntlet.analysis import GitRepositoryInspector
-from gauntlet.application.gate import PlanChangeDependencies, PlanChangeUseCase
+from gauntlet.application.gate import (
+    PlanChangeDependencies,
+    PlanChangeUseCase,
+    StaticTargetCatalog,
+    profile_from_manifest,
+)
 from gauntlet.contracts import ChangeRequest, RunEvent
 from gauntlet.integrations.bedrock import create_bedrock_gateway
 from gauntlet.integrations.fake.storage import FakeRunStore
 from gauntlet.planning import AttackPlanner, FrozenPlan, PlanningLimits, serialize_frozen_plan
+from gauntlet.ports import TargetCatalog
 from gauntlet.ports.errors import EnvironmentUnavailableError
 from gauntlet.ports.model import ModelGateway
 from gauntlet.verification.registry import RegisteredOracleRegistry
 
 ROOT = Path(__file__).resolve().parents[1]
 INSTRUCTIONS = ROOT / "docs/prompts/p1-ui-planner.md"
+MANIFEST = ROOT / "apps/cartwheel/fixture-manifest.v1.json"
 PINNED_BOTO3 = "1.43.114"
 
 
@@ -44,7 +51,11 @@ def _release_reservation(path: Path, descriptor: int, *, published: bool) -> Non
 
 
 async def freeze_live_plan(
-    repository: Path, change: ChangeRequest, gateway: ModelGateway, instructions: str
+    repository: Path,
+    change: ChangeRequest,
+    gateway: ModelGateway,
+    instructions: str,
+    targets: TargetCatalog,
 ) -> tuple[FrozenPlan, tuple[RunEvent, ...]]:
     """Use the existing diff inspector, validator and event freeze with a supplied model port."""
     store = FakeRunStore(initial_sequence=0)
@@ -59,12 +70,19 @@ async def freeze_live_plan(
                 PlanningLimits(),
             ),
             store=store,
+            targets=targets,
             clock=lambda: datetime.now(UTC),
             new_event_id=lambda: f"event-{uuid4().hex}",
         )
     )
     frozen = await use_case.execute(run_id, change)
     return frozen, await store.list_events(run_id)
+
+
+def _cartwheel_catalog() -> StaticTargetCatalog:
+    """The only authorized target is the committed synthetic Cartwheel manifest."""
+    manifest = json.loads(MANIFEST.read_text())
+    return StaticTargetCatalog(profile_from_manifest(manifest))
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -131,7 +149,9 @@ def main(argv: list[str] | None = None) -> int:
         gateway = create_bedrock_gateway(model_id=args.model_id, region=args.region)
         instructions = INSTRUCTIONS.read_text()
         frozen, events = asyncio.run(
-            freeze_live_plan(args.repository, change, gateway, instructions)
+            freeze_live_plan(
+                args.repository, change, gateway, instructions, _cartwheel_catalog()
+            )
         )
     except Exception as exc:
         error_type = type(exc).__name__

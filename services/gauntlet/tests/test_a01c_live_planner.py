@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 from conftest import DemoRepo
+from fakes import StaticTargetCatalog
 
 from gauntlet.analysis import GitRepositoryInspector
 from gauntlet.contracts import ChangeImpactMap, ChangeRequest
@@ -204,6 +205,7 @@ def test_real_diff_plan_composition_freezes_only_valid_model_proposals(demo_repo
             request,
             BedrockConverseGateway(client, "test-model"),
             "trusted instruction",
+            StaticTargetCatalog(),
         )
     )
     assert [attack.attack_id for attack in frozen.attacks] == ["attack-ui-from-model"]
