@@ -227,7 +227,9 @@ def build_model_gateway(
         settings.require(name)
     return (
         create_bedrock_gateway(
-            model_id=settings.require("BEDROCK_MODEL_ID"), region=settings.require("AWS_REGION")
+            model_id=settings.require("BEDROCK_MODEL_ID"),
+            region=settings.require("AWS_REGION"),
+            reasoning_model=settings.flag("BEDROCK_REASONING_MODEL"),
         ),
         "live_bedrock",
     )

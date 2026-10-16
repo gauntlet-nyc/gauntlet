@@ -462,3 +462,43 @@ def test_execute_reports_rejected_model_proposal_without_accepting_an_attack(
     assert report["rejected_attacks"] == 1
     assert report["attacks"] == []
     assert report["gate_status"] == "not_tested"
+
+
+def test_reasoning_model_omits_temperature_and_skips_reasoning_blocks() -> None:
+    raw = response('{"attacks": []}')
+    message = raw["output"]["message"]  # type: ignore[index]
+    message["content"] = [{"reasoningContent": {"reasoningText": {"text": "hidden"}}}] + message[
+        "content"
+    ]
+    client = RecordingClient(raw)
+    gateway = BedrockConverseGateway(client, "test-model", reasoning_model=True)
+    result = asyncio.run(gateway.complete(ModelRequest("instruction", "diff", 500, 0.0)))
+    assert result.text == '{"attacks": []}'
+    assert client.calls[0]["inferenceConfig"] == {"maxTokens": 500}
+
+
+def test_reasoning_blocks_are_still_rejected_for_non_reasoning_models() -> None:
+    raw = response("{}")
+    message = raw["output"]["message"]  # type: ignore[index]
+    message["content"] = [{"reasoningContent": {"reasoningText": {"text": "x"}}}] + message[
+        "content"
+    ]
+    with pytest.raises(EnvironmentUnavailableError):
+        asyncio.run(
+            BedrockConverseGateway(RecordingClient(raw), "test-model").complete(
+                ModelRequest("instruction", "diff", 500, 0.0)
+            )
+        )
+
+
+def test_reasoning_only_response_is_unusable() -> None:
+    raw = response("{}")
+    raw["output"]["message"]["content"] = [  # type: ignore[index]
+        {"reasoningContent": {"reasoningText": {"text": "x"}}}
+    ]
+    with pytest.raises(EnvironmentUnavailableError):
+        asyncio.run(
+            BedrockConverseGateway(
+                RecordingClient(raw), "test-model", reasoning_model=True
+            ).complete(ModelRequest("instruction", "diff", 500, 0.0))
+        )
