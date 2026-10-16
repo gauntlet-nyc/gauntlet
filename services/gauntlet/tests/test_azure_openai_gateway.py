@@ -175,3 +175,25 @@ def test_other_paths_are_still_refused() -> None:
         create_azure_openai_gateway(
             {**ENV, "AZURE_OPENAI_ENDPOINT": "https://demo-res.services.ai.azure.com/openai/v2"}
         )
+
+
+def test_one_retry_after_a_transport_error() -> None:
+    calls: list[int] = []
+
+    def flaky(request: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        if len(calls) == 1:
+            raise httpx.ReadTimeout("slow", request=request)
+        return httpx.Response(200, json=completion("{}"))
+
+    gateway = create_azure_openai_gateway(ENV, transport=httpx.MockTransport(flaky))
+    assert asyncio.run(gateway.complete(REQUEST)).text == "{}"
+    assert len(calls) == 2
+
+
+def test_http_errors_are_not_retried() -> None:
+    recorder = Recorder(500, {"error": "boom"})
+    gateway = create_azure_openai_gateway(ENV, transport=recorder.transport())
+    with pytest.raises(EnvironmentUnavailableError):
+        asyncio.run(gateway.complete(REQUEST))
+    assert len(recorder.requests) == 1

@@ -17,6 +17,7 @@ from gauntlet.ports.model import ModelRequest, ModelResponse
 DEFAULT_API_VERSION: Final = "2024-10-21"
 _MAX_RESPONSE_CHARS: Final = 128_000
 _MAX_RESPONSE_BYTES: Final = 1_000_000
+_READ_TIMEOUT_SECONDS: Final = 180
 _SAFE_REQUEST_ID: Final = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 _DEPLOYMENT: Final = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 _API_VERSION: Final = re.compile(r"^\d{4}-\d{2}-\d{2}(?:-preview)?$")
@@ -106,19 +107,26 @@ class AzureOpenAIGateway:
         if not self._reasoning_model:
             # Reasoning deployments only accept their default temperature.
             body["temperature"] = request.temperature
-        try:
-            async with httpx.AsyncClient(
-                transport=self._transport,
-                trust_env=False,
-                follow_redirects=False,
-                timeout=httpx.Timeout(60, connect=5),
-            ) as client:
-                response = await client.post(
-                    self._url, json=body, headers={"api-key": self._api_key}
-                )
-        except httpx.HTTPError:
-            # Exception text can include the endpoint or request; never surface it.
-            raise EnvironmentUnavailableError("Azure OpenAI request failed") from None
+        response: httpx.Response | None = None
+        # Reasoning deployments can think for minutes on a full planning prompt. Allow a long
+        # read and one retry on transport errors (timeouts, resets); never retry HTTP errors.
+        for attempt in range(2):
+            try:
+                async with httpx.AsyncClient(
+                    transport=self._transport,
+                    trust_env=False,
+                    follow_redirects=False,
+                    timeout=httpx.Timeout(_READ_TIMEOUT_SECONDS, connect=5),
+                ) as client:
+                    response = await client.post(
+                        self._url, json=body, headers={"api-key": self._api_key}
+                    )
+                break
+            except httpx.HTTPError:
+                if attempt == 1:
+                    # Exception text can include the endpoint or request; never surface it.
+                    raise EnvironmentUnavailableError("Azure OpenAI request failed") from None
+        assert response is not None
         if response.status_code != 200 or len(response.content) > _MAX_RESPONSE_BYTES:
             raise EnvironmentUnavailableError(
                 f"Azure OpenAI request failed with HTTP {response.status_code}"

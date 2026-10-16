@@ -37,7 +37,9 @@ export default async function GatePage({ searchParams }: { searchParams: Promise
       {params.error && (
         <p role="alert" className="text-regression mb-4 flex items-center gap-2 text-sm">
           <AlertTriangle className="size-4 shrink-0" aria-hidden />
-          Could not start run (HTTP {params.error}).
+          {params.error === "503"
+            ? "A live provider (planner, sandbox or browser) didn't respond. Nothing was recorded; start the run again."
+            : `Could not start run (HTTP ${params.error}).`}
         </p>
       )}
 
