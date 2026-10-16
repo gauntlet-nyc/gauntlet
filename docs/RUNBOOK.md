@@ -103,7 +103,7 @@ untracked registration file with the actual provider values:
   --head-snapshot <actual-head-snapshot> \
   --image-digest <common-64-character-image-digest> \
   --repo-path /workspace/cartwheel \
-  --preview-domain-suffix .proxy.daytona.work \
+  --preview-domain-suffix .daytonaproxy01.net \
   --preview-port 3000 \
   --output /tmp/cartwheel-registration.json
 ```
@@ -178,3 +178,15 @@ two head failures under the same plan hash
 The paired report is `/tmp/gauntlet-a01f-paired-report.json`. It labels the
 local result `confirmed_regression` with `introduced` attribution and keeps the
 product Gate status `not_tested`. No Daytona or Anchor resource was used.
+
+For the unrelated clean Cartwheel change, build a separate checkout with
+`scripts/build_cartwheel_clean_fixture.py --dest <new-directory>`. Its clean SHA
+is `27548050633077b5d865431fd736fb9b92a28085`; only the product description
+page differs from base. Run the local probe with `--clean-sha` on both base and
+clean checkouts, using the same run ID and separately built servers. Pass the
+same `--clean-sha` and both report hashes to the paired consumer. The 2026-10-16
+headless Chrome run produced two base passes and two clean passes under plan hash
+`92b2cae9813a9a0799e3ff0fc67382c63a564fe3cfa9833708ba0ac5bdfb10f8`.
+The independent report `/tmp/gauntlet-a01g-paired-report.json` records
+`local_pair_status=passed`, zero failures and `gate_status=not_tested`. This is
+a scripted local false-positive check; it is not a blind Bedrock or Anchor run.

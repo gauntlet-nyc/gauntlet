@@ -1,10 +1,10 @@
 # SDK integration validation checklist — B owns
 
-**Status: all live smokes NOT RUN in starter.** Record installed SDK version, exact API call, invocation environment, sanitized output/trace ID, elapsed time, cleanup result and SDK doc URL. Never commit keys. Package APIs and feature entitlements may change.
+**Starter baseline; see dated updates below for current results.** Record installed SDK version, exact API call, invocation environment, sanitized output/trace ID, elapsed time, cleanup result and SDK doc URL. Never commit keys. Package APIs and feature entitlements may change.
 
 | Provider | Required live smoke | Known docs | Recorded result |
 |---|---|---|---|
-| Daytona | create sandbox, execute, access preview, optionally eligible VM fork, destroy | https://www.daytona.io/docs/en/python-sdk/ | NOT RUN |
+| Daytona | create sandbox, execute, access preview, optionally eligible VM fork, destroy | https://www.daytona.io/docs/en/python-sdk/ | 2026-10-16 cold restore and signed preview receipts PASSED; VM fork not tested |
 | Anchor | create cloud session, resize, inspect, click approved preview, capture recording, close | https://github.com/anchorbrowser/AnchorBrowser-SDK-Python | NOT RUN |
 | Arize AX | `arize.otel.register`, correlated span visible in AX, one actual evaluated experiment | https://arize.com/docs/ax/quickstarts/quickstart-write-first-eval | NOT RUN |
 | SurrealDB core | AsyncSurreal connect, param insert/query, relation, update and close | https://surrealdb.com/docs/reference/python/api/core/surreal | NOT RUN |
@@ -165,31 +165,65 @@ obtains the signed preview and waits for `/checkout` readiness. The hosted
 Daytona SDK 0.224.1 `AsyncProcess.exec(command, cwd, timeout)` documents a
 redirected background command for a long-running server. B-01s uses that
 method with a constant command template and the registered integer port.
-Offline fakes establish ordering and cleanup, but no B-01s live restore or
-preview was run by the coding agent. A real base/head restore and signed
-receipt smoke is still required before any P1 claim.
+Offline fakes establish ordering and cleanup. At B-01s branch completion, its
+live restore and preview remained unverified; the integrated run below resolves
+that checkpoint.
 
 Run the local preflight from the repository root with
 `uv run --frozen --no-sync --group live-providers python -m scripts.provision_cartwheel_snapshots
 --lockfile <reviewed-package-lock-outside-git> --image
 node:22-bookworm@sha256:0e5f906573693feaa1e21057ebdcfdb5bd5021f050b2dc7c9deceb629c7da2a8 --preview-domain-suffix
-.proxy.daytona.work --output /tmp/cartwheel-snapshot-registration.json`.
+.daytonaproxy01.net --output /tmp/cartwheel-snapshot-registration.json`.
 Without `--execute --authorize-spend`, it prints missing prerequisite names and
 does not write a registration or call Daytona. Keep the lockfile and output
 outside Git; the lockfile is a trusted operator input, and its hash is retained
 for audit. The registration output's parent must already exist outside any Git
-checkout. The pinned image still needs Daytona acceptance and a restored
-startup smoke before a Gate claim.
+checkout. The integrated live run below established Daytona acceptance and
+restored startup; the full Gate still requires planner and browser validation.
 
 The generated fixture currently has no committed `package-lock.json`, so an
 operator must supply a reviewed lockfile matching its `package.json`. A
 successful snapshot creation would still be `not_tested` for P1: the installed
 SDK cannot by itself prove that restored cold snapshots can start and serve the
-selected compiled build. The next authorized live check must create one sandbox
-from each output snapshot, verify checkout/state, invoke the fixed Cartwheel
-startup profile, fetch each signed preview's `/api/build-info` exact SHA, then
-delete both sandboxes before using Anchor. If restore/startup fails, report
-`environment_error` and keep P1 open.
+selected compiled build. The integrated live check below restored both
+snapshots and verified their preview receipts. P1 remains open.
+
+### Integrated Daytona cold restore smoke (2026-10-16)
+
+With explicit live/spend opt-in and Daytona 0.224.1, the bootstrap created two
+private Cartwheel cold snapshots from the reviewed Linux lockfile SHA-256
+`c0cfffa2614271ec288c3ef7379316f1bbad8b678dcd302ab151e9d23dbff738`
+and pinned Node image digest above. Base and head were the manifest SHAs
+`ad74b08a77ceb1d9452d4335261c99c1db7376e9` and
+`fd32708bcd615e072327c0771f49c69329e123e3`. The local bundles measured
+138,652,980 and 138,686,356 bytes. The successful bootstrap reported
+`snapshots_created=true`, `restore_smoke_verified=false`, and `gate_status=not_tested`.
+The registration is `/tmp/cartwheel-b01s-registration-current-domain-20261016.json`;
+the two final snapshots intentionally remain private in Daytona for subsequent
+authorized smokes.
+
+The first restore diagnosed a real adapter signature error: installed
+`AsyncFileSystem.download_file(self, *args)` rejects `timeout=30`. A base-only
+diagnostic confirmed the file existed with the registered SHA-256. The SDK
+adapter and fake signature were corrected, then a second restore diagnosed a
+registered preview suffix mismatch. The signed origin was an exact HTTPS origin
+under `.daytonaproxy01.net`; the registration was regenerated for that suffix.
+No signed URL, token or provider exception text was recorded. Both failed
+restores deleted their temporary sandboxes with no pending cleanup IDs.
+
+The final invocation was `RUN_LIVE_INTEGRATIONS=1` with the project-local
+`python -m dotenv -f <gitignored .env.local> run --no-override -- python
+scripts/probe_b01_snapshot_restore.py --registration <current-domain-registration>
+--output /tmp/gauntlet-c01e-live-restore-current-domain-20261016 --execute
+--authorize-spend`. It returned `status=passed`,
+`synthetic_build_receipt_verified=true`, `gate_status=not_tested`, no cleanup
+errors and no pending sandbox IDs. It independently verified each restored Git
+SHA, fixture-state digest, fixed startup, `/checkout` readiness and exact
+`/api/build-info` response. Sandbox IDs in the sanitized report are
+`f5d21668-9ff4-4f81-b3e9-5871cc4bb580` (base) and
+`9fbfabda-784e-4659-9c25-9412ac1681ae` (head); both were deleted. The
+report explicitly says `sandbox_image_attested=false`. No Anchor browser or
+Bedrock model ran, so P1 Gate remains open.
 
 On the integrated tree, the rebuilt fixture passed `npm run build` on both
 revisions. Headless Chrome with one frozen, diff-cited scripted plan produced
@@ -459,15 +493,15 @@ Daytona 0.224.1 installed signature inspection matched the calls used here:
 `AsyncDaytona.create(params, timeout=...)`,
 `AsyncDaytona.delete(sandbox, timeout=..., wait=True)`,
 `AsyncSandbox.process.exec(command, cwd=..., timeout=...)`,
-`AsyncSandbox.fs.download_file(path, timeout=...)` and
+`AsyncSandbox.fs.download_file(path)` and
 `AsyncSandbox.create_signed_preview_url(port, expires_in_seconds=...,
 request_timeout=...)`. Nine offline tests pass with a fake runtime and a real
 loopback HTTP readiness probe;
 this is not a provider smoke. The B-01b and B-01a live checkboxes stay open.
 
-The current Cartwheel generated repository has no Daytona snapshots or
-`fixture-state.json`, and no server revision attestation or ready endpoint is
-currently provisioned in Daytona. Before a live run, build and register two
+At this earlier B-01b checkpoint, the generated repository had no Daytona
+snapshots or `fixture-state.json`, and no server revision attestation or ready
+endpoint was provisioned in Daytona. Before a live run, build and register two
 private snapshots from the pinned base/head commits with the same actual image
 digest, include the same deterministic fixture-state file in each, provide a
 running synthetic app and health path, and register the preview proxy domain.
@@ -891,7 +925,8 @@ created, so cloud cleanup behavior remains unverified.
   revisions, and approved preview/network configuration. A successful planning
   call alone does not satisfy hosted execution or P1 acceptance.
 
-AWS, Daytona and Anchor live results remain NOT RUN. P1 is not yet accepted.
+AWS and Anchor live results remain NOT RUN. Daytona results are recorded in the
+2026-10-16 live restore update above. P1 is not yet accepted.
 
 ## P1 handoff and infrastructure recheck (2026-10-16)
 
