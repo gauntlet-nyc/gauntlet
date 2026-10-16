@@ -14,6 +14,7 @@ from fakes import (
     ScriptedModelGateway,
     StaticTargetCatalog,
 )
+
 from gauntlet.analysis import GitRepositoryInspector
 from gauntlet.application.gate import PlanChangeDependencies, PlanChangeUseCase
 from gauntlet.contracts import ChangeImpactMap, ChangeRequest

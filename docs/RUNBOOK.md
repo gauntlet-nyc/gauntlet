@@ -4,6 +4,36 @@
 
 Python 3.12+, `uv`, Node >=22, pnpm, Docker and Git recommended. Copy `.env.example` to `.env.local` and privately fill only the required provider keys. First prove offline contracts and pure tests before any paid calls. Local scripts MUST NOT invoke real provider endpoints unless `RUN_LIVE_INTEGRATIONS=1` and explicit operator consent.
 
+## Dev environment (worktree bootstrap)
+
+Use the worktree-local `.venv`; never install dependencies globally. On B-00,
+Python 3.14 and uv 0.11.28 were used (project requirement: Python 3.12+).
+The existing root dependency groups define the offline tools. Until C's lockfile
+is integrated, a fresh worktree can bootstrap without writing a competing lock:
+
+```bash
+uv venv .venv
+uv pip install --python .venv/bin/python -e services/gauntlet --group dev
+.venv/bin/python -m pytest -q
+.venv/bin/ruff check .
+.venv/bin/ruff format --check .
+.venv/bin/mypy services/gauntlet/src
+uv build --package gauntlet-control --out-dir /tmp/gauntlet-build
+```
+
+After the approved `uv.lock` lands, use `uv sync --frozen` instead of the unlocked
+bootstrap above. Provider SDKs are not part of B-00's offline environment; C owns
+dependency/lock changes. `scripts/probe_sdk_inventory.py` reports installed and
+optional published versions without calling provider services or reading keys.
+For local headless diagnostics, Node 22+ and an existing Chrome executable are
+required; see `docs/SDK_VALIDATION.md`. This probe adds no npm dependency.
+The generated Cartwheel fixture is a separate project without a committed Node
+lockfile or `packageManager` field. In that generated temporary checkout, run
+`npm install --no-package-lock --ignore-scripts`, then `npm run build` and
+`./node_modules/.bin/next start -p 3100` for the local probe. Keep these
+installed packages and build outputs outside the tracked fixture templates;
+Corepack may otherwise try to add its own package-manager version there.
+
 ## Offline check (implemented scaffold)
 
 ```bash
@@ -28,3 +58,103 @@ A demo reset should only delete **scoped synthetic** state for a known `fixture_
 ## Operational support
 
 Log UTC/run_id/attempt_id/replay_id/trace_id for every attempt. Track sandbox leaked resources, token spend and browser session TTL. Keep artifacts restricted; rotate leaked keys; do not store raw historical customer content in Arize traces.
+
+## Approved provider dependencies (C, 2026-10-14)
+
+Approved and pinned for B-01a only, in the non-default dependency group `live-providers` (root `pyproject.toml`, resolved in `uv.lock`): `daytona==0.224.1`, `anchorbrowser==1.0.1`, `playwright==1.64.0`, and `boto3==1.43.114` (A-01c planning probe). Default `uv sync` and CI do not install them; use `uv sync --frozen --group live-providers`. Checked: PyPI publisher metadata matches the vendors, none are yanked, and `pip-audit` on the resolved set reported no known vulnerabilities. Approval is for installing and signature checking only. Live calls still need `RUN_LIVE_INTEGRATIONS=1`, explicit spend authorization and an approved synthetic target. `playwright install` (browser download) is not part of this approval.
+
+Not yet approved: `surrealdb`/`surrealdb[memory]` (the memory extra is a prerelease that needs a separately resolved lock), `arize`/`arize-otel`, ElevenLabs. Each needs its own owner proposal. New packages need A/B/C review per CONTRIBUTING.
+
+Dashboard: `pnpm audit --prod` found four postcss advisories (two high, two moderate) bundled by Next 15.5.28, the latest 15.x. A root `pnpm.overrides` entry forces `postcss>=8.5.23`; typecheck, lint, tests and build pass and the audit is clean. Revisit when Next ships a patched dependency.
+
+## P1 credential loading and readiness
+
+The probe scripts read the process environment; they do not automatically load
+`.env.local`. Keep credentials in a private, gitignored file. Never paste keys
+into command arguments or commit them. For the pinned optional provider environment,
+load that file without shell evaluation using the installed dotenv module:
+
+```bash
+uv sync --frozen --group live-providers
+.venv/bin/python -m dotenv -f .env.local run --no-override -- .venv/bin/python scripts/probe_b01_provider_smoke.py
+```
+
+This command performs local preflight only. It does not create resources, validate
+keys, or authorize spend. Existing process variables take precedence. Provider
+execution additionally requires `RUN_LIVE_INTEGRATIONS=1`, `--execute`,
+`--authorize-spend`, and a validated `--registration` file.
+
+For the current P1 smoke, configure `DAYTONA_API_KEY`, `DAYTONA_API_URL`,
+`DAYTONA_TARGET`, `ANCHOR_API_KEY`, and `ANCHOR_PROXY_SERVER`,
+`ANCHOR_PROXY_USERNAME`, `ANCHOR_PROXY_PASSWORD`. Allow `cartwheel-fixture` in
+`GAUNTLET_ALLOWED_TARGET_IDS`. Registration must identify the exact committed
+base/head source revisions, registered snapshots, equivalent pinned image digest,
+fixture IDs/checksums/state path, repository path, preview port/domain and readiness
+path. Snapshots must already serve their separately compiled synthetic fixture.
+An ordinary proxy credential does not establish the required egress policy.
+
+The committed Cartwheel baseline includes `fixture-state.json` in both generated
+revisions. After creating the two private Daytona snapshots, prepare an
+untracked registration file with the actual provider values:
+
+```bash
+.venv/bin/python scripts/prepare_cartwheel_registration.py \
+  --base-snapshot <actual-base-snapshot> \
+  --head-snapshot <actual-head-snapshot> \
+  --image-digest <common-64-character-image-digest> \
+  --repo-path /workspace/cartwheel \
+  --preview-domain-suffix .proxy.daytona.work \
+  --preview-port 3000 \
+  --output /tmp/cartwheel-registration.json
+```
+
+Replace the sample path, suffix and port with those of the actual snapshots.
+The command derives the committed SHA/checksum and state digest, validates the
+registration format, and refuses to overwrite an existing file. It does not
+create or inspect snapshots. The provider smoke now checks `/api/build-info`
+over each signed preview for the exact selected SHA before any browser action.
+That synthetic receipt does not attest the sandbox image. Keep the registration
+file outside Git and restrict its access to the operator.
+
+Bedrock planning separately requires AWS credentials through a profile/role or
+credential environment variables, model access, and explicit `--model-id` and
+`--region` arguments. `BEDROCK_MODEL_ID` and `AWS_REGION` in the example file are
+operator configuration references; the CLI does not translate them into arguments.
+Also pass an authorized `--repository`, `--change-request`, unused writable
+`--output`, and the same explicit live/spend switches. Run the CLI without
+arguments for its safe missing-input report.
+
+Full source mypy validation currently requires the optional provider SDKs installed
+via `uv sync --frozen --group live-providers`. The default CI environment runs
+API-only mypy and the full offline test suite without those SDKs.
+
+## Execute a frozen plan locally
+
+The Bedrock probe writes a report containing `frozen_plan`. The local execution
+probe accepts that nested object as a **bare receipt file**, not the whole report.
+Extract it without altering its fields, for example:
+
+```python
+import json
+from pathlib import Path
+report = json.loads(Path("model-report.json").read_text())
+with Path("plan-receipt.json").open("x") as receipt:
+    json.dump(report["frozen_plan"], receipt)
+```
+
+Use `scripts/probe_p1_frozen_gate.py --help` for arguments. Select `base` or `head`,
+provide the receipt, existing Chrome executable, generated fixture repo, loopback
+origin and a new output directory. Supply `--expected-change` (trusted
+ChangeRequest JSON), `--expected-plan-hash`, `--expected-model-id`,
+`--expected-prompt-sha256`, and `--expected-run-id` from the independently reviewed
+planning record. Do not infer the expected values from an untrusted receipt; its
+hash is not a signature. The prompt hash is SHA-256 of the exact instruction text
+passed to the planner, encoded as UTF-8.
+
+Build and start each selected fixture revision separately. The consumer verifies
+both checkout SHA and compiled receipt before Chrome starts, enforces supported
+UI/oracle and execution budgets, then runs each unchanged attack twice. Repeat
+with the same receipt/expected identity on the other revision. Reports include
+actual observations and oracle outcomes, without asserting which revision should
+fail. A single-revision report is not a paired Gate finding: `gate_status` remains
+`not_tested` pending independent attribution. Empty or rejected plans do not run.
