@@ -60,18 +60,19 @@ export function ToneIcon({ value, className }: { value: string; className?: stri
   return <Icon className={cn("size-4", TONE_CLASSES[tone].text, className)} aria-hidden />;
 }
 
-/** Shown whenever any data on the page came from fakes, recordings or fixtures. */
+/** Shown whenever any data on the page came from fakes, recordings or fixtures. Compact by design. */
 export function OfflineBadge({ provenance }: { provenance: readonly Provenance[] }) {
   if (!isOffline(provenance)) return null;
   return (
-    <div
+    <span
       role="status"
       data-testid="offline-badge"
-      className="border-inconclusive/25 bg-inconclusive/[0.06] text-inconclusive/90 my-4 flex items-center gap-2.5 rounded-lg border px-3.5 py-2 text-xs font-medium"
+      title="Data on this page comes from recordings, fixtures or fakes; no provider was contacted."
+      className="border-inconclusive/25 bg-inconclusive/[0.06] text-inconclusive inline-flex h-6 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium whitespace-nowrap"
     >
-      <FlaskConical className="size-3.5 shrink-0" aria-hidden />
-      <span>OFFLINE / live NOT RUN — data below comes from recordings, fixtures or fakes</span>
-    </div>
+      <FlaskConical className="size-3" aria-hidden />
+      OFFLINE / live NOT RUN
+    </span>
   );
 }
 

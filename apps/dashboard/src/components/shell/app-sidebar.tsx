@@ -2,9 +2,7 @@
 
 import {
   Activity,
-  BookOpenCheck,
   Brain,
-  FlaskConical,
   History,
   LayoutDashboard,
   ListChecks,
@@ -19,7 +17,6 @@ import { usePathname } from "next/navigation";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -50,13 +47,6 @@ const NAV: { label: string; items: NavItem[] }[] = [
       { href: "/sponsors", label: "Sponsor proof", icon: Activity },
       { href: "/onboarding", label: "Onboarding", icon: Rocket },
       { href: "/login", label: "Reviewer login", icon: LogIn },
-    ],
-  },
-  {
-    label: "Diagnostics",
-    items: [
-      { href: "/gate/offline", label: "Offline gate (P0)", icon: FlaskConical },
-      { href: "/fake-run", label: "Fake run", icon: BookOpenCheck },
     ],
   },
 ];
@@ -102,17 +92,6 @@ export function AppSidebar() {
           </SidebarGroup>
         ))}
       </SidebarContent>
-      <SidebarFooter className="px-3 pb-4 group-data-[collapsible=icon]:hidden">
-        <div className="border-sidebar-border rounded-lg border p-3 text-xs">
-          <div className="text-foreground flex items-center gap-2 font-medium">
-            <span className="bg-inconclusive size-1.5 rounded-full" />
-            Synthetic target
-          </div>
-          <p className="text-muted-foreground mt-1 leading-relaxed">
-            Cartwheel fixture. The model proposes; oracles and humans decide.
-          </p>
-        </div>
-      </SidebarFooter>
     </Sidebar>
   );
 }
