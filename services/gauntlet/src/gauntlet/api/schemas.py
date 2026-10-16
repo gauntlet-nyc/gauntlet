@@ -16,6 +16,7 @@ from gauntlet.contracts import (
     RecallVerdict,
     RemediationProposal,
     RunEvent,
+    TemporalMemoryFact,
     ToolEvent,
     VoiceBriefing,
 )
@@ -94,6 +95,8 @@ class GateRunView(BaseModel):
     findings: list[Finding]
     fix_plan: FixPlanView | None
     repair: RepairView | None = None
+    memory_fact_ids_used: list[str] = []
+    memory_facts_written: list[str] = []
     events: list[RunEvent]
     provenance: list[Provenance]
 
@@ -243,3 +246,18 @@ class OnboardingStep(BaseModel):
 class OnboardingView(BaseModel):
     targets: list[OnboardingTarget]
     steps: list[OnboardingStep]
+
+
+class MemoryRunRow(BaseModel):
+    run_id: str
+    change_id: str
+    status: str
+    planned_at: str
+    memory_fact_ids_used: list[str]
+    memory_facts_written: list[str]
+
+
+class MemoryView(BaseModel):
+    facts: list[TemporalMemoryFact]
+    runs: list[MemoryRunRow]
+    provenance: Provenance

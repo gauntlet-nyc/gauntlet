@@ -7,6 +7,7 @@ from .routes import (
     fake_run,
     gate,
     health,
+    memory,
     offline_gate,
     onboarding,
     recall,
@@ -27,6 +28,7 @@ def create_app() -> FastAPI:
     app.include_router(approvals.router)
     app.include_router(sponsors.router)
     app.include_router(onboarding.router)
+    app.include_router(memory.router)
     app.include_router(webhooks.router)
     return app
 

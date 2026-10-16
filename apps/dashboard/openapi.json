@@ -1548,6 +1548,22 @@
             "title": "Head Sha",
             "type": "string"
           },
+          "memory_fact_ids_used": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Memory Fact Ids Used",
+            "type": "array"
+          },
+          "memory_facts_written": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Memory Facts Written",
+            "type": "array"
+          },
           "model_id": {
             "anyOf": [
               {
@@ -1972,6 +1988,144 @@
           "edges"
         ],
         "title": "LineageView",
+        "type": "object"
+      },
+      "MemoryProvenance": {
+        "additionalProperties": false,
+        "properties": {
+          "commit": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{7,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commit"
+          },
+          "finding_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finding Id"
+          },
+          "oracle_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oracle Id"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "trace_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trace Id"
+          }
+        },
+        "title": "MemoryProvenance",
+        "type": "object"
+      },
+      "MemoryRunRow": {
+        "properties": {
+          "change_id": {
+            "title": "Change Id",
+            "type": "string"
+          },
+          "memory_fact_ids_used": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Memory Fact Ids Used",
+            "type": "array"
+          },
+          "memory_facts_written": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Memory Facts Written",
+            "type": "array"
+          },
+          "planned_at": {
+            "title": "Planned At",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "change_id",
+          "status",
+          "planned_at",
+          "memory_fact_ids_used",
+          "memory_facts_written"
+        ],
+        "title": "MemoryRunRow",
+        "type": "object"
+      },
+      "MemoryView": {
+        "properties": {
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/TemporalMemoryFact"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/MemoryRunRow"
+            },
+            "title": "Runs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "facts",
+          "runs",
+          "provenance"
+        ],
+        "title": "MemoryView",
         "type": "object"
       },
       "MissingInput": {
@@ -3090,6 +3244,136 @@
         "title": "TargetRoute",
         "type": "object"
       },
+      "TemporalMemoryFact": {
+        "additionalProperties": false,
+        "properties": {
+          "fact_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Fact Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "ui_occlusion",
+              "authz_bypass",
+              "workflow_state",
+              "policy_conflict",
+              "fix_pattern"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "known_at": {
+            "format": "date-time",
+            "title": "Known At",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "scope": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9_/.-]*$",
+            "title": "Scope",
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/MemoryProvenance"
+          },
+          "summary": {
+            "maxLength": 2500,
+            "minLength": 1,
+            "title": "Summary",
+            "type": "string"
+          },
+          "supersedes": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supersedes"
+          },
+          "surface_kinds": {
+            "items": {
+              "enum": [
+                "route",
+                "component",
+                "api",
+                "agent_tool",
+                "style",
+                "workflow"
+              ],
+              "type": "string"
+            },
+            "maxItems": 6,
+            "minItems": 1,
+            "title": "Surface Kinds",
+            "type": "array"
+          },
+          "trust": {
+            "enum": [
+              "verified_test",
+              "policy",
+              "app_content",
+              "model_summary"
+            ],
+            "title": "Trust",
+            "type": "string"
+          },
+          "valid_from": {
+            "format": "date-time",
+            "title": "Valid From",
+            "type": "string"
+          },
+          "valid_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          },
+          "verification": {
+            "enum": [
+              "confirmed",
+              "unverified"
+            ],
+            "title": "Verification",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fact_id",
+          "kind",
+          "summary",
+          "verification",
+          "trust",
+          "scope",
+          "surface_kinds",
+          "source",
+          "known_at",
+          "valid_from"
+        ],
+        "title": "TemporalMemoryFact",
+        "type": "object"
+      },
       "ToolEvent": {
         "additionalProperties": false,
         "description": "One recorded tool operation. `outcome='unknown'` is never treated as success or failure.",
@@ -3949,6 +4233,27 @@
           }
         },
         "summary": "Health"
+      }
+    },
+    "/memory": {
+      "get": {
+        "operationId": "memory_view_memory_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemoryView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Memory View",
+        "tags": [
+          "memory"
+        ]
       }
     },
     "/onboarding": {

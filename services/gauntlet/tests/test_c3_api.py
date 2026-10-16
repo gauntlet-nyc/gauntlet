@@ -415,3 +415,25 @@ def test_elevenlabs_webhook_reads_findings_and_never_approves(
     assert replay["replay_request"]["status"] == "pending_operator_confirmation"
     unsigned = hook.post("/webhooks/elevenlabs", content=b"{}")
     assert unsigned.status_code == 401
+
+
+def test_memory_feeds_later_plans_and_supersedes_append_only(client: TestClient) -> None:
+    first = _start(client)
+    assert first["memory_fact_ids_used"] == []
+    assert first["memory_facts_written"] == ["fact-attack-ui-primary-action-375"]
+    second = _start(client)
+    assert second["memory_fact_ids_used"] == ["fact-attack-ui-primary-action-375"]
+    third = _start(client)
+    assert third["memory_fact_ids_used"] == second["memory_facts_written"]
+    view = client.get("/memory").json()
+    chain = [(f["fact_id"], f["supersedes"]) for f in view["facts"]]
+    assert chain[1][1] == chain[0][0] and chain[2][1] == chain[1][0]
+    assert all(
+        f["source"]["finding_id"] and f["verification"] == "confirmed" for f in view["facts"]
+    )
+    assert view["provenance"]["live"] is False
+    assert [r["run_id"] for r in view["runs"]] == [
+        first["run_id"],
+        second["run_id"],
+        third["run_id"],
+    ]

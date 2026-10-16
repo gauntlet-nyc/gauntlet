@@ -188,6 +188,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/memory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Memory View */
+        get: operations["memory_view_memory_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/onboarding": {
         parameters: {
             query?: never;
@@ -967,6 +984,16 @@ export interface components {
             fixture_id: string;
             /** Head Sha */
             head_sha: string;
+            /**
+             * Memory Fact Ids Used
+             * @default []
+             */
+            memory_fact_ids_used: string[];
+            /**
+             * Memory Facts Written
+             * @default []
+             */
+            memory_facts_written: string[];
             /** Model Id */
             model_id: string | null;
             /** Not Tested Reason */
@@ -1107,6 +1134,46 @@ export interface components {
         LineageView: {
             /** Edges */
             edges: components["schemas"]["LineageEdge"][];
+        };
+        /** MemoryProvenance */
+        MemoryProvenance: {
+            /** Commit */
+            commit?: string | null;
+            /** Finding Id */
+            finding_id?: string | null;
+            /** Oracle Id */
+            oracle_id?: string | null;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /** Trace Id */
+            trace_id?: string | null;
+        };
+        /** MemoryRunRow */
+        MemoryRunRow: {
+            /** Change Id */
+            change_id: string;
+            /** Memory Fact Ids Used */
+            memory_fact_ids_used: string[];
+            /** Memory Facts Written */
+            memory_facts_written: string[];
+            /** Planned At */
+            planned_at: string;
+            /** Run Id */
+            run_id: string;
+            /** Status */
+            status: string;
+        };
+        /** MemoryView */
+        MemoryView: {
+            /** Facts */
+            facts: components["schemas"]["TemporalMemoryFact"][];
+            provenance: components["schemas"]["Provenance"];
+            /** Runs */
+            runs: components["schemas"]["MemoryRunRow"][];
         };
         /**
          * MissingInput
@@ -1531,6 +1598,53 @@ export interface components {
             path: string;
             /** Primary Action */
             primary_action: string | null;
+        };
+        /** TemporalMemoryFact */
+        TemporalMemoryFact: {
+            /** Fact Id */
+            fact_id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "ui_occlusion" | "authz_bypass" | "workflow_state" | "policy_conflict" | "fix_pattern";
+            /**
+             * Known At
+             * Format: date-time
+             */
+            known_at: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /** Scope */
+            scope: string;
+            source: components["schemas"]["MemoryProvenance"];
+            /** Summary */
+            summary: string;
+            /** Supersedes */
+            supersedes?: string | null;
+            /** Surface Kinds */
+            surface_kinds: ("route" | "component" | "api" | "agent_tool" | "style" | "workflow")[];
+            /**
+             * Trust
+             * @enum {string}
+             */
+            trust: "verified_test" | "policy" | "app_content" | "model_summary";
+            /**
+             * Valid From
+             * Format: date-time
+             */
+            valid_from: string;
+            /** Valid Until */
+            valid_until?: string | null;
+            /**
+             * Verification
+             * @enum {string}
+             */
+            verification: "confirmed" | "unverified";
         };
         /**
          * ToolEvent
@@ -2020,6 +2134,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    memory_view_memory_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryView"];
                 };
             };
         };

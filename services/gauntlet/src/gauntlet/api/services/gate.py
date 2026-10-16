@@ -31,7 +31,15 @@ from gauntlet.composition import (
     readiness,
     refund_verification_suite,
 )
-from gauntlet.contracts import ApprovalDecision, ApprovalRecord, AttackSpec, FixPlan, RunEvent
+from gauntlet.contracts import (
+    ApprovalDecision,
+    ApprovalRecord,
+    AttackSpec,
+    FixPlan,
+    MemoryProvenance,
+    RunEvent,
+    TemporalMemoryFact,
+)
 from gauntlet.domain import CONFIRMED_GATE_STATUSES, Attribution, GateStatus
 from gauntlet.settings import MissingSettingError, Settings
 
@@ -47,6 +55,7 @@ from ..schemas import (
     RepairView,
 )
 from ..settings import REPO_ROOT, ApiSettings
+from ..stores import InProcessTemporalMemory
 
 Payload = dict[str, str | int | float | bool | None]
 
@@ -268,6 +277,7 @@ class GateService:
     settings: ApiSettings
     manifests: dict[str, dict[str, str]]
     runs: dict[str, GateRunRecord] = field(default_factory=dict)
+    memory: InProcessTemporalMemory = field(default_factory=InProcessTemporalMemory)
     _ids: "count[int]" = field(default_factory=lambda: count(1))
     _fixture: dict[str, Any] | None = None
 
@@ -397,6 +407,7 @@ class GateService:
             sandbox=sandbox,  # type: ignore[arg-type]
             browser=browser,  # type: ignore[arg-type]
             artifact_root=Path(tempfile.mkdtemp(prefix=f"gauntlet-{run_id}-")),
+            memory=self.memory,
         )
         keep_open = False
         try:
@@ -433,6 +444,15 @@ class GateService:
                     )
         status = report.overall
         confirmed = [f for f in report.findings if f.status in CONFIRMED_GATE_STATUSES]
+        used = next(
+            (
+                str(e.payload.get("memory_fact_ids") or "")
+                for e in report.events
+                if e.event_type == "plan_frozen"
+            ),
+            "",
+        )
+        written = await self._remember(report, target)
         attribution = confirmed[0].attribution if confirmed else Attribution.UNKNOWN
         provenance = [*_provenance(runtime.labels), TEMPLATE_DIFF]
         fix_view = None
@@ -485,10 +505,49 @@ class GateService:
                 "attempts": attempts,
                 "findings": list(report.findings),
                 "fix_plan": fix_view,
+                "memory_fact_ids_used": [f for f in used.split(",") if f],
+                "memory_facts_written": written,
                 "events": list(report.events),
                 "provenance": provenance,
             }
         )
+
+    async def _remember(self, report: GateRunReport, target: GateTarget) -> list[str]:
+        """Each confirmed finding becomes a provenance-backed fact for later planning."""
+        written: list[str] = []
+        surfaces = tuple(dict.fromkeys(s.kind for s in report.plan.impact.surfaces))[:6]
+        for outcome in report.outcomes:
+            finding = outcome.finding
+            if finding.status not in CONFIRMED_GATE_STATUSES or not surfaces:
+                continue
+            base_id = f"fact-{outcome.attack.attack_id}"
+            earlier = [f.fact_id for f in self.memory.all() if f.fact_id.startswith(base_id)]
+            supersedes = earlier[-1] if earlier else None
+            fact_id = f"{base_id}-{report.run_id}" if supersedes else base_id
+            now = datetime.now(UTC)
+            await self.memory.remember(
+                TemporalMemoryFact(
+                    fact_id=fact_id,
+                    kind="authz_bypass"
+                    if outcome.attack.worker_kind == "ai_agent"
+                    else "ui_occlusion",
+                    summary=outcome.attack.hypothesis[:2500],
+                    verification="confirmed",
+                    trust="verified_test",
+                    scope=f"project/{target.target_id}",
+                    surface_kinds=surfaces,
+                    source=MemoryProvenance(
+                        finding_id=finding.finding_id,
+                        oracle_id=finding.oracle_ids[0],
+                        commit=target.head_sha,
+                    ),
+                    known_at=now,
+                    valid_from=now,
+                    supersedes=supersedes,
+                )
+            )
+            written.append(fact_id)
+        return written
 
     async def _prepare_repair(
         self,
