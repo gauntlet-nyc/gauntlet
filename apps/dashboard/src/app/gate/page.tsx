@@ -4,7 +4,7 @@ import { startRun } from "@/app/actions";
 import { RunsTable } from "@/components/gate/runs-table";
 import { StartRunForm } from "@/components/gate/start-run-form";
 import { Reveal } from "@/components/motion/reveal";
-import { EmptyState, ErrorPanel, OfflineBadge, PageHeader, toneOf } from "@/components/shared";
+import { EmptyState, ErrorPanel, PageHeader, toneOf } from "@/components/shared";
 import { api } from "@/lib/gauntlet";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +24,15 @@ export default async function GatePage({ searchParams }: { searchParams: Promise
       <PageHeader
         title="Gate"
         description="Attack each pull request on base and head; independent oracles decide."
-        actions={runs.some((r) => r.offline) ? <OfflineBadge provenance={[]} /> : undefined}
+        actions={runs.some((r) => r.offline) ? (
+          <span
+            role="status"
+            title="At least one listed run contains offline evidence; open a run for its provider details."
+            className="border-inconclusive/25 bg-inconclusive/[0.06] text-inconclusive inline-flex h-6 items-center rounded-full border px-2.5 text-[11px] font-medium whitespace-nowrap"
+          >
+            SOME RUNS INCLUDE OFFLINE EVIDENCE
+          </span>
+        ) : undefined}
       />
       {params.error && (
         <p role="alert" className="text-regression mb-4 flex items-center gap-2 text-sm">

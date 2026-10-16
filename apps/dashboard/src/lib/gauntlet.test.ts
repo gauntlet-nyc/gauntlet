@@ -1,19 +1,38 @@
 import { describe, expect, it } from "vitest";
 
-import { classificationTone, isOffline, parseGateRun, type Provenance } from "./gauntlet";
+import { classificationTone, parseGateRun, provenanceBadge, provenanceMode, type Provenance } from "./gauntlet";
 
 const offline: Provenance = { provider: "golden-recording", mode: "offline_recording", live: false, label: "OFFLINE" };
 const live: Provenance = { provider: "anchor", mode: "live", live: true, label: "Anchor session" };
 
-describe("isOffline", () => {
-  it("flags any non-live artifact", () => {
-    expect(isOffline([live, offline])).toBe(true);
+describe("provenanceMode", () => {
+  it("keeps mixed live and recorded evidence distinct from fully offline evidence", () => {
+    expect(provenanceMode([live, offline])).toBe("mixed");
+    expect(provenanceMode([offline])).toBe("offline");
   });
-  it("treats missing provenance as offline", () => {
-    expect(isOffline([])).toBe(true);
+  it("does not infer an offline run from missing provenance", () => {
+    expect(provenanceMode([])).toBe("unknown");
   });
-  it("is false only when everything is live", () => {
-    expect(isOffline([live])).toBe(false);
+  it("recognizes a list whose recorded entries are all live", () => {
+    expect(provenanceMode([live])).toBe("live");
+  });
+});
+
+describe("provenanceBadge", () => {
+  it("limits the no-provider claim to fully offline evidence", () => {
+    expect(provenanceBadge([offline]).text).toBe("OFFLINE / live NOT RUN");
+    expect(provenanceBadge([offline]).title).toContain("no provider was contacted");
+    expect(provenanceBadge([live, offline]).text).toContain("MIXED");
+    expect(provenanceBadge([live, offline]).title).toContain("live and offline");
+    expect(provenanceBadge([live, offline]).title).not.toContain("no provider was contacted");
+  });
+  it("reports live evidence without claiming every possible provider ran", () => {
+    expect(provenanceBadge([live]).text).toBe("LIVE EVIDENCE");
+    expect(provenanceBadge([live]).title).not.toContain("all providers");
+  });
+  it("shows absent provenance as unknown", () => {
+    expect(provenanceBadge([]).text).toBe("PROVENANCE UNKNOWN");
+    expect(provenanceBadge([]).title).not.toContain("no provider was contacted");
   });
 });
 
