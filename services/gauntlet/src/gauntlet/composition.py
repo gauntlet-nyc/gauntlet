@@ -249,6 +249,7 @@ async def build_gate(
     artifact_root: Path,
     memory: MemoryReader | None = None,
     accessibility_probe: bool = False,
+    agent: Literal["synthetic", "azure", "bedrock"] = "synthetic",
 ) -> GateRuntime:
     if _COMPATIBLE[browser] != sandbox:
         raise ValueError(
@@ -273,7 +274,9 @@ async def build_gate(
                 raise ValueError("AI-agent attacks run in the local tool world; use --sandbox fake")
             from gauntlet.integrations.tool_world import (
                 LocalToolWorldExecutor,
+                ModelSupportAgent,
                 RevisionCheckoutSandbox,
+                SupportAgent,
                 SyntheticSupportAgent,
             )
             from gauntlet.workers.ai_agent import AIAgentWorker
@@ -285,11 +288,16 @@ async def build_gate(
                 fixture_checksum=target.fixture_checksum,
                 allowed_shas=frozenset({target.base_sha, target.head_sha}),
             )
-            agent = _agent_probe(target)
+            probe = _agent_probe(target)
+            support: SupportAgent = SyntheticSupportAgent()
+            agent_label = SyntheticSupportAgent.label
+            if agent != "synthetic":
+                agent_gateway, agent_label = build_model_gateway(agent, settings, target)
+                support = ModelSupportAgent(agent_gateway)
             channel = LocalToolWorldExecutor(
                 tool_sandbox,
                 artifacts,
-                agents={agent.agent_id if agent else "support-test-agent": SyntheticSupportAgent()},
+                agents={probe.agent_id if probe else "support-test-agent": support},
             )
             routes["ai_agent"] = WorkerRoute(
                 OracleAttemptExecutor(
@@ -301,7 +309,7 @@ async def build_gate(
                 adjudicate_agent_pair,
             )
             sandbox_port: SandboxProvider = tool_sandbox
-            sandbox_label, browser_label = "local_tool_world", "not_used"
+            sandbox_label, browser_label = "local_tool_world", f"agent:{agent_label}"
         else:
             sandbox_port, sandbox_label, preview_suffix = _build_sandbox(sandbox, settings, target)
             browser_port, browser_label = await _build_browser(
