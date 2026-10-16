@@ -122,6 +122,7 @@ export default async function GateRunPage({
             repair={run.repair}
             back={back}
             repairStatus={query.repair}
+            approvalStatus={query.approval}
             decide={decide}
             runRepair={runRepair}
           />
