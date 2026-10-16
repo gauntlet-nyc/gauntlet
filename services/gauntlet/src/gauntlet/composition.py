@@ -12,7 +12,7 @@ from contextlib import AsyncExitStack
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Final, Literal, cast
+from typing import TYPE_CHECKING, Any, Final, Literal, cast
 from uuid import uuid4
 
 from gauntlet.analysis import GitRepositoryInspector
@@ -49,6 +49,10 @@ from gauntlet.settings import (
 from gauntlet.verification.registry import RegisteredOracleRegistry
 from gauntlet.verification.stored_browser import StoredBrowserOracle
 from gauntlet.workers.ui import UIWorker
+
+if TYPE_CHECKING:
+    from gauntlet.application.recall import RunRecallUseCase
+    from gauntlet.integrations.history_files import HistoryArchive
 
 GateSandbox = Literal["fake", "local", "daytona"]
 GateBrowser = Literal["fake", "local", "anchor"]
@@ -352,3 +356,79 @@ def readiness(settings: Settings) -> dict[str, tuple[str, ...]]:
         "anchor": settings.missing(*anchor),
         "local": settings.missing(*LOCAL_ORIGIN_KEYS),
     }
+
+
+# --- Recall -----------------------------------------------------------------------------------
+
+HISTORY_DIR: Final = REPO_ROOT / "apps/cartwheel/history"
+REFUND_MANIFEST: Final = REPO_ROOT / "apps/cartwheel/refund-fixture-manifest.v1.json"
+
+
+@dataclass(frozen=True)
+class RecallRuntime:
+    use_case: "RunRecallUseCase"
+    archive: "HistoryArchive"
+    labels: dict[str, str]
+
+
+def build_recall(
+    settings: Settings,
+    *,
+    model: ModelProvider = "scripted",
+    history_dir: Path = HISTORY_DIR,
+) -> RecallRuntime:
+    """Recall over the seeded history. Read-only adapters; ``model`` drives the agent replay
+    (``scripted`` = deterministic synthetic agent policy, offline)."""
+    from gauntlet.application.recall import (
+        CounterfactualUseCase,
+        EventAuditUseCase,
+        RecallDependencies,
+        RecallScoper,
+        RunRecallUseCase,
+    )
+    from gauntlet.integrations.history_files import (
+        CapturedAgentReplay,
+        FileHistory,
+        HistoryArchive,
+        LedgerAuditEvidence,
+        ModelAgentPolicy,
+        PinnedWorldResolver,
+    )
+    from gauntlet.ports import ReplayWorld
+
+    archive = HistoryArchive.load(history_dir)
+    history = FileHistory(archive)
+    refund = json.loads(REFUND_MANIFEST.read_text())
+    world = ReplayWorld(
+        source_sha=refund["change"]["head_sha"],
+        fixture_id=refund["fixture_id"],
+        fixture_checksum=refund["fixture_checksum_sha256"],
+    )
+    if model == "scripted":
+        engine = CapturedAgentReplay(archive)
+    else:
+        gateway, model_label = build_model_gateway(model, settings, _recall_gate_target())
+        engine = CapturedAgentReplay(
+            archive, ModelAgentPolicy(gateway), label=f"{model_label}_captured_input_replay"
+        )
+    clock = lambda: datetime.now(UTC)  # noqa: E731
+    use_case = RunRecallUseCase(
+        RecallDependencies(
+            lineage=history,
+            history=history,
+            scoper=RecallScoper(history, history),
+            counterfactual=CounterfactualUseCase(engine, PinnedWorldResolver(world)),
+            audit=EventAuditUseCase(history, LedgerAuditEvidence(archive), clock),
+            clock=clock,
+        )
+    )
+    labels = {
+        "history": "seeded_synthetic_files",
+        "replay": engine.label,
+        "audit_evidence": "seeded_ledger",
+    }
+    return RecallRuntime(use_case, archive, labels)
+
+
+def _recall_gate_target() -> GateTarget:
+    return GateTarget(json.loads(CARTWHEEL_MANIFEST.read_text()), HISTORY_DIR)
