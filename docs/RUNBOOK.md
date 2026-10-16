@@ -34,6 +34,15 @@ lockfile or `packageManager` field. In that generated temporary checkout, run
 installed packages and build outputs outside the tracked fixture templates;
 Corepack may otherwise try to add its own package-manager version there.
 
+When `pnpm` is unavailable on PATH, bootstrap Node dependencies with the pinned,
+project-local invocation below (no global installation):
+
+```bash
+npm exec --cache node_modules/.cache/npm --yes --package pnpm@9.12.2 -- pnpm install --frozen-lockfile
+npm run test --prefix apps/dashboard
+npm run build --prefix apps/dashboard
+```
+
 ## Offline check (implemented scaffold)
 
 ```bash

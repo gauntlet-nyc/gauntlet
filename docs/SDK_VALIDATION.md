@@ -1321,3 +1321,15 @@ A live configured memory-view smoke after PR85 exposed HTTP 404: application
 composition bypassed the existing SDK-aware memory factory and sent SQL to the
 Agent Memory endpoint. SDK authentication itself had succeeded earlier. This is a
 composition defect, not evidence that new credentials are needed.
+
+### ElevenLabs configured voice smoke (2026-10-16)
+
+Read the existing authorized agent through the official agent endpoint and saved
+its configured TTS voice ID in ignored `.env.local`. The existing ElevenLabs
+adapter smoke returned a `wss` signed conversation URL and 26,374 audio bytes
+for the short synthetic smoke phrase. This verifies actual TTS and signed URL
+creation, not a dashboard conversational client or evidence Q&A session.
+
+```bash
+RUN_LIVE_INTEGRATIONS=1 .venv/bin/python -m dotenv -f .env.local run --no-override -- .venv/bin/python scripts/smoke_adapters.py elevenlabs
+```
