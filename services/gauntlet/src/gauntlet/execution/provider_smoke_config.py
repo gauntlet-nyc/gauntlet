@@ -7,6 +7,8 @@ from pathlib import Path
 from gauntlet.contracts import ChangeRequest
 from gauntlet.integrations.daytona.provider import RegisteredSnapshot, RegisteredTarget
 
+# Optional unrelated-change revision (scripts/build_cartwheel_clean_fixture.py).
+CARTWHEEL_CLEAN_SHA = "27548050633077b5d865431fd736fb9b92a28085"
 _REGISTRATION_FIELDS = frozenset(RegisteredTarget.__dataclass_fields__)
 _SNAPSHOT_FIELDS = frozenset(RegisteredSnapshot.__dataclass_fields__)
 _REQUIRED_ENV = (
@@ -80,7 +82,8 @@ def load_registration(
         or not isinstance(base_sha, str)
         or not isinstance(head_sha, str)
         or base_sha == head_sha
-        or {item.source_sha for item in target.snapshots} != {base_sha, head_sha}
+        or {item.source_sha for item in target.snapshots}
+        not in ({base_sha, head_sha}, {base_sha, head_sha, CARTWHEEL_CLEAN_SHA})
     ):
         raise ValueError("registration does not match manifest base/head revisions and fixture")
     change = ChangeRequest(
