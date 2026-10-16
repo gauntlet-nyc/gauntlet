@@ -56,9 +56,16 @@ class Inputs:
 
 
 class BootstrapCleanupError(RuntimeError):
-    def __init__(self, pending: list[str]) -> None:
+    def __init__(self, pending: list[str], stage: str) -> None:
         super().__init__("Daytona bootstrap cleanup is incomplete")
         self.pending = tuple(pending)
+        self.stage = stage
+
+
+class BootstrapStageError(RuntimeError):
+    def __init__(self, stage: str) -> None:
+        super().__init__(f"Cartwheel bootstrap failed at {stage}")
+        self.stage = stage
 
 
 class ExecuteResult(Protocol):
@@ -385,6 +392,7 @@ async def provision(
     sandboxes: list[Sandbox] = []
     finals: list[str] = []
     error: BaseException | None = None
+    stage = "runtime_create"
     try:
         _, cancelled = await _settle_create(
             client.snapshot.create(
@@ -394,9 +402,12 @@ async def provision(
         )
         if cancelled:
             raise asyncio.CancelledError()
+        stage = "runtime_get"
         if (await client.snapshot.get(names[0])).entrypoint != ENTRYPOINT:
             raise RuntimeError("Daytona runtime entrypoint differs")
         for index, sha in enumerate((inputs.base_sha, inputs.head_sha)):
+            side = ("base", "head")[index]
+            stage = f"{side}_create"
             sandbox, cancelled = await _settle_create(
                 client.create(
                     CreateSandboxFromSnapshotParams(
@@ -411,30 +422,40 @@ async def provision(
             sandboxes.append(sandbox)
             if cancelled:
                 raise asyncio.CancelledError()
+            stage = f"{side}_mkdir"
             await _command(sandbox, "mkdir -p /workspace/cartwheel", 20, cwd=None)
+            stage = f"{side}_upload"
             await sandbox.fs.upload_file_stream(
                 inputs.bundles[index], "/tmp/cartwheel-source.tar.gz"
             )
+            stage = f"{side}_extract"
             await _command(
                 sandbox, "tar -xzf /tmp/cartwheel-source.tar.gz -C /workspace/cartwheel", 300
             )
+            stage = f"{side}_source"
             if await _command(sandbox, "git rev-parse HEAD", 20) != sha:
                 raise RuntimeError("Daytona checkout revision differs")
+            stage = f"{side}_state"
             if (
                 await sandbox.fs.download_file(f"{REPO_PATH}/fixture-state.json")
                 != STATE.read_bytes()
             ):
                 raise RuntimeError("Daytona fixture state differs")
+            stage = f"{side}_clean"
             if await _command(sandbox, "git status --porcelain", 20):
                 raise RuntimeError("Daytona checkout is dirty")
+            stage = f"{side}_build"
             await _command(sandbox, "test -s .next/BUILD_ID", 20)
+            stage = f"{side}_stop"
             await sandbox.stop(timeout=60)
             finals.append(names[index + 1])
+            stage = f"{side}_snapshot"
             _, cancelled = await _settle_create(
                 sandbox.create_snapshot(names[index + 1], timeout=600)
             )
             if cancelled:
                 raise asyncio.CancelledError()
+            stage = f"{side}_snapshot_get"
             if (await client.snapshot.get(names[index + 1])).entrypoint != ENTRYPOINT:
                 raise RuntimeError("Daytona captured snapshot lost its startup entrypoint")
     except BaseException as exc:
@@ -448,11 +469,16 @@ async def provision(
                 error = asyncio.CancelledError()
     pending = cleanup_task.result()
     if error is not None or pending:
+        if error is None:
+            stage = "temporary_cleanup"
         pending.extend(await _cleanup(client, [], finals))
         if pending:
-            raise BootstrapCleanupError(pending) from error
+            raise BootstrapCleanupError(pending, stage) from None
         if error is not None:
-            raise error
+            if isinstance(error, (asyncio.CancelledError, KeyboardInterrupt)):
+                raise error
+            raise BootstrapStageError(stage) from None
+    stage = "registration"
     try:
         registration = prepare_registration(
             base_snapshot=names[1],
@@ -465,6 +491,7 @@ async def provision(
         if output is not None:
             created = False
             try:
+                stage = "output_write"
                 with output.open("x", encoding="utf-8") as stream:
                     created = True
                     stream.write(json.dumps(registration, indent=2) + "\n")
@@ -473,11 +500,13 @@ async def provision(
                     output.unlink(missing_ok=True)
                 raise
         return registration
-    except BaseException:
+    except BaseException as exc:
         pending = await _cleanup(client, [], finals)
         if pending:
-            raise BootstrapCleanupError(pending) from None
-        raise
+            raise BootstrapCleanupError(pending, stage) from None
+        if isinstance(exc, (asyncio.CancelledError, KeyboardInterrupt)):
+            raise
+        raise BootstrapStageError(stage) from None
 
 
 def _preflight(environment: dict[str, str], execute: bool, authorize_spend: bool) -> list[str]:
@@ -537,8 +566,28 @@ async def _execute(inputs: Inputs, args: argparse.Namespace) -> None:
             preview_port=args.preview_port,
             output=args.output,
         )
-    finally:
+    except BaseException:
+        try:
+            await port.close()
+        except BaseException:
+            pass
+        raise
+    try:
         await port.close()
+    except BaseException:
+        raise BootstrapStageError("client_close") from None
+
+
+def _error_report(exc: BaseException) -> dict[str, object]:
+    report: dict[str, object] = {
+        "status": "environment_error",
+        "error_type": type(exc).__name__,
+        "gate_status": "not_tested",
+        "pending_cleanup_ids": exc.pending if isinstance(exc, BootstrapCleanupError) else (),
+    }
+    if isinstance(exc, (BootstrapStageError, BootstrapCleanupError)):
+        report["stage"] = exc.stage
+    return report
 
 
 def main() -> int:
@@ -591,18 +640,7 @@ def main() -> int:
         )
         return 0
     except (Exception, KeyboardInterrupt) as exc:
-        print(
-            json.dumps(
-                {
-                    "status": "environment_error",
-                    "error_type": type(exc).__name__,
-                    "gate_status": "not_tested",
-                    "pending_cleanup_ids": exc.pending
-                    if isinstance(exc, BootstrapCleanupError)
-                    else (),
-                }
-            )
-        )
+        print(json.dumps(_error_report(exc)))
         return 1
 
 

@@ -57,7 +57,7 @@ class FakeProcess:
     ) -> SimpleNamespace:
         self.owner.calls.append((command, cwd, timeout))
         if command == self.owner.fail_command:
-            return SimpleNamespace(exit_code=1, result="secret provider output")
+            raise RuntimeError("secret provider output")
         if command == "git rev-parse HEAD":
             return SimpleNamespace(exit_code=0, result=self.owner.sha)
         return SimpleNamespace(exit_code=0, result="")
@@ -120,10 +120,12 @@ class FakeClient:
         self,
         source: bootstrap.Inputs,
         fail_command: str | None = None,
+        fail_sandbox: int | None = None,
         fail_delete: bool = False,
     ) -> None:
         self.source = source
         self.fail_command = fail_command
+        self.fail_sandbox = fail_sandbox
         self.fail_delete = fail_delete
         self.snapshot = FakeSnapshots(self)
         self.sandboxes: list[FakeSandbox] = []
@@ -134,7 +136,10 @@ class FakeClient:
         self.params.append(params)
         number = len(self.sandboxes)
         sha = (self.source.base_sha, self.source.head_sha)[number]
-        sandbox = FakeSandbox(sha, number, self.fail_command)
+        fail_command = (
+            self.fail_command if self.fail_sandbox is None or self.fail_sandbox == number else None
+        )
+        sandbox = FakeSandbox(sha, number, fail_command)
         self.sandboxes.append(sandbox)
         return sandbox
 
@@ -281,15 +286,33 @@ def test_offline_lifecycle_stops_before_snapshot_and_cleans_temporary_resources(
 def test_seed_failure_deletes_created_resources_without_exposing_output(tmp_path: Path) -> None:
     source = inputs(tmp_path)
     client = FakeClient(source, fail_command="git status --porcelain")
-    with pytest.raises(RuntimeError, match="seed command failed") as error:
+    with pytest.raises(bootstrap.BootstrapStageError, match="base_clean") as error:
         asyncio.run(
             bootstrap.provision(
                 client, source, preview_domain_suffix=".proxy.daytona.work", preview_port=3000
             )
         )
     assert "secret" not in str(error.value)
+    assert bootstrap._error_report(error.value)["stage"] == "base_clean"
     assert len(client.deleted) == 1
     assert len(client.snapshot.deleted) == 1
+
+
+def test_head_failure_reports_fixed_stage_and_cleans_both_revisions(tmp_path: Path) -> None:
+    source = inputs(tmp_path)
+    client = FakeClient(source, fail_command="git status --porcelain", fail_sandbox=1)
+    with pytest.raises(bootstrap.BootstrapStageError) as error:
+        asyncio.run(
+            bootstrap.provision(
+                client, source, preview_domain_suffix=".proxy.daytona.work", preview_port=3000
+            )
+        )
+    report = bootstrap._error_report(error.value)
+    assert report["stage"] == "head_clean"
+    assert report["error_type"] == "BootstrapStageError"
+    assert "secret" not in json.dumps(report)
+    assert len(client.deleted) == 2
+    assert len(client.snapshot.deleted) == 2
 
 
 def test_cancellation_cleans_created_sandbox(tmp_path: Path) -> None:
@@ -337,5 +360,6 @@ def test_cleanup_failure_reports_retryable_resource_ids(tmp_path: Path) -> None:
             )
         )
     assert {"sandbox:sandbox-0", "sandbox:sandbox-1"} <= set(error.value.pending)
+    assert bootstrap._error_report(error.value)["stage"] == "temporary_cleanup"
     assert "private" not in str(error.value)
     assert not (tmp_path / "registration.json").exists()
