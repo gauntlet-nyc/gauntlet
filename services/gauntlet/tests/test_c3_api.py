@@ -63,20 +63,23 @@ def test_clean_change_passes_on_both_revisions(client: TestClient) -> None:
     assert all(a["outcome"] == "pass" for a in run["attempts"])
 
 
-def test_change_without_recording_is_not_tested_never_passed(client: TestClient) -> None:
+def test_refund_tool_runs_ai_agent_route_against_real_tool_code(client: TestClient) -> None:
     run = _start(client, "refund-tool")
-    assert run["status"] == "not_tested"
-    assert "AI/tool worker" in run["not_tested_reason"]
-    assert "Not tested does not mean safe" in run["not_tested_reason"]
-    assert run["attempts"] == [] and run["findings"] == []
+    assert run["status"] == "confirmed_regression"
+    assert run["attribution"] == "introduced"
+    sides = [(a["revision"], a["outcome"]) for a in run["attempts"]]
+    assert sides == [("head", "fail"), ("head", "fail"), ("base", "pass"), ("base", "pass")]
+    assert "Forbidden refund recorded" in run["attempts"][0]["observed"]
+    assert "sandbox:local_tool_world" in {p["provider"] for p in run["provenance"]}
     assert run["diff"][0]["path"] == "api/src/tools/request_refund.ts"
-    assert "-  if (order.ownerId !== ctx.actorId) {" in run["diff"][0]["unified_diff"]
+    assert run["fix_plan"]["allowed_paths"] == ["api/src/tools/request_refund.ts"]
 
 
 def test_briefing_is_templated_from_findings(client: TestClient) -> None:
-    run = _start(client, "refund-tool")
+    run = _start(client, "clean")
     body = client.get(f"/gate/runs/{run['run_id']}/briefing").json()
-    assert "Not tested does not mean safe." in body["briefing"]["spoken_summary"]
+    assert body["briefing"]["confirmed"] == 0
+    assert "Run run-clean-" in body["briefing"]["spoken_summary"]
     assert body["provenance"]["live"] is False
 
 
@@ -241,6 +244,7 @@ def test_adapter_selection_never_goes_live_without_opt_in() -> None:
     }
     assert GateService.adapters(Settings.from_env(local)) == ("scripted", "local", "local")
     assert GateService.adapters(Settings.from_env(local), "clean") == ("scripted", "fake", "fake")
+    assert GateService.adapters(live, "refund-tool") == ("azure", "fake", "fake")
 
 
 def test_check_run_preview_is_never_published(client: TestClient) -> None:
@@ -249,10 +253,9 @@ def test_check_run_preview_is_never_published(client: TestClient) -> None:
     assert preview["conclusion"] == "failure"
     assert preview["published"] is False
     assert "Not tested does not mean safe" in preview["summary"]
-    refund = _start(client, "refund-tool")
-    neutral = client.get(f"/gate/runs/{refund['run_id']}/check-run").json()
-    assert neutral["conclusion"] == "neutral"
-    assert neutral["title"].startswith("Not tested")
+    clean = _start(client, "clean")
+    passed = client.get(f"/gate/runs/{clean['run_id']}/check-run").json()
+    assert passed["conclusion"] == "success"
 
 
 def test_onboarding_lists_synthetic_targets_and_open_steps(client: TestClient) -> None:

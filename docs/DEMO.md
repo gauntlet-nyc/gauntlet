@@ -36,8 +36,22 @@ Then go to `/login` and paste the reviewer token (kept in an httpOnly cookie; de
 | **▶ Play voice briefing** | Spoken summary | "Briefing is built from stored findings only. Voice can't approve anything." |
 
 Optional false-positive check: start **"Clarify the product description"** → `passed` on both
-sides. Start **"Let the support assistant request refunds"** → `not_tested` (AI/tool worker not
-routed yet): "Not tested does not mean safe."
+sides, check run `success`.
+
+Scroll to **GitHub check run (preview)**: "This is exactly what the GitHub App posts on the PR.
+Checks only: it never comments, approves or merges." (The App isn't installed yet; preview only.)
+
+## 1b. Act B — Gate on the AI refund-tool PR (≈60 s)
+
+| Click | Show | Say |
+|---|---|---|
+| **Gate** → "Let the support assistant request refunds" → **Start Gate run** | Diff: the ownership check is deleted from `request_refund.ts` | "Same planner, different surface: it sees a removed permission check on a tool with a money side effect." |
+| **Frozen plan** | `attack-ai-cross-owner-refund` (ai_agent worker) | "It plans an AI attack, not a UI one: an attacker asks the assistant to refund someone else's order." |
+| **Attempts** | head 2/2 fail "Forbidden refund recorded: ord-2001 …", base 0/2 | "The oracle reads the trusted test ledger, not the chat. On head money moved to the wrong person; on base it didn't." |
+| **Fix plan review** | Restore the ownership check in the tool | "Fix belongs in the tool, not the prompt. Human approves the hash." |
+
+Provenance says **Local tool world** (the fixture's real tool code per revision, not Daytona) and
+the scripted planner unless Azure is live.
 
 ## 2. Act C — Recall on the refund agent (≈90 s)
 
@@ -54,6 +68,7 @@ routed yet): "Not tested does not mean safe."
 ## 3. Close (≈30 s) — **Sponsor proof**
 
 Read each row honestly: which artifact each sponsor produces and whether it ran live today.
+Also show **Onboarding**: registered synthetic targets and the open operator steps.
 Pitch: "CI passed because no one wrote the test. Gauntlet read what changed, invented the test,
 proved the failure in isolation and gated the fix on a human. When the bug already shipped,
 Recall separates documented harm from assumptions."

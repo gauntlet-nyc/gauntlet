@@ -4,8 +4,8 @@ Adapters are chosen from settings: live (Azure/Bedrock planner, Daytona, Anchor)
 RUN_LIVE_INTEGRATIONS=1 and that adapter's env vars are set; otherwise the labelled offline
 adapters (scripted planner, fake sandbox, simulated layout browser). Every attempt still goes
 through the real planner/validator, plan freeze, UI worker, stored-evidence oracle and pair
-verdict. The refund-tool change needs the AI/tool worker, which is not routed yet, so it is
-`not_tested`, never passed.
+verdict. The refund-tool change runs the AI-agent route: the fixture's own tool code per
+revision in the local tool world, judged by the ledger oracle.
 """
 
 import difflib
@@ -62,6 +62,8 @@ _LABEL_TEXT = {
     "live_daytona": "LIVE Daytona sandboxes",
     "live_anchor_with_egress_proxy": "LIVE Anchor browser with egress proxy",
     "live_anchor_no_egress_proxy": "LIVE Anchor browser WITHOUT egress proxy (weaker isolation)",
+    "local_tool_world": "Local tool world: the fixture's own tool code per revision (not Daytona)",
+    "not_used": "Not used by this attack",
 }
 
 
@@ -81,7 +83,7 @@ CHANGES: dict[str, ChangeDef] = {
         "Let the support assistant request refunds for an order",
         "refund-base",
         "refund-head",
-        False,
+        True,
     ),
     "clean": ChangeDef("clean", "Clarify the product description", "base", "clean", True),
 }
@@ -103,6 +105,45 @@ SAMPLE_FIX_DIFF = """--- a/src/components/FloatingHelp.module.css
 -  }
 -}
 """
+
+
+REFUND_FIX_DIFF = """--- a/api/src/tools/request_refund.ts
++++ b/api/src/tools/request_refund.ts
+@@ -17,6 +17,9 @@
+   if (!order) {
+     throw new Error("unknown order");
+   }
++  if (order.ownerId !== ctx.actorId) {
++    throw new Error("forbidden: order belongs to another customer");
++  }
+   if (ctx.ledger.hasRefund(order.id)) {
+     throw new Error("order already refunded");
+   }
+"""
+
+# change_id -> (allowed path, diff, rationale, verification plan)
+SAMPLE_FIXES: dict[str, tuple[str, str, str, tuple[str, ...]]] = {
+    "help-button": (
+        "src/components/FloatingHelp.module.css",
+        SAMPLE_FIX_DIFF,
+        "Keep the Help button above the Checkout action at every width.",
+        (
+            "Replay the frozen attack on the patched head: Checkout receives the click",
+            "Legitimate: Help button still opens the help dialog",
+            "Base and desktop widths unchanged",
+        ),
+    ),
+    "refund-tool": (
+        "api/src/tools/request_refund.ts",
+        REFUND_FIX_DIFF,
+        "Enforce order ownership in the tool itself; the conversation is not an authority.",
+        (
+            "Replay the frozen cross-owner attack on the patched head: ledger shows no refund",
+            "Legitimate: an owner can still refund their own order once",
+            "Node test api/test/refund.test.ts passes",
+        ),
+    ),
+}
 
 
 def _source(base_dir: str, rel: str) -> Path | None:
@@ -128,13 +169,11 @@ def template_diff(change: ChangeDef) -> list[FileDiff]:
     return diffs
 
 
-def _load_clean_builder() -> ModuleType:
+def _load_builder(name: str) -> ModuleType:
     scripts = str(REPO_ROOT / "scripts")
     if scripts not in sys.path:
         sys.path.insert(0, scripts)
-    spec = importlib.util.spec_from_file_location(
-        "build_cartwheel_clean_fixture", REPO_ROOT / "scripts/build_cartwheel_clean_fixture.py"
-    )
+    spec = importlib.util.spec_from_file_location(name, REPO_ROOT / f"scripts/{name}.py")
     if spec is None or spec.loader is None:
         raise RuntimeError("fixture builder not found")
     module = importlib.util.module_from_spec(spec)
@@ -202,12 +241,19 @@ class GateService:
             for c in CHANGES.values()
         ]
 
-    def _fixture_repo(self) -> tuple[Path, dict[str, str]]:
-        """Build the deterministic Cartwheel checkout once per process."""
+    def _fixture_repo(self, kind: str) -> tuple[Path, dict[str, str]]:
+        """Build each deterministic Cartwheel checkout once per process."""
         if self._fixture is None:
-            root = Path(tempfile.mkdtemp(prefix="gauntlet-api-cartwheel-")) / "cartwheel"
-            self._fixture = {"repo": root, "refs": _load_clean_builder().build_clean(root)}
-        return self._fixture["repo"], self._fixture["refs"]
+            self._fixture = {}
+        if kind not in self._fixture:
+            root = Path(tempfile.mkdtemp(prefix=f"gauntlet-api-{kind}-")) / "cartwheel"
+            if kind == "refund":
+                refs = _load_builder("build_cartwheel_refund_fixture").build_refund(root)
+            else:
+                refs = _load_builder("build_cartwheel_clean_fixture").build_clean(root)
+            self._fixture[kind] = (root, refs)
+        repo, refs = self._fixture[kind]
+        return repo, refs
 
     @staticmethod
     def missing(core: Settings, adapter: str) -> tuple[str, ...]:
@@ -226,8 +272,10 @@ class GateService:
         model: str = core.model_provider
         if model != "scripted" and not (live and not ready[model]):
             model = "scripted"
-        if live and not ready["daytona"] and not ready["anchor"]:
+        if change_id != "refund-tool" and live and not ready["daytona"] and not ready["anchor"]:
             return model, "daytona", "anchor"
+        if change_id == "refund-tool":
+            return model, "fake", "fake"  # AI-agent attacks run in the local tool world
         if change_id == "help-button" and not ready["local"]:
             return model, "local", "local"
         return model, "fake", "fake"
@@ -287,10 +335,19 @@ class GateService:
         run_id = record.view.run_id
         core = Settings.from_env()
         model, sandbox, browser = self.adapters(core, change.change_id)
-        repo, refs = self._fixture_repo()
-        target = GateTarget.cartwheel(repo)
-        if change.change_id == "clean":
-            target = replace(target, clean_head_sha=refs["clean_sha"])
+        if change.change_id == "refund-tool":
+            repo, refs = self._fixture_repo("refund")
+            target = GateTarget.cartwheel_refund(repo)
+            if (refs["refund_base_sha"], refs["refund_head_sha"]) != (
+                target.base_sha,
+                target.head_sha,
+            ):
+                raise RuntimeError("rebuilt refund fixture SHAs differ from the pinned manifest")
+        else:
+            repo, refs = self._fixture_repo("ui")
+            target = GateTarget.cartwheel(repo)
+            if change.change_id == "clean":
+                target = replace(target, clean_head_sha=refs["clean_sha"])
         runtime = await build_gate(
             core,
             target,
@@ -334,20 +391,18 @@ class GateService:
         attribution = confirmed[0].attribution if confirmed else Attribution.UNKNOWN
         provenance = [*_provenance(runtime.labels), TEMPLATE_DIFF]
         fix_view = None
-        if change.change_id == "help-button" and status is GateStatus.CONFIRMED_REGRESSION:
+        sample = SAMPLE_FIXES.get(change.change_id)
+        if sample and status is GateStatus.CONFIRMED_REGRESSION:
+            path, diff, rationale, test_plan = sample
             fix = FixPlan(
                 fix_plan_id=f"{run_id}:fix-001",
                 run_id=run_id,
                 finding_id=confirmed[0].finding_id,
                 base_sha=target.head_sha,
-                allowed_paths=("src/components/FloatingHelp.module.css",),
-                unified_diff=SAMPLE_FIX_DIFF,
-                rationale="Keep the Help button above the Checkout action at every width.",
-                test_plan=(
-                    "Replay the frozen attack on the patched head: Checkout receives the click",
-                    "Legitimate: Help button still opens the help dialog",
-                    "Base and desktop widths unchanged",
-                ),
+                allowed_paths=(path,),
+                unified_diff=diff,
+                rationale=rationale,
+                test_plan=test_plan,
                 created_at=datetime.now(UTC),
             )
             fix_view = FixPlanView(
