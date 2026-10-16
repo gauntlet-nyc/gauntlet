@@ -33,6 +33,15 @@
           "title": "Schema Version",
           "type": "string"
         },
+        "signals": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ChangeSignal"
+          },
+          "maxItems": 20,
+          "title": "Signals",
+          "type": "array"
+        },
         "source_refs": {
           "items": {
             "$ref": "#/$defs/SourceRef"
@@ -50,6 +59,44 @@
         "confidence"
       ],
       "title": "AffectedSurface",
+      "type": "object"
+    },
+    "ChangeSignal": {
+      "additionalProperties": false,
+      "description": "A deterministic, line-cited hint about *what kind* of change this is. Never a verdict.",
+      "properties": {
+        "excerpt": {
+          "maxLength": 300,
+          "title": "Excerpt",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "auth_check_removed",
+            "auth_check_added",
+            "side_effect_call",
+            "tool_definition",
+            "layout_positioning"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1.0",
+          "default": "1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_ref": {
+          "$ref": "#/$defs/SourceRef"
+        }
+      },
+      "required": [
+        "kind",
+        "source_ref",
+        "excerpt"
+      ],
+      "title": "ChangeSignal",
       "type": "object"
     },
     "SourceRef": {

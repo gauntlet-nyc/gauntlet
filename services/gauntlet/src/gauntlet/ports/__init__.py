@@ -19,6 +19,7 @@ from .replay import ReplayEngine
 from .repository import RepositoryInspector
 from .sandbox import EnvironmentHandle, SandboxProvider
 from .storage import RunStore
+from .targets import TargetCatalog, TargetProfile
 from .worker import TestWorker
 
 __all__ = [
@@ -42,6 +43,8 @@ __all__ = [
     "RunStore",
     "SandboxProvider",
     "StoredArtifact",
+    "TargetCatalog",
+    "TargetProfile",
     "TestWorker",
     "TrustedOracleRegistry",
     "UnknownOracleError",

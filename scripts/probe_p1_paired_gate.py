@@ -12,6 +12,7 @@ import json
 import re
 from pathlib import Path
 
+from gauntlet.application.gate import StaticTargetCatalog, profile_from_manifest
 from gauntlet.application.gate.pair_verdict import GateAttempt, adjudicate_ui_pair
 from gauntlet.contracts import (
     AttackSpec,
@@ -146,7 +147,12 @@ async def pair_reports(
             "Clarify the product description" if clean_sha is not None else "Synthetic UI update"
         ),
     )
-    frozen = (await freeze_diagnostic_plan(fixture_repo, change, run_id=run_id)).frozen
+    frozen = (await freeze_diagnostic_plan(
+            fixture_repo,
+            change,
+            targets=StaticTargetCatalog(profile_from_manifest(manifest)),
+            run_id=run_id,
+        )).frozen
     if (
         frozen.plan_hash != expected_plan_hash
         or frozen.run_id != run_id

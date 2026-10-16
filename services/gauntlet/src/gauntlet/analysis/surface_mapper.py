@@ -11,6 +11,7 @@ from gauntlet.contracts.gate import SurfaceKind
 from gauntlet.domain import is_path_allowed
 
 from .diff_parser import FileChange, FileStatus, Hunk, ParsedDiff
+from .signals import extract_signals
 
 
 @dataclass(frozen=True)
@@ -123,12 +124,14 @@ def map_surfaces(
         if not best:
             gaps.append(f"No surface rule matched {change.path}")
             continue
+        signals = extract_signals(change.path, change.hunks, base_sha, head_sha)
         surfaces.extend(
             AffectedSurface(
                 kind=kind,
                 identifier=_identifier(kind, change.path),
                 source_refs=refs,
                 confidence=confidence,
+                signals=signals,
             )
             for kind, confidence in sorted(best.items())
         )

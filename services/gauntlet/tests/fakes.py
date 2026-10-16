@@ -14,6 +14,7 @@ from gauntlet.ports import (
     ModelRequest,
     ModelResponse,
     OracleDescriptor,
+    TargetProfile,
     UnknownOracleError,
 )
 
@@ -99,3 +100,20 @@ class InMemoryApprovalStore:
         if approval_id in self.consumed:
             raise ApprovalAlreadyConsumedError(approval_id)
         self.consumed[approval_id] = consumer_ref
+
+
+CARTWHEEL = TargetProfile(
+    target_id="cartwheel-fixture",
+    fixture_ids=frozenset({"baseline-v1"}),
+    synthetic_actor_ids=frozenset({"synthetic-owner-01", "synthetic-attacker-01"}),
+    agent_ids=frozenset({"support-test-agent"}),
+    route_prefixes=("/checkout", "/products", "/support"),
+)
+
+
+class StaticTargetCatalog:
+    def __init__(self, *profiles: TargetProfile) -> None:
+        self._by_id = {p.target_id: p for p in profiles or (CARTWHEEL,)}
+
+    async def get(self, target_id: str) -> TargetProfile | None:
+        return self._by_id.get(target_id)

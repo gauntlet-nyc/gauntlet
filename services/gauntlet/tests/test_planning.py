@@ -7,7 +7,13 @@ from datetime import UTC, datetime
 from typing import Any
 
 from conftest import DemoRepo
-from fakes import FakeOracleRegistry, InMemoryRunStore, ScriptedModelGateway
+from fakes import (
+    CARTWHEEL,
+    FakeOracleRegistry,
+    InMemoryRunStore,
+    ScriptedModelGateway,
+    StaticTargetCatalog,
+)
 
 from gauntlet.analysis import GitRepositoryInspector
 from gauntlet.application.gate import PlanChangeDependencies, PlanChangeUseCase
@@ -68,7 +74,7 @@ def ui_attack(impact: ChangeImpactMap, **overrides: object) -> dict[str, Any]:
 def validate(impact: ChangeImpactMap, repo: DemoRepo, *attacks: dict[str, Any]) -> list[str]:
     validator = PlanValidator(FakeOracleRegistry(), PlanningLimits())
     result = validator.validate(
-        json.dumps({"attacks": list(attacks)}), change_for(repo, impact.head_sha), impact
+        json.dumps({"attacks": list(attacks)}), change_for(repo, impact.head_sha), impact, CARTWHEEL
     )
     return [reason for r in result.rejected for reason in r.reasons]
 
@@ -136,7 +142,7 @@ def test_non_json_output_produces_no_attacks(demo_repo: DemoRepo) -> None:
     impact = inspect(demo_repo, demo_repo.ui_head)
     validator = PlanValidator(FakeOracleRegistry(), PlanningLimits())
     result = validator.validate(
-        "Sure! Here is my plan...", change_for(demo_repo, impact.head_sha), impact
+        "Sure! Here is my plan...", change_for(demo_repo, impact.head_sha), impact, CARTWHEEL
     )
     assert result.accepted == () and result.rejected[0].reasons == ("model output is not JSON",)
 
@@ -147,7 +153,7 @@ def test_attack_count_and_runtime_budgets_are_enforced(demo_repo: DemoRepo) -> N
         FakeOracleRegistry(), PlanningLimits(max_attacks=1, max_total_runtime_seconds=1800)
     )
     raw = json.dumps({"attacks": [ui_attack(impact), ui_attack(impact, attack_id="attack-ui-002")]})
-    result = validator.validate(raw, change_for(demo_repo, impact.head_sha), impact)
+    result = validator.validate(raw, change_for(demo_repo, impact.head_sha), impact, CARTWHEEL)
     assert len(result.accepted) == 1
     assert result.rejected[0].reasons == ("exceeds max_attacks",)
 
@@ -167,6 +173,7 @@ def run_use_case(
             inspector=GitRepositoryInspector({"cartwheel": repo.path}),
             planner=AttackPlanner(gateway, oracles, "planner instructions", PlanningLimits()),
             store=store,
+            targets=StaticTargetCatalog(),
             clock=lambda: NOW,
             new_event_id=lambda: next(ids),
         )

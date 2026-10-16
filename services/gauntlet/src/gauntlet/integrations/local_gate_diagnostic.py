@@ -15,6 +15,7 @@ from gauntlet.application.gate import PlanChangeDependencies, PlanChangeUseCase
 from gauntlet.contracts import ChangeImpactMap, ChangeRequest, RunEvent
 from gauntlet.integrations.fake.storage import FakeRunStore
 from gauntlet.planning import AttackPlanner, FrozenPlan, PlanningLimits
+from gauntlet.ports import TargetCatalog
 from gauntlet.ports.model import ModelRequest, ModelResponse
 from gauntlet.verification.registry import RegisteredOracleRegistry
 
@@ -74,7 +75,11 @@ class DiagnosticFreeze:
 
 
 async def freeze_diagnostic_plan(
-    repository: Path, change: ChangeRequest, *, run_id: str | None = None
+    repository: Path,
+    change: ChangeRequest,
+    *,
+    targets: TargetCatalog,
+    run_id: str | None = None,
 ) -> DiagnosticFreeze:
     inspector = GitRepositoryInspector({change.repository_id: repository})
     impact = await inspector.inspect_change(change)
@@ -89,6 +94,7 @@ async def freeze_diagnostic_plan(
                 gateway, oracles, "Synthetic local UI diagnostic", PlanningLimits()
             ),
             store=store,
+            targets=targets,
             clock=lambda: datetime.now(UTC),
             new_event_id=lambda: f"event-{uuid4().hex}",
         )

@@ -7,6 +7,7 @@ from pathlib import Path
 from types import ModuleType
 
 import pytest
+from fakes import StaticTargetCatalog
 
 from gauntlet.contracts import ChangeRequest
 from gauntlet.integrations.local_gate_diagnostic import freeze_diagnostic_plan
@@ -40,7 +41,7 @@ def inputs(tmp_path: Path) -> tuple[Path, FrozenPlan]:
         fixture_id=manifest["fixture_id"],
         max_cost_usd_cents=500,
     )
-    frozen = asyncio.run(freeze_diagnostic_plan(repo, change)).frozen
+    frozen = asyncio.run(freeze_diagnostic_plan(repo, change, targets=StaticTargetCatalog())).frozen
     return repo, frozen
 
 

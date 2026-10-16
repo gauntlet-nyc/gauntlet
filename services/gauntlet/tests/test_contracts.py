@@ -44,6 +44,11 @@ def test_unknown_action_is_rejected() -> None:
         "//evil.example/x",
         "javascript:alert(1)",
         "/a/../../etc",
+        "/checkout/%2e%2e/admin",
+        "/checkout/..%2Fadmin",
+        "/checkout/%252e%252e/admin",
+        "/checkout/./x",
+        "/checkout/a b",
         # percent-encoded forms the browser resolves to the same thing
         "/%2e%2e/admin",
         "/checkout/%2E%2e/x",

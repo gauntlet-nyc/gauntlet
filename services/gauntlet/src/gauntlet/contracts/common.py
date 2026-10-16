@@ -49,8 +49,10 @@ def _reject_non_route_path(value: str) -> str:
         raise ValueError("route must not contain control characters")
     if not value.startswith("/") or path.startswith("//") or "\\" in path:
         raise ValueError("route must be an origin-relative path such as /checkout")
-    if ".." in path.split("/"):
-        raise ValueError("route must not contain '..' segments")
+    if any(ch.isspace() for ch in value.split("#", 1)[0].split("?", 1)[0]):
+        raise ValueError("route must not contain literal whitespace")
+    if any(segment in (".", "..") for segment in path.split("/")):
+        raise ValueError("route must not contain '.' or '..' segments")
     return value
 
 

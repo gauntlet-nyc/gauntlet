@@ -8,6 +8,7 @@ from pathlib import Path
 from types import ModuleType
 
 import pytest
+from fakes import StaticTargetCatalog
 
 from gauntlet.contracts import ActionRecord, ChangeRequest, EvidenceSubject, Observation
 from gauntlet.integrations.local_artifacts import LocalArtifactStore
@@ -118,7 +119,9 @@ def pair_input(tmp_path: Path) -> dict[str, object]:
         max_cost_usd_cents=500,
         feature_intent="Synthetic UI update",
     )
-    frozen = asyncio.run(freeze_diagnostic_plan(fixture_repo, change, run_id=RUN_ID)).frozen
+    frozen = asyncio.run(
+        freeze_diagnostic_plan(fixture_repo, change, targets=StaticTargetCatalog(), run_id=RUN_ID)
+    ).frozen
     outputs = {side: tmp_path / side for side in ("base", "head")}
     digests = {}
     for side, output in outputs.items():
@@ -174,9 +177,13 @@ def test_base_and_head_checkouts_freeze_same_scripted_plan(tmp_path: Path) -> No
         feature_intent="Synthetic UI update",
     )
     builder.git(repo, "checkout", "-q", built["base_sha"])
-    base = asyncio.run(freeze_diagnostic_plan(repo, change, run_id=RUN_ID)).frozen
+    base = asyncio.run(
+        freeze_diagnostic_plan(repo, change, targets=StaticTargetCatalog(), run_id=RUN_ID)
+    ).frozen
     builder.git(repo, "checkout", "-q", built["head_sha"])
-    head = asyncio.run(freeze_diagnostic_plan(repo, change, run_id=RUN_ID)).frozen
+    head = asyncio.run(
+        freeze_diagnostic_plan(repo, change, targets=StaticTargetCatalog(), run_id=RUN_ID)
+    ).frozen
     assert base.run_id == head.run_id == RUN_ID
     assert base.plan_hash == head.plan_hash
     assert base.attacks == head.attacks

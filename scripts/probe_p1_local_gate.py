@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import cast
 from uuid import uuid4
 
+from gauntlet.application.gate import StaticTargetCatalog, profile_from_manifest
 from gauntlet.contracts import ChangeRequest, EvidenceSubject
 from gauntlet.integrations.browser_evidence import BrowserEvidenceCollector
 from gauntlet.integrations.fixture_identity import verify_fixture_build_receipt
@@ -72,7 +73,12 @@ async def probe(
             "Clarify the product description" if clean_sha is not None else "Synthetic UI update"
         ),
     )
-    frozen_result = await freeze_diagnostic_plan(fixture_repo, change, run_id=run_id)
+    frozen_result = await freeze_diagnostic_plan(
+        fixture_repo,
+        change,
+        targets=StaticTargetCatalog(profile_from_manifest(manifest)),
+        run_id=run_id,
+    )
     frozen = frozen_result.frozen
     if (
         len(frozen.attacks) != 1

@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Final
 
 from gauntlet.contracts import AttackSpec, ChangeImpactMap, ChangeRequest, SourceRef
-from gauntlet.ports import ModelGateway, ModelRequest, TrustedOracleRegistry
+from gauntlet.ports import ModelGateway, ModelRequest, TargetProfile, TrustedOracleRegistry
 
 from .plan_validation import PlanningLimits, PlanValidation, PlanValidator, RejectedAttack
 from .worker_selector import allowed_workers
@@ -82,6 +82,7 @@ class AttackPlanner:
         change: ChangeRequest,
         impact: ChangeImpactMap,
         excerpts: Sequence[SourceExcerpt],
+        target: TargetProfile,
     ) -> PlanDraft:
         workers = allowed_workers(impact)
         if not workers:
@@ -91,11 +92,11 @@ class AttackPlanner:
         response = await self._gateway.complete(
             ModelRequest(
                 system=self._instructions,
-                user=self._user_payload(change, impact, excerpts, workers),
+                user=self._user_payload(change, impact, excerpts, workers, target),
                 max_output_tokens=self._limits.max_output_tokens,
             )
         )
-        validation = self._validator.validate(response.text, change, impact)
+        validation = self._validator.validate(response.text, change, impact, target)
         reason = None if validation.accepted else "planner produced no valid attacks"
         return PlanDraft(validation, response.model_id, response.trace_id, reason)
 
@@ -105,6 +106,7 @@ class AttackPlanner:
         impact: ChangeImpactMap,
         excerpts: Sequence[SourceExcerpt],
         workers: frozenset[str],
+        target: TargetProfile,
     ) -> str:
         oracles = [
             {
@@ -125,6 +127,11 @@ class AttackPlanner:
                 {"ref": e.ref.model_dump(mode="json"), "text": e.text} for e in excerpts
             ],
             "allowed_worker_kinds": sorted(workers),
+            "target": {
+                "synthetic_actor_ids": sorted(target.synthetic_actor_ids),
+                "agent_ids": sorted(target.agent_ids),
+                "route_prefixes": list(target.route_prefixes),
+            },
             "registered_oracles": oracles,
             "limits": {
                 "max_attacks": self._limits.max_attacks,

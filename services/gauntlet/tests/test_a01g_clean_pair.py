@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from fakes import StaticTargetCatalog
 from test_a01f_paired_gate import RUN_ID, load, make_attempt, write_report
 
 from gauntlet.contracts import ChangeRequest
@@ -38,9 +39,13 @@ def clean_pair_input(tmp_path: Path) -> dict[str, object]:
         max_cost_usd_cents=500,
         feature_intent="Clarify the product description",
     )
-    frozen = asyncio.run(freeze_diagnostic_plan(repo, change, run_id=RUN_ID)).frozen
+    frozen = asyncio.run(
+        freeze_diagnostic_plan(repo, change, targets=StaticTargetCatalog(), run_id=RUN_ID)
+    ).frozen
     subprocess.run(["git", "-C", str(repo), "checkout", "-q", change.base_sha], check=True)
-    base_frozen = asyncio.run(freeze_diagnostic_plan(repo, change, run_id=RUN_ID)).frozen
+    base_frozen = asyncio.run(
+        freeze_diagnostic_plan(repo, change, targets=StaticTargetCatalog(), run_id=RUN_ID)
+    ).frozen
     assert base_frozen.plan_hash == frozen.plan_hash
     assert base_frozen.attacks == frozen.attacks
     subprocess.run(["git", "-C", str(repo), "checkout", "-q", change.head_sha], check=True)

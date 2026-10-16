@@ -5,6 +5,10 @@ class ApplicationError(Exception):
     """Base for use-case level refusals."""
 
 
+class TargetNotAuthorizedError(ApplicationError):
+    """The target or fixture is not in the server-side registry; nothing may be planned or run."""
+
+
 class StaleApprovalError(ApplicationError):
     """The reviewer approved a plan hash that is no longer the current plan."""
 
