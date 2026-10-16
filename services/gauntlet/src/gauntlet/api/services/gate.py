@@ -19,9 +19,19 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
-from gauntlet.application.gate import fix_plan_hash
-from gauntlet.composition import GateTarget, build_gate, readiness
-from gauntlet.contracts import FixPlan, RunEvent
+from gauntlet.application.gate import ApprovalScope, AuthenticatedReviewer, fix_plan_hash
+from gauntlet.application.gate.repair import ReleaseVerdict
+from gauntlet.application.gate.run_gate import GateRunReport
+from gauntlet.composition import (
+    GateRuntime,
+    GateTarget,
+    RepairRuntime,
+    build_gate,
+    build_repair,
+    readiness,
+    refund_verification_suite,
+)
+from gauntlet.contracts import ApprovalDecision, ApprovalRecord, AttackSpec, FixPlan, RunEvent
 from gauntlet.domain import CONFIRMED_GATE_STATUSES, Attribution, GateStatus
 from gauntlet.settings import MissingSettingError, Settings
 
@@ -33,6 +43,8 @@ from ..schemas import (
     GateRunSummary,
     GateRunView,
     Provenance,
+    RepairCheckView,
+    RepairView,
 )
 from ..settings import REPO_ROOT, ApiSettings
 
@@ -197,6 +209,23 @@ def _provenance(labels: dict[str, str]) -> list[Provenance]:
     return out
 
 
+def _repair_provenance(labels: dict[str, str]) -> list[Provenance]:
+    text = {
+        "offline_scripted_fix": "OFFLINE scripted fix proposer (no model call)",
+        "local_git_worktree": "Patch applied in a fresh local git worktree; never pushed",
+        "in_memory": "Single-use approval store in API memory",
+    }
+    return [
+        Provenance(
+            provider=f"{part}:{label}",
+            mode="live" if label.startswith("live_") else "offline_fixture",
+            live=label.startswith("live_"),
+            label=text.get(label, label),
+        )
+        for part, label in labels.items()
+    ]
+
+
 def _event(run_id: str, sequence: int, event_type: str, payload: Payload) -> RunEvent:
     return RunEvent(
         event_id=f"{run_id}:event-{sequence:03d}",
@@ -215,10 +244,23 @@ def _is_offline(view: GateRunView) -> bool:
 
 
 @dataclass
+class RepairContext:
+    """Live objects the repair loop needs after the Gate run (refund-tool only)."""
+
+    gate: GateRuntime
+    repair: RepairRuntime
+    target: GateTarget
+    attack: AttackSpec
+    plan: FixPlan
+    approval_id: str | None = None
+
+
+@dataclass
 class GateRunRecord:
     view: GateRunView
     created_at: datetime
     artifacts: dict[str, tuple[str, bytes]] = field(default_factory=dict)
+    repair: RepairContext | None = None
 
 
 @dataclass
@@ -356,12 +398,15 @@ class GateService:
             browser=browser,  # type: ignore[arg-type]
             artifact_root=Path(tempfile.mkdtemp(prefix=f"gauntlet-{run_id}-")),
         )
+        keep_open = False
         try:
             report = await runtime.use_case.execute(
                 run_id, target.change(intent=change.feature_intent), target.fixture_checksum
             )
+            keep_open = await self._prepare_repair(record, runtime, target, report, core, model)
         finally:
-            await runtime.aclose()
+            if not keep_open:
+                await runtime.aclose()
         attempts: list[AttemptView] = []
         for outcome in report.outcomes:
             for revision, side in (("head", outcome.head), ("base", outcome.base)):
@@ -391,8 +436,19 @@ class GateService:
         attribution = confirmed[0].attribution if confirmed else Attribution.UNKNOWN
         provenance = [*_provenance(runtime.labels), TEMPLATE_DIFF]
         fix_view = None
-        sample = SAMPLE_FIXES.get(change.change_id)
-        if sample and status is GateStatus.CONFIRMED_REGRESSION:
+        if record.repair is not None:
+            context = record.repair
+            fix_view = FixPlanView(
+                plan=context.plan,
+                plan_sha256=fix_plan_hash(context.plan),
+                allowed_paths=list(context.plan.allowed_paths),
+                provenance=_repair_provenance(context.repair.labels)[0],
+                repairable=True,
+            )
+            provenance.append(fix_view.provenance)
+        elif (sample := SAMPLE_FIXES.get(change.change_id)) and (
+            status is GateStatus.CONFIRMED_REGRESSION
+        ):
             path, diff, rationale, test_plan = sample
             fix = FixPlan(
                 fix_plan_id=f"{run_id}:fix-001",
@@ -410,6 +466,7 @@ class GateService:
                 plan_sha256=fix_plan_hash(fix),
                 allowed_paths=list(fix.allowed_paths),
                 provenance=SAMPLE_FIX,
+                repairable=False,
             )
             provenance.append(SAMPLE_FIX)
         return record.view.model_copy(
@@ -432,6 +489,99 @@ class GateService:
                 "provenance": provenance,
             }
         )
+
+    async def _prepare_repair(
+        self,
+        record: GateRunRecord,
+        runtime: GateRuntime,
+        target: GateTarget,
+        report: GateRunReport,
+        core: Settings,
+        model: str,
+    ) -> bool:
+        """For confirmed AI-agent findings, freeze a real fix proposal for human review."""
+        if "ai_agent" not in runtime.routes:
+            return False
+        confirmed = [
+            o for o in report.outcomes if o.finding.status is GateStatus.CONFIRMED_REGRESSION
+        ]
+        if not confirmed:
+            return False
+        outcome = confirmed[0]
+        repair = build_repair(core, target, runtime, model=model)  # type: ignore[arg-type]
+        plan, _ = await repair.use_case.propose(
+            record.view.run_id, outcome.finding, outcome.attack, target.head_sha
+        )
+        record.repair = RepairContext(runtime, repair, target, outcome.attack, plan)
+        return True
+
+    async def record_fix_approval(
+        self,
+        record: GateRunRecord,
+        decision: ApprovalDecision,
+        reviewer: AuthenticatedReviewer,
+    ) -> ApprovalRecord:
+        """Approvals for repairable plans go to the repair loop's own single-use store."""
+        context = record.repair
+        if context is None:
+            raise ValueError("this run has no repairable fix plan")
+        approval = await context.repair.approvals.record(
+            ApprovalScope(
+                run_id=record.view.run_id,
+                target_id=context.target.target_id,
+                fixture_id=context.target.fixture_id,
+                current_plan_sha256=fix_plan_hash(context.plan),
+                allowed_paths=context.plan.allowed_paths,
+            ),
+            decision,
+            reviewer,
+        )
+        if approval.decision == "approved":
+            context.approval_id = approval.approval_id
+        return approval
+
+    async def run_repair(self, run_id: str) -> GateRunView:
+        """Apply the approved plan in a fresh worktree and re-verify. Review-only output."""
+        record = self.runs[run_id]
+        context = record.repair
+        if context is None:
+            raise ValueError("this run has no repairable fix plan")
+        if context.approval_id is None:
+            raise PermissionError("approve the fix plan hash before running the repair")
+        report = await context.repair.use_case.execute(
+            context.approval_id,
+            context.plan,
+            target_id=context.target.target_id,
+            fixture_id=context.target.fixture_id,
+            fixture_checksum=context.target.fixture_checksum,
+            suite=refund_verification_suite(context.target, context.attack),
+        )
+        context.approval_id = None  # spent by authorize()
+        repair_view = RepairView(
+            approval_id=report.approval_id,
+            patched_sha=report.patched_sha,
+            touched_paths=list(report.touched_paths),
+            checks=[
+                RepairCheckView(name=c.name, passed=c.passed, detail=c.detail)
+                for c in report.checks
+            ],
+            verdict=report.verdict.value,
+            note=report.note,
+            provenance=_repair_provenance(context.repair.labels),
+        )
+        record.view = record.view.model_copy(update={"repair": repair_view})
+        self.append_event(
+            run_id,
+            "repair_verified"
+            if report.verdict is ReleaseVerdict.FIX_VERIFIED_REVIEW_REQUIRED
+            else "repair_not_verified",
+            {
+                "approval_id": report.approval_id,
+                "patched_sha": report.patched_sha,
+                "release_verdict": report.verdict.value,
+            },
+        )
+        return record.view
 
     def append_event(self, run_id: str, event_type: str, payload: Payload) -> None:
         record = self.runs[run_id]

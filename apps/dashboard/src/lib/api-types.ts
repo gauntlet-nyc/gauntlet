@@ -148,6 +148,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/gate/runs/{run_id}/repair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Gate Repair
+         * @description Apply the human-approved fix plan in a fresh worktree and re-verify it.
+         *
+         *     Needs a reviewer token and a prior approval of the exact plan hash (single use). The
+         *     result is review-only: nothing is merged, pushed or deployed.
+         */
+        post: operations["run_gate_repair_gate_runs__run_id__repair_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -866,6 +889,8 @@ export interface components {
             /** Plan Sha256 */
             plan_sha256: string;
             provenance: components["schemas"]["Provenance"];
+            /** Repairable */
+            repairable: boolean;
         };
         /** GateRunSummary */
         GateRunSummary: {
@@ -915,6 +940,7 @@ export interface components {
             provenance: components["schemas"]["Provenance"][];
             /** Rejected Attacks */
             rejected_attacks: string[];
+            repair?: components["schemas"]["RepairView"] | null;
             /** Run Id */
             run_id: string;
             /** Status */
@@ -1273,6 +1299,35 @@ export interface components {
             status: "draft" | "approved_for_review" | "dismissed";
             /** Verdict Ids */
             verdict_ids: string[];
+        };
+        /** RepairCheckView */
+        RepairCheckView: {
+            /** Detail */
+            detail: string;
+            /** Name */
+            name: string;
+            /** Passed */
+            passed: boolean;
+        };
+        /** RepairView */
+        RepairView: {
+            /** Approval Id */
+            approval_id: string;
+            /** Checks */
+            checks: components["schemas"]["RepairCheckView"][];
+            /** Note */
+            note: string;
+            /** Patched Sha */
+            patched_sha: string | null;
+            /** Provenance */
+            provenance: components["schemas"]["Provenance"][];
+            /** Touched Paths */
+            touched_paths: string[];
+            /**
+             * Verdict
+             * @enum {string}
+             */
+            verdict: "fix_verified_review_required" | "fix_rejected" | "not_verified";
         };
         /** ResizeStep */
         ResizeStep: {
@@ -1810,6 +1865,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CheckRunPreview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_gate_repair_gate_runs__run_id__repair_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateRunView"];
                 };
             };
             /** @description Validation Error */

@@ -79,8 +79,14 @@ async def record_approval(body: ApprovalRequest, reviewer: Reviewer) -> Approval
             status_code=422, detail=[e["msg"] for e in exc.errors(include_url=False)]
         ) from exc
     scope = await _remediation_scope(body) if body.subject == "remediation" else _scope(body)
+    run = container.gate.runs.get(body.run_id)
     try:
-        record = await container.approvals.record(scope, decision, reviewer)
+        if body.subject == "fix_plan" and run is not None and run.repair is not None:
+            # The repair loop spends its own approval; keep a copy for the approvals list.
+            record = await container.gate.record_fix_approval(run, decision, reviewer)
+            await container.approval_store.save(record)
+        else:
+            record = await container.approvals.record(scope, decision, reviewer)
     except StaleApprovalError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     if body.subject == "remediation":

@@ -1428,13 +1428,18 @@
           },
           "provenance": {
             "$ref": "#/components/schemas/Provenance"
+          },
+          "repairable": {
+            "title": "Repairable",
+            "type": "boolean"
           }
         },
         "required": [
           "plan",
           "plan_sha256",
           "allowed_paths",
-          "provenance"
+          "provenance",
+          "repairable"
         ],
         "title": "FixPlanView",
         "type": "object"
@@ -1589,6 +1594,16 @@
             },
             "title": "Rejected Attacks",
             "type": "array"
+          },
+          "repair": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RepairView"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "run_id": {
             "title": "Run Id",
@@ -2531,6 +2546,93 @@
           "created_at"
         ],
         "title": "RemediationProposal",
+        "type": "object"
+      },
+      "RepairCheckView": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "passed",
+          "detail"
+        ],
+        "title": "RepairCheckView",
+        "type": "object"
+      },
+      "RepairView": {
+        "properties": {
+          "approval_id": {
+            "title": "Approval Id",
+            "type": "string"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/RepairCheckView"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "patched_sha": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patched Sha"
+          },
+          "provenance": {
+            "items": {
+              "$ref": "#/components/schemas/Provenance"
+            },
+            "title": "Provenance",
+            "type": "array"
+          },
+          "touched_paths": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Touched Paths",
+            "type": "array"
+          },
+          "verdict": {
+            "enum": [
+              "fix_verified_review_required",
+              "fix_rejected",
+              "not_verified"
+            ],
+            "title": "Verdict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "approval_id",
+          "patched_sha",
+          "touched_paths",
+          "checks",
+          "verdict",
+          "note",
+          "provenance"
+        ],
+        "title": "RepairView",
         "type": "object"
       },
       "ResizeStep": {
@@ -3607,6 +3709,65 @@
           }
         },
         "summary": "Get Gate Check Run",
+        "tags": [
+          "gate"
+        ]
+      }
+    },
+    "/gate/runs/{run_id}/repair": {
+      "post": {
+        "description": "Apply the human-approved fix plan in a fresh worktree and re-verify it.\n\nNeeds a reviewer token and a prior approval of the exact plan hash (single use). The\nresult is review-only: nothing is merged, pushed or deployed.",
+        "operationId": "run_gate_repair_gate_runs__run_id__repair_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateRunView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Gate Repair",
         "tags": [
           "gate"
         ]

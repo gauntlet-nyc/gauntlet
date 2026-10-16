@@ -54,6 +54,24 @@ class FixPlanView(BaseModel):
     plan_sha256: str
     allowed_paths: list[str]
     provenance: Provenance
+    repairable: bool
+    """True when an approved plan can be applied and re-verified by the repair loop here."""
+
+
+class RepairCheckView(BaseModel):
+    name: str
+    passed: bool
+    detail: str
+
+
+class RepairView(BaseModel):
+    approval_id: str
+    patched_sha: str | None
+    touched_paths: list[str]
+    checks: list[RepairCheckView]
+    verdict: Literal["fix_verified_review_required", "fix_rejected", "not_verified"]
+    note: str
+    provenance: list[Provenance]
 
 
 class GateRunView(BaseModel):
@@ -75,6 +93,7 @@ class GateRunView(BaseModel):
     attempts: list[AttemptView]
     findings: list[Finding]
     fix_plan: FixPlanView | None
+    repair: RepairView | None = None
     events: list[RunEvent]
     provenance: list[Provenance]
 

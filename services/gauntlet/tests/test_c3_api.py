@@ -266,3 +266,36 @@ def test_onboarding_lists_synthetic_targets_and_open_steps(client: TestClient) -
     assert steps["Configure reviewer tokens"]["done"] is True
     github = steps["Install the GitHub App and bind the repository"]
     assert github["done"] is False and "GITHUB_APP_ID" in github["detail"]
+
+
+def test_refund_repair_needs_hash_approval_and_spends_it_once(client: TestClient) -> None:
+    run = _start(client, "refund-tool")
+    fix = run["fix_plan"]
+    assert fix["repairable"] is True
+    assert fix["provenance"]["provider"] == "proposer:offline_scripted_fix"
+    url = f"/gate/runs/{run['run_id']}/repair"
+    assert client.post(url).status_code == 401
+    assert client.post(url, headers=AUTH).status_code == 409
+    approved = client.post("/approvals", json=_fix_approval(run), headers=AUTH)
+    assert approved.status_code == 201
+    repaired = client.post(url, headers=AUTH)
+    assert repaired.status_code == 200
+    repair = repaired.json()["repair"]
+    assert repair["verdict"] == "fix_verified_review_required"
+    assert {c["name"]: c["passed"] for c in repair["checks"]} == {
+        "original_attack": True,
+        "variant_0": True,
+        "legitimate_workflow": True,
+    }
+    assert repair["touched_paths"] == ["api/src/tools/request_refund.ts"]
+    assert "never merges" in repair["note"]
+    assert client.post(url, headers=AUTH).status_code == 409  # approval already spent
+    events = [e["event_type"] for e in repaired.json()["events"]]
+    assert events[-2:] == ["repair_requested", "repair_verified"]
+
+
+def test_ui_sample_fix_is_not_repairable(client: TestClient) -> None:
+    run = _start(client)
+    assert run["fix_plan"]["repairable"] is False
+    response = client.post(f"/gate/runs/{run['run_id']}/repair", headers=AUTH)
+    assert response.status_code == 422

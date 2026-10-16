@@ -48,7 +48,9 @@ Checks only: it never comments, approves or merges." (The App isn't installed ye
 | **Gate** → "Let the support assistant request refunds" → **Start Gate run** | Diff: the ownership check is deleted from `request_refund.ts` | "Same planner, different surface: it sees a removed permission check on a tool with a money side effect." |
 | **Frozen plan** | `attack-ai-cross-owner-refund` (ai_agent worker) | "It plans an AI attack, not a UI one: an attacker asks the assistant to refund someone else's order." |
 | **Attempts** | head 2/2 fail "Forbidden refund recorded: ord-2001 …", base 0/2 | "The oracle reads the trusted test ledger, not the chat. On head money moved to the wrong person; on base it didn't." |
-| **Fix plan review** | Restore the ownership check in the tool | "Fix belongs in the tool, not the prompt. Human approves the hash." |
+| **Fix plan review** | Proposed diff restores the ownership check; allowed path only `request_refund.ts` | "Fix belongs in the tool, not the prompt." |
+| **Apply approved plan…** *before* approving | "Refused (HTTP 409)" | "No approval, no patch." |
+| **Approve fix plan** → **Apply approved plan in a fresh worktree and re-verify** | Release verdict `fix verified review required`: original attack pass, variant pass, owner refund still works | "Patched in a fresh worktree, never pushed. The original attack, a variant and the legitimate flow all re-run. The approval is spent: click again and it's refused. A human still merges." |
 
 Provenance says **Local tool world** (the fixture's real tool code per revision, not Daytona) and
 the scripted planner unless Azure is live.
