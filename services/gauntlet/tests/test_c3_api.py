@@ -241,3 +241,25 @@ def test_adapter_selection_never_goes_live_without_opt_in() -> None:
     }
     assert GateService.adapters(Settings.from_env(local)) == ("scripted", "local", "local")
     assert GateService.adapters(Settings.from_env(local), "clean") == ("scripted", "fake", "fake")
+
+
+def test_check_run_preview_is_never_published(client: TestClient) -> None:
+    run = _start(client)
+    preview = client.get(f"/gate/runs/{run['run_id']}/check-run").json()
+    assert preview["conclusion"] == "failure"
+    assert preview["published"] is False
+    assert "Not tested does not mean safe" in preview["summary"]
+    refund = _start(client, "refund-tool")
+    neutral = client.get(f"/gate/runs/{refund['run_id']}/check-run").json()
+    assert neutral["conclusion"] == "neutral"
+    assert neutral["title"].startswith("Not tested")
+
+
+def test_onboarding_lists_synthetic_targets_and_open_steps(client: TestClient) -> None:
+    view = client.get("/onboarding").json()
+    assert {t["fixture_id"] for t in view["targets"]} == {"baseline-v1", "refund-v1"}
+    assert all(t["synthetic_only"] for t in view["targets"])
+    steps = {s["step"]: s for s in view["steps"]}
+    assert steps["Configure reviewer tokens"]["done"] is True
+    github = steps["Install the GitHub App and bind the repository"]
+    assert github["done"] is False and "GITHUB_APP_ID" in github["detail"]

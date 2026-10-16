@@ -859,6 +859,62 @@
         "title": "ChatStep",
         "type": "object"
       },
+      "CheckRunPreview": {
+        "description": "What the GitHub App would publish for this run. Not sent anywhere from this endpoint.",
+        "properties": {
+          "conclusion": {
+            "enum": [
+              "success",
+              "failure",
+              "neutral"
+            ],
+            "title": "Conclusion",
+            "type": "string"
+          },
+          "details_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details Url"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "published": {
+            "title": "Published",
+            "type": "boolean"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "conclusion",
+          "title",
+          "summary",
+          "details_url",
+          "published",
+          "note"
+        ],
+        "title": "CheckRunPreview",
+        "type": "object"
+      },
       "ClickStep": {
         "additionalProperties": false,
         "properties": {
@@ -2048,6 +2104,119 @@
         "title": "OfflineGateResponse",
         "type": "object"
       },
+      "OnboardingStep": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "done": {
+            "title": "Done",
+            "type": "boolean"
+          },
+          "step": {
+            "title": "Step",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step",
+          "done",
+          "detail"
+        ],
+        "title": "OnboardingStep",
+        "type": "object"
+      },
+      "OnboardingTarget": {
+        "properties": {
+          "base_sha": {
+            "title": "Base Sha",
+            "type": "string"
+          },
+          "fixture_checksum_sha256": {
+            "title": "Fixture Checksum Sha256",
+            "type": "string"
+          },
+          "fixture_id": {
+            "title": "Fixture Id",
+            "type": "string"
+          },
+          "github_repository": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Github Repository"
+          },
+          "head_sha": {
+            "title": "Head Sha",
+            "type": "string"
+          },
+          "identities": {
+            "items": {
+              "$ref": "#/components/schemas/TargetIdentity"
+            },
+            "title": "Identities",
+            "type": "array"
+          },
+          "routes": {
+            "items": {
+              "$ref": "#/components/schemas/TargetRoute"
+            },
+            "title": "Routes",
+            "type": "array"
+          },
+          "synthetic_only": {
+            "title": "Synthetic Only",
+            "type": "boolean"
+          },
+          "target_id": {
+            "title": "Target Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "target_id",
+          "fixture_id",
+          "synthetic_only",
+          "base_sha",
+          "head_sha",
+          "fixture_checksum_sha256",
+          "routes",
+          "identities",
+          "github_repository"
+        ],
+        "title": "OnboardingTarget",
+        "type": "object"
+      },
+      "OnboardingView": {
+        "properties": {
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/OnboardingStep"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "targets": {
+            "items": {
+              "$ref": "#/components/schemas/OnboardingTarget"
+            },
+            "title": "Targets",
+            "type": "array"
+          }
+        },
+        "required": [
+          "targets",
+          "steps"
+        ],
+        "title": "OnboardingView",
+        "type": "object"
+      },
       "PressStep": {
         "additionalProperties": false,
         "properties": {
@@ -2776,6 +2945,49 @@
         "title": "StartGateRun",
         "type": "object"
       },
+      "TargetIdentity": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "role"
+        ],
+        "title": "TargetIdentity",
+        "type": "object"
+      },
+      "TargetRoute": {
+        "properties": {
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "primary_action": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Action"
+          }
+        },
+        "required": [
+          "path",
+          "primary_action"
+        ],
+        "title": "TargetRoute",
+        "type": "object"
+      },
       "ToolEvent": {
         "additionalProperties": false,
         "description": "One recorded tool operation. `outcome='unknown'` is never treated as success or failure.",
@@ -3357,6 +3569,49 @@
         ]
       }
     },
+    "/gate/runs/{run_id}/check-run": {
+      "get": {
+        "description": "Preview of the GitHub check run (checks-only; never comments, approves or merges).",
+        "operationId": "get_gate_check_run_gate_runs__run_id__check_run_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckRunPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Gate Check Run",
+        "tags": [
+          "gate"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "health_health_get",
@@ -3373,6 +3628,27 @@
           }
         },
         "summary": "Health"
+      }
+    },
+    "/onboarding": {
+      "get": {
+        "operationId": "onboarding_status_onboarding_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Onboarding Status",
+        "tags": [
+          "onboarding"
+        ]
       }
     },
     "/recall/audit": {

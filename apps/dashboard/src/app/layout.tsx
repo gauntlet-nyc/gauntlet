@@ -13,6 +13,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <Link href="/recall">Recall</Link>
           <Link href="/recall/review">Review queue</Link>
           <Link href="/sponsors">Sponsor proof</Link>
+          <Link href="/onboarding">Onboarding</Link>
           <Link href="/login">Reviewer login</Link>
           <span style={{ color: "#999" }}>|</span>
           <Link href="/gate/offline">Offline gate (P0)</Link>

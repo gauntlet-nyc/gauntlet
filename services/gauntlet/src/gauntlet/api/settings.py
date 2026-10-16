@@ -65,6 +65,10 @@ class ApiSettings:
     def missing_env(self, provider: str) -> tuple[str, ...]:
         return tuple(n for n in PROVIDER_ENV[provider] if n not in self.configured_env)
 
+    @property
+    def has_reviewers(self) -> bool:
+        return bool(self._reviewer_tokens)
+
     def reviewer_for(self, token: str) -> ReviewerToken | None:
         """Constant-time lookup over every configured token."""
         match: ReviewerToken | None = None

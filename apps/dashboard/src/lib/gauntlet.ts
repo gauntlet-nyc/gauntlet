@@ -17,6 +17,8 @@ export type ReviewItem = S["ReviewItem"];
 export type SponsorStatus = S["SponsorStatus"];
 export type BriefingView = S["BriefingView"];
 export type ApprovalRecord = S["ApprovalRecord"];
+export type CheckRunPreview = S["CheckRunPreview"];
+export type OnboardingView = S["OnboardingView"];
 
 // Runtime checks at the untrusted boundary: only the fields the UI relies on for safety labels.
 const provenanceSchema = z.object({
@@ -83,6 +85,8 @@ export const api = {
   reviewQueue: () => get<ReviewItem[]>("/recall/review-queue", asArray),
   sponsors: () => get<SponsorStatus[]>("/sponsors", asArray),
   approvals: () => get<ApprovalRecord[]>("/approvals", asArray),
+  checkRun: (id: string) => get<CheckRunPreview>(`/gate/runs/${encodeURIComponent(id)}/check-run`, (d) => d as CheckRunPreview),
+  onboarding: () => get<OnboardingView>("/onboarding", (d) => d as OnboardingView),
 };
 
 export function artifactUrl(runId: string, artifactId: string): string {

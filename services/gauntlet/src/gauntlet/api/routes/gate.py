@@ -3,11 +3,13 @@
 from fastapi import APIRouter, HTTPException, Response
 
 from gauntlet.application.voice import build_briefing
+from gauntlet.intake.github import render_check_run
 
 from ..container import get_container
 from ..schemas import (
     BriefingView,
     ChangeOption,
+    CheckRunPreview,
     GateRunSummary,
     GateRunView,
     Provenance,
@@ -76,4 +78,20 @@ async def get_gate_artifact(run_id: str, artifact_id: str) -> Response:
         content=content,
         media_type=media_type,
         headers={"X-Content-Type-Options": "nosniff", "Cache-Control": "no-store"},
+    )
+
+
+@router.get("/runs/{run_id}/check-run")
+async def get_gate_check_run(run_id: str) -> CheckRunPreview:
+    """Preview of the GitHub check run (checks-only; never comments, approves or merges)."""
+    view = _run(run_id)
+    report = render_check_run(view.run_id, view.findings, [], view.not_tested_reason)
+    return CheckRunPreview(
+        name=report.name,
+        conclusion=report.conclusion,
+        title=report.title,
+        summary=report.summary,
+        details_url=report.details_url,
+        published=False,
+        note="Preview only: the GitHub App is not installed, so nothing was published.",
     )

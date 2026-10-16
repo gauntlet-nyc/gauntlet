@@ -36,9 +36,9 @@ export default async function GateRunPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
-  let run, briefing;
+  let run, briefing, check;
   try {
-    [run, briefing] = await Promise.all([api.run(id), api.briefing(id)]);
+    [run, briefing, check] = await Promise.all([api.run(id), api.briefing(id), api.checkRun(id)]);
   } catch (err) {
     return <ErrorPanel what="Gate run" error={err} />;
   }
@@ -163,6 +163,14 @@ export default async function GateRunPage({
           />
         </Section>
       )}
+
+      <Section title="GitHub check run (preview)">
+        <p>
+          <strong>{check.name}</strong> · conclusion <StatusPill value={check.conclusion === "failure" ? "fail" : check.conclusion === "success" ? "pass" : "inconclusive"} /> · {check.title}
+        </p>
+        <pre style={{ background: "#f6f8fa", padding: 8, fontSize: 12, whiteSpace: "pre-wrap" }}>{check.summary}</pre>
+        <small style={{ color: "#555" }}>{check.note} Checks-only: Gauntlet never comments, approves or merges.</small>
+      </Section>
 
       <Section title="Events">
         <ol>

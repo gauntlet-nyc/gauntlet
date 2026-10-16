@@ -128,6 +128,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/gate/runs/{run_id}/check-run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Gate Check Run
+         * @description Preview of the GitHub check run (checks-only; never comments, approves or merges).
+         */
+        get: operations["get_gate_check_run_gate_runs__run_id__check_run_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -137,6 +157,23 @@ export interface paths {
         };
         /** Health */
         get: operations["health_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/onboarding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Onboarding Status */
+        get: operations["onboarding_status_onboarding_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -622,6 +659,29 @@ export interface components {
              */
             schema_version: "1.0";
         };
+        /**
+         * CheckRunPreview
+         * @description What the GitHub App would publish for this run. Not sent anywhere from this endpoint.
+         */
+        CheckRunPreview: {
+            /**
+             * Conclusion
+             * @enum {string}
+             */
+            conclusion: "success" | "failure" | "neutral";
+            /** Details Url */
+            details_url: string | null;
+            /** Name */
+            name: string;
+            /** Note */
+            note: string;
+            /** Published */
+            published: boolean;
+            /** Summary */
+            summary: string;
+            /** Title */
+            title: string;
+        };
         /** ClickStep */
         ClickStep: {
             /**
@@ -1050,6 +1110,43 @@ export interface components {
             /** Status */
             status: string;
         };
+        /** OnboardingStep */
+        OnboardingStep: {
+            /** Detail */
+            detail: string;
+            /** Done */
+            done: boolean;
+            /** Step */
+            step: string;
+        };
+        /** OnboardingTarget */
+        OnboardingTarget: {
+            /** Base Sha */
+            base_sha: string;
+            /** Fixture Checksum Sha256 */
+            fixture_checksum_sha256: string;
+            /** Fixture Id */
+            fixture_id: string;
+            /** Github Repository */
+            github_repository: string | null;
+            /** Head Sha */
+            head_sha: string;
+            /** Identities */
+            identities: components["schemas"]["TargetIdentity"][];
+            /** Routes */
+            routes: components["schemas"]["TargetRoute"][];
+            /** Synthetic Only */
+            synthetic_only: boolean;
+            /** Target Id */
+            target_id: string;
+        };
+        /** OnboardingView */
+        OnboardingView: {
+            /** Steps */
+            steps: components["schemas"]["OnboardingStep"][];
+            /** Targets */
+            targets: components["schemas"]["OnboardingTarget"][];
+        };
         /** PressStep */
         PressStep: {
             /**
@@ -1328,6 +1425,20 @@ export interface components {
              * @enum {string}
              */
             change_id: "help-button" | "refund-tool" | "clean";
+        };
+        /** TargetIdentity */
+        TargetIdentity: {
+            /** Id */
+            id: string;
+            /** Role */
+            role: string;
+        };
+        /** TargetRoute */
+        TargetRoute: {
+            /** Path */
+            path: string;
+            /** Primary Action */
+            primary_action: string | null;
         };
         /**
          * ToolEvent
@@ -1681,6 +1792,37 @@ export interface operations {
             };
         };
     };
+    get_gate_check_run_gate_runs__run_id__check_run_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckRunPreview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     health_health_get: {
         parameters: {
             query?: never;
@@ -1697,6 +1839,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    onboarding_status_onboarding_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingView"];
                 };
             };
         };

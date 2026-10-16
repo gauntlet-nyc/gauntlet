@@ -179,3 +179,48 @@ class BriefingView(BaseModel):
     briefing: VoiceBriefing
     audio_available: bool
     provenance: Provenance
+
+
+class CheckRunPreview(BaseModel):
+    """What the GitHub App would publish for this run. Not sent anywhere from this endpoint."""
+
+    name: str
+    conclusion: Literal["success", "failure", "neutral"]
+    title: str
+    summary: str
+    details_url: str | None
+    published: bool
+    note: str
+
+
+class TargetRoute(BaseModel):
+    path: str
+    primary_action: str | None
+
+
+class TargetIdentity(BaseModel):
+    id: str
+    role: str
+
+
+class OnboardingTarget(BaseModel):
+    target_id: str
+    fixture_id: str
+    synthetic_only: bool
+    base_sha: str
+    head_sha: str
+    fixture_checksum_sha256: str
+    routes: list[TargetRoute]
+    identities: list[TargetIdentity]
+    github_repository: str | None
+
+
+class OnboardingStep(BaseModel):
+    step: str
+    done: bool
+    detail: str
+
+
+class OnboardingView(BaseModel):
+    targets: list[OnboardingTarget]
+    steps: list[OnboardingStep]
