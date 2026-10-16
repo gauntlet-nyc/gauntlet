@@ -1,12 +1,16 @@
 """B-01 provider smoke: fixed navigation, bound screenshot and scoped cleanup."""
 
 import asyncio
+import json
+from dataclasses import replace
 from pathlib import Path
 
+import httpx
 import pytest
 
 from gauntlet.contracts import ActionRecord, ChangeRequest, EvidenceSubject
 from gauntlet.execution.provider_smoke import capture_provider_pair
+from gauntlet.integrations.daytona.provider import RegisteredSnapshot, RegisteredTarget
 from gauntlet.integrations.fake.sandbox import FakeSandboxProvider, Fixture
 from gauntlet.integrations.local_artifacts import LocalArtifactStore
 from gauntlet.ports.browser import is_browser_subject_for
@@ -40,8 +44,43 @@ class RecordingSandbox(FakeSandboxProvider):
 
     async def create(self, **kwargs: object) -> EnvironmentHandle:
         handle = await super().create(**kwargs)  # type: ignore[arg-type]
+        label = "base" if handle.source_sha == BASE else "head"
+        handle = replace(handle, preview_origin=f"https://signed-{label}.proxy.daytona.work")
+        self._active[handle.environment_id] = handle
         self.created.append(handle)
         return handle
+
+
+def target() -> RegisteredTarget:
+    return RegisteredTarget(
+        target_id="cartwheel-fixture",
+        fixture_id="baseline-v1",
+        fixture_checksum=CHECKSUM,
+        fixture_state_digest="d" * 64,
+        fixture_state_path="/fixtures/state.json",
+        repo_path="/workspace/cartwheel",
+        preview_port=3000,
+        preview_domain_suffix=".proxy.daytona.work",
+        ready_path="/checkout",
+        snapshots=(
+            RegisteredSnapshot(BASE, "base-snapshot", "e" * 64),
+            RegisteredSnapshot(HEAD, "head-snapshot", "e" * 64),
+        ),
+    )
+
+
+def receipt_transport() -> httpx.MockTransport:
+    def respond(request: httpx.Request) -> httpx.Response:
+        sha = BASE if request.url.host.startswith("signed-base.") else HEAD
+        return httpx.Response(
+            200,
+            stream=httpx.ByteStream(
+                json.dumps({"schema_version": "1.0", "source_sha": sha}).encode()
+            ),
+            headers={"content-type": "application/json"},
+        )
+
+    return httpx.MockTransport(respond)
 
 
 class RecordingBrowser:
@@ -92,7 +131,14 @@ def test_pair_smoke_captures_bound_png_for_each_revision(tmp_path: Path) -> None
         store = LocalArtifactStore(tmp_path)
         browser = RecordingBrowser(store)
         captures = await capture_provider_pair(
-            sandbox, browser, store, change(), CHECKSUM, ready_path="/checkout"
+            sandbox,
+            browser,
+            store,
+            change(),
+            CHECKSUM,
+            ready_path="/checkout",
+            registered_target=target(),
+            receipt_transport=receipt_transport(),
         )
         assert [item.source_sha for item in captures] == [BASE, HEAD]
         assert browser.navigated == [BASE, HEAD]
@@ -123,7 +169,14 @@ def test_smoke_rejects_failed_action_or_invalid_screenshot_and_cleans_up(
         setattr(browser, failure, True)
         with pytest.raises(EnvironmentUnavailableError):
             await capture_provider_pair(
-                sandbox, browser, store, change(), CHECKSUM, ready_path="/checkout"
+                sandbox,
+                browser,
+                store,
+                change(),
+                CHECKSUM,
+                ready_path="/checkout",
+                registered_target=target(),
+                receipt_transport=receipt_transport(),
             )
         assert browser.sessions == {}
         assert len(sandbox.created) == 2
@@ -155,7 +208,14 @@ def test_repeated_cancel_during_browser_close_still_cleans_up(tmp_path: Path) ->
         browser = SlowCloseBrowser(store)
         task = asyncio.create_task(
             capture_provider_pair(
-                sandbox, browser, store, change(), CHECKSUM, ready_path="/checkout"
+                sandbox,
+                browser,
+                store,
+                change(),
+                CHECKSUM,
+                ready_path="/checkout",
+                registered_target=target(),
+                receipt_transport=receipt_transport(),
             )
         )
         await asyncio.wait_for(browser.close_started.wait(), 1)

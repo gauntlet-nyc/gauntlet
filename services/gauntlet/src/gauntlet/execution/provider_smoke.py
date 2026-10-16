@@ -1,7 +1,8 @@
 """Fixed, provider-independent browser capture for B-01 live smoke only.
 
-This checks resource creation, scoped navigation, screenshot storage and
-cleanup. It does not attest the running app's source or prove a Gate finding.
+This checks resource creation, the synthetic compiled-build receipt, scoped
+navigation, screenshot storage and cleanup. It does not attest the sandbox
+image or prove a Gate finding.
 """
 
 import asyncio
@@ -9,7 +10,11 @@ import hashlib
 from dataclasses import dataclass
 from uuid import uuid4
 
+import httpx
+
 from gauntlet.contracts import CaptureStep, ChangeRequest, EvidenceSubject, NavigateStep
+from gauntlet.integrations.daytona.provider import RegisteredTarget
+from gauntlet.integrations.fixture_identity import verify_hosted_fixture_build_receipt
 from gauntlet.ports.artifacts import ArtifactStore
 from gauntlet.ports.browser import BrowserProvider
 from gauntlet.ports.errors import EnvironmentUnavailableError
@@ -105,11 +110,37 @@ async def capture_provider_pair(
     expected_checksum: str,
     *,
     ready_path: str,
+    registered_target: RegisteredTarget | None = None,
+    receipt_transport: httpx.AsyncBaseTransport | None = None,
 ) -> tuple[ProviderSmokeCapture, ProviderSmokeCapture]:
-    """Capture each revision from verified environments with one fixed path."""
+    """Capture verified revisions after checking each registered hosted build."""
+    if registered_target is None:
+        raise EnvironmentUnavailableError("provider smoke requires target registration")
+    if registered_target is not None and (
+        registered_target.target_id != change.target_id
+        or registered_target.fixture_id != change.fixture_id
+        or registered_target.fixture_checksum != expected_checksum
+        or {snapshot.source_sha for snapshot in registered_target.snapshots}
+        != {change.base_sha, change.head_sha}
+    ):
+        raise EnvironmentUnavailableError("provider smoke target registration does not match")
     navigation = NavigateStep(path=ready_path)
     run_id = f"provider-smoke-{uuid4().hex}"
     async with gate_environment_pair(sandbox, change, expected_checksum) as pair:
+        if registered_target is not None:
+            await verify_hosted_fixture_build_receipt(
+                pair.base.preview_origin,
+                pair.base.source_sha,
+                preview_domain_suffix=registered_target.preview_domain_suffix,
+                transport=receipt_transport,
+            )
         base = await _capture_one(browser, artifacts, pair.base, run_id=run_id, path=navigation)
+        if registered_target is not None:
+            await verify_hosted_fixture_build_receipt(
+                pair.head.preview_origin,
+                pair.head.source_sha,
+                preview_domain_suffix=registered_target.preview_domain_suffix,
+                transport=receipt_transport,
+            )
         head = await _capture_one(browser, artifacts, pair.head, run_id=run_id, path=navigation)
     return base, head

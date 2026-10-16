@@ -93,6 +93,29 @@ fixture IDs/checksums/state path, repository path, preview port/domain and readi
 path. Snapshots must already serve their separately compiled synthetic fixture.
 An ordinary proxy credential does not establish the required egress policy.
 
+The committed Cartwheel baseline includes `fixture-state.json` in both generated
+revisions. After creating the two private Daytona snapshots, prepare an
+untracked registration file with the actual provider values:
+
+```bash
+.venv/bin/python scripts/prepare_cartwheel_registration.py \
+  --base-snapshot <actual-base-snapshot> \
+  --head-snapshot <actual-head-snapshot> \
+  --image-digest <common-64-character-image-digest> \
+  --repo-path /workspace/cartwheel \
+  --preview-domain-suffix .proxy.daytona.work \
+  --preview-port 3000 \
+  --output /tmp/cartwheel-registration.json
+```
+
+Replace the sample path, suffix and port with those of the actual snapshots.
+The command derives the committed SHA/checksum and state digest, validates the
+registration format, and refuses to overwrite an existing file. It does not
+create or inspect snapshots. The provider smoke now checks `/api/build-info`
+over each signed preview for the exact selected SHA before any browser action.
+That synthetic receipt does not attest the sandbox image. Keep the registration
+file outside Git and restrict its access to the operator.
+
 Bedrock planning separately requires AWS credentials through a profile/role or
 credential environment variables, model access, and explicit `--model-id` and
 `--region` arguments. `BEDROCK_MODEL_ID` and `AWS_REGION` in the example file are
