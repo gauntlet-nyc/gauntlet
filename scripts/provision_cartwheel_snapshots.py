@@ -25,12 +25,13 @@ from pathlib import Path
 from typing import Protocol, cast
 from uuid import uuid4
 
-from scripts.prepare_cartwheel_registration import prepare_registration
+from scripts.prepare_cartwheel_registration import CLEAN_SHA, prepare_registration
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "apps/cartwheel/fixture-manifest.v1.json"
 STATE = ROOT / "apps/cartwheel/fixture/base/fixture-state.json"
 BUILD = ROOT / "scripts/build_cartwheel_fixture.py"
+BUILD_CLEAN = ROOT / "scripts/build_cartwheel_clean_fixture.py"
 REPO_PATH = "/workspace/cartwheel"
 ENTRYPOINT = [
     "/bin/sh",
@@ -53,6 +54,15 @@ class Inputs:
     lock_sha256: str
     lock_bytes: bytes
     bundles: tuple[bytes, bytes]
+    # Optional unrelated-change revision (base..clean must pass the Gate).
+    clean_sha: str | None = None
+    clean_bundle: bytes | None = None
+
+    def revisions(self) -> tuple[tuple[str, str, bytes], ...]:
+        sides = [("base", self.base_sha, self.bundles[0]), ("head", self.head_sha, self.bundles[1])]
+        if self.clean_sha is not None and self.clean_bundle is not None:
+            sides.append(("clean", self.clean_sha, self.clean_bundle))
+        return tuple(sides)
 
 
 class BootstrapCleanupError(RuntimeError):
@@ -222,6 +232,7 @@ def prepare_inputs(
     image: str,
     *,
     build_revision: Callable[[Path, str, str], None] = _local_build,
+    include_clean: bool = False,
 ) -> Inputs:
     """Check committed synthetic revisions and trusted npm lock before spend."""
     resolved_lock = lockfile.resolve()
@@ -295,43 +306,29 @@ def prepare_inputs(
             or identity.get("fixture_checksum_sha256") != manifest.get("fixture_checksum_sha256")
         ):
             raise ValueError("rebuilt Cartwheel fixture does not match manifest")
-        bundles: list[bytes] = []
-        for sha in (base, head):
-            subprocess.run(
-                ["git", "checkout", "--detach", "--quiet", sha],
-                cwd=repo,
-                capture_output=True,
-                check=True,
-            )
-            if (repo / "fixture-state.json").read_bytes() != state:
-                raise ValueError("fixture state differs across revisions")
-            (repo / "package-lock.json").write_bytes(lock_bytes)
-            with (repo / ".git/info/exclude").open("a", encoding="utf-8") as excluded:
-                excluded.write("\n/package-lock.json\n")
-            status = subprocess.run(
-                ["git", "status", "--porcelain"],
-                cwd=repo,
+        bundles = [
+            _prepare_revision(repo, sha, state, lock_bytes, image, build_revision)
+            for sha in (base, head)
+        ]
+        clean_bundle = None
+        if include_clean:
+            clean_repo = Path(directory) / "cartwheel-clean"
+            built_clean = subprocess.run(
+                [sys.executable, str(BUILD_CLEAN), "--dest", str(clean_repo)],
+                cwd=ROOT,
                 capture_output=True,
                 text=True,
                 check=True,
             )
-            if status.stdout:
-                raise ValueError("generated Cartwheel checkout is dirty")
-            build_revision(repo, sha, image)
-            if not (repo / ".next/BUILD_ID").is_file():
-                raise RuntimeError("local Cartwheel build output is missing")
-            if (repo / "package-lock.json").read_bytes() != lock_bytes:
-                raise ValueError("local Cartwheel build changed the reviewed package lock")
-            status = subprocess.run(
-                ["git", "status", "--porcelain"],
-                cwd=repo,
-                capture_output=True,
-                text=True,
-                check=True,
+            clean_identity = json.loads(built_clean.stdout)
+            if (
+                clean_identity.get("base_sha") != base
+                or clean_identity.get("clean_sha") != CLEAN_SHA
+            ):
+                raise ValueError("rebuilt clean Cartwheel revision does not match the pin")
+            clean_bundle = _prepare_revision(
+                clean_repo, CLEAN_SHA, state, lock_bytes, image, build_revision
             )
-            if status.stdout:
-                raise ValueError("local Cartwheel build changed source files")
-            bundles.append(_bundle(repo))
     return Inputs(
         base,
         head,
@@ -340,7 +337,53 @@ def prepare_inputs(
         hashlib.sha256(lock_bytes).hexdigest(),
         lock_bytes,
         (bundles[0], bundles[1]),
+        CLEAN_SHA if include_clean else None,
+        clean_bundle,
     )
+
+
+def _prepare_revision(
+    repo: Path,
+    sha: str,
+    state: bytes,
+    lock_bytes: bytes,
+    image: str,
+    build_revision: Callable[[Path, str, str], None],
+) -> bytes:
+    """Check out, verify, build and bundle one committed revision."""
+    subprocess.run(
+        ["git", "checkout", "--detach", "--quiet", sha],
+        cwd=repo,
+        capture_output=True,
+        check=True,
+    )
+    if (repo / "fixture-state.json").read_bytes() != state:
+        raise ValueError("fixture state differs across revisions")
+    (repo / "package-lock.json").write_bytes(lock_bytes)
+    exclude = repo / ".git/info/exclude"
+    if "/package-lock.json" not in exclude.read_text(encoding="utf-8"):
+        with exclude.open("a", encoding="utf-8") as excluded:
+            excluded.write("\n/package-lock.json\n")
+    if _git_status(repo):
+        raise ValueError("generated Cartwheel checkout is dirty")
+    build_revision(repo, sha, image)
+    if not (repo / ".next/BUILD_ID").is_file():
+        raise RuntimeError("local Cartwheel build output is missing")
+    if (repo / "package-lock.json").read_bytes() != lock_bytes:
+        raise ValueError("local Cartwheel build changed the reviewed package lock")
+    if _git_status(repo):
+        raise ValueError("local Cartwheel build changed source files")
+    return _bundle(repo)
+
+
+def _git_status(repo: Path) -> str:
+    return subprocess.run(
+        ["git", "status", "--porcelain"],
+        cwd=repo,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
 
 
 async def _command(
@@ -389,7 +432,11 @@ async def provision(
         preview_port=preview_port,
         preview_domain_suffix=preview_domain_suffix,
     )
-    names = [f"cartwheel-b01p-{uuid4().hex[:20]}-{part}" for part in ("runtime", "base", "head")]
+    revisions = inputs.revisions()
+    run_tag = uuid4().hex[:20]
+    names = [f"cartwheel-b01p-{run_tag}-runtime"] + [
+        f"cartwheel-b01p-{run_tag}-{side}" for side, _, _ in revisions
+    ]
     sandboxes: list[Sandbox] = []
     finals: list[str] = []
     error: BaseException | None = None
@@ -406,8 +453,7 @@ async def provision(
         stage = "runtime_get"
         if (await client.snapshot.get(names[0])).entrypoint != ENTRYPOINT:
             raise RuntimeError("Daytona runtime entrypoint differs")
-        for index, sha in enumerate((inputs.base_sha, inputs.head_sha)):
-            side = ("base", "head")[index]
+        for index, (side, sha, bundle) in enumerate(revisions):
             stage = f"{side}_create"
             sandbox, cancelled = await _settle_create(
                 client.create(
@@ -426,9 +472,7 @@ async def provision(
             stage = f"{side}_mkdir"
             await _command(sandbox, "mkdir -p /workspace/cartwheel", 20, cwd=None)
             stage = f"{side}_upload"
-            await sandbox.fs.upload_file_stream(
-                inputs.bundles[index], "/tmp/cartwheel-source.tar.gz"
-            )
+            await sandbox.fs.upload_file_stream(bundle, "/tmp/cartwheel-source.tar.gz")
             stage = f"{side}_extract"
             await _command(
                 sandbox, "tar -xzf /tmp/cartwheel-source.tar.gz -C /workspace/cartwheel", 300
@@ -485,6 +529,7 @@ async def provision(
         registration = prepare_registration(
             base_snapshot=names[1],
             head_snapshot=names[2],
+            clean_snapshot=names[3] if len(names) > 3 else None,
             image_digest=inputs.image_digest,
             repo_path=REPO_PATH,
             preview_port=preview_port,
@@ -601,10 +646,15 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--authorize-spend", action="store_true")
+    parser.add_argument(
+        "--include-clean",
+        action="store_true",
+        help="also seed the unrelated clean revision (base..clean false-positive check)",
+    )
     args = parser.parse_args()
     try:
         args.output = validate_output_path(args.output)
-        inputs = prepare_inputs(args.lockfile, args.image)
+        inputs = prepare_inputs(args.lockfile, args.image, include_clean=args.include_clean)
         missing = _preflight(dict(os.environ), args.execute, args.authorize_spend)
         version = importlib.metadata.version("daytona")
         if version != "0.224.1":
@@ -618,8 +668,9 @@ def main() -> int:
                         "sdk_version": version,
                         "base_sha": inputs.base_sha,
                         "head_sha": inputs.head_sha,
+                        "clean_sha": inputs.clean_sha,
                         "lock_sha256": inputs.lock_sha256,
-                        "bundle_bytes": [len(bundle) for bundle in inputs.bundles],
+                        "bundle_bytes": [len(bundle) for _, _, bundle in inputs.revisions()],
                     }
                 )
             )
@@ -635,8 +686,9 @@ def main() -> int:
                     "sdk_version": version,
                     "base_sha": inputs.base_sha,
                     "head_sha": inputs.head_sha,
+                    "clean_sha": inputs.clean_sha,
                     "lock_sha256": inputs.lock_sha256,
-                    "bundle_bytes": [len(bundle) for bundle in inputs.bundles],
+                    "bundle_bytes": [len(bundle) for _, _, bundle in inputs.revisions()],
                 }
             )
         )

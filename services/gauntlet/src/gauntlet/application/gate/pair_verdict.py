@@ -5,7 +5,7 @@ bytes and bindings again; a serialized execution report is never a verdict input
 """
 
 import hashlib
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -65,6 +65,9 @@ class GateAttempt:
     observation: Observation
     verdicts: tuple[OracleVerdict, ...]
     artifacts: tuple[StoredArtifact, ...]
+
+
+PairAdjudicatorFn = Callable[..., "PairedGateVerdict"]
 
 
 @dataclass(frozen=True)
@@ -181,6 +184,35 @@ def adjudicate_ui_pair(
         oracle_id=_UI_ORACLE_ID,
         collector="browser_collector",
     )
+
+
+def adjudicator_for(
+    worker_kind: WorkerKind, oracle_id: str, collector: EvidenceCollector
+) -> "PairAdjudicatorFn":
+    """Paired adjudication for any registered hard oracle with the same rules."""
+
+    def adjudicate(
+        *,
+        change: ChangeRequest,
+        attack: AttackSpec,
+        run_id: str,
+        fixture_checksum: str,
+        head: Sequence[GateAttempt],
+        base: Sequence[GateAttempt],
+    ) -> PairedGateVerdict:
+        return _adjudicate_pair(
+            change=change,
+            attack=attack,
+            run_id=run_id,
+            fixture_checksum=fixture_checksum,
+            head=head,
+            base=base,
+            worker_kind=worker_kind,
+            oracle_id=oracle_id,
+            collector=collector,
+        )
+
+    return adjudicate
 
 
 def adjudicate_agent_pair(

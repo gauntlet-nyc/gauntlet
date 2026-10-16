@@ -31,6 +31,9 @@ come from `gauntlet.settings.load_settings()`; check readiness (names only, no v
 | Temporal memory on a separate SurrealDB memory context (`memory/surreal_memory.py`) | `tests/test_s2_memory.py` | **local SurrealDB RUN 2026-10-16**: provenance, as-of (no hindsight), supersession history, lens filtering passed. SurrealDB **Agent Memory product SDK not used** (`surrealdb[memory]` not approved); Agent Memory live NOT RUN | `RUN_LIVE_INTEGRATIONS=1 .venv/bin/python -m dotenv -f .env.local run --no-override -- .venv/bin/python scripts/smoke_surreal.py --memory` |
 | Arize OTLP tracing (`integrations/arize/`: planner LLM, worker, oracle, replay wrappers; hand-encoded OTLP protobuf over httpx) | `tests/test_s2_arize.py` (protobuf decoded and checked) | live NOT RUN; no-op when ARIZE_* unset or live disabled | `RUN_LIVE_INTEGRATIONS=1 .venv/bin/python -m dotenv -f .env.local run --no-override -- .venv/bin/python scripts/smoke_adapters.py arize` |
 | Arize experiments (Recall control vs counterfactual) | `tests/test_s2_arize.py` | live NOT RUN. Recorded as tagged traces (`experiment.id`, `experiment.variant`, eval spans); the Arize Experiments API needs the `arize` SDK, not approved | `RUN_LIVE_INTEGRATIONS=1 .venv/bin/python -m dotenv -f .env.local run --no-override -- .venv/bin/python scripts/smoke_adapters.py arize` |
+| Daytona clean revision (`provision_cartwheel_snapshots.py --include-clean`, `prepare_cartwheel_registration.py --clean-snapshot`) | `tests/test_s2_clean_snapshot.py` (real rebuild reproduces clean SHA `2754805…`; 3-sandbox lifecycle with fakes) | base/head cold restore PASSED earlier (see below); clean snapshot live NOT RUN | `RUN_LIVE_INTEGRATIONS=1 GAUNTLET_ALLOWED_TARGET_IDS=cartwheel-fixture .venv/bin/python -m dotenv -f .env.local run --no-override -- .venv/bin/python -m scripts.provision_cartwheel_snapshots --lockfile <reviewed-linux-lock> --image node:22-bookworm@sha256:0e5f906573693feaa1e21057ebdcfdb5bd5021f050b2dc7c9deceb629c7da2a8 --preview-domain-suffix <suffix> --output /tmp/cartwheel-registration.json --include-clean --execute --authorize-spend` (omit `--execute --authorize-spend` for the no-spend dry run) |
+| P10 job/cost ledger + resource leases (`persistence/jobs.py`) | `tests/test_s2_jobs_retention.py` (offline + local) | **local SurrealDB RUN 2026-10-16**: legal transitions only, budget overrun recorded then refused, leaked-lease recovery with failing/unknown cleaners, stale-job interruption passed. Not yet wired into the Gate orchestrator | n/a (uses SurrealDB core settings) |
+| P10 evidence retention (`execution/retention.py`) | `tests/test_s2_jobs_retention.py` | local filesystem; dry-run by default, protected evidence kept, symlinks/other files untouched | `sweep_artifacts(root, retention_days=GAUNTLET_EVIDENCE_RETENTION_DAYS, now=..., protected_ids=..., apply=True)` |
 | GitHub App check runs (`integrations/github_app.py`: RS256 App JWT → installation token with `checks: write` → create/update check run) | `tests/test_s2_github_voice.py` (JWT signature verified by `openssl dgst -verify`; request sequence asserted) | live NOT RUN (App not created) | `RUN_LIVE_INTEGRATIONS=1 .venv/bin/python -m dotenv -f .env.local run --no-override -- .venv/bin/python scripts/smoke_adapters.py github --repo <owner/name> --sha <40-char head SHA>` |
 | GitHub webhook verification (`security/webhooks.py`: HMAC, delivery replay guard, PR → run) | `tests/test_s2_github_voice.py` | live NOT RUN; forward with smee: `npx smee-client --url $GITHUB_WEBHOOK_PROXY_URL --target http://127.0.0.1:8000/<webhook route>` | API route wiring is owned by the API session |
 | ElevenLabs (`integrations/elevenlabs.py` signed URL + TTS briefing; `security/webhooks.py` signed tool webhook) | `tests/test_s2_github_voice.py` | live NOT RUN | `RUN_LIVE_INTEGRATIONS=1 .venv/bin/python -m dotenv -f .env.local run --no-override -- .venv/bin/python scripts/smoke_adapters.py elevenlabs` |
@@ -1124,3 +1127,35 @@ Offline/local result: patched commit verified, all checks pass, verdict
 stale hash and an unknown token are refused; a reused approval is refused; a
 fix that blocks every refund is `fix_rejected` (legitimate workflow broke).
 Model fix proposer (`--model azure`): offline-tested shape only, **live NOT RUN**.
+
+### Session 1: P7 memory-informed planning (2026-10-16)
+
+`LearnFromGateUseCase` writes one `TemporalMemoryFact` per confirmed finding
+(`verification=confirmed`, `trust=verified_test`, provenance = finding id,
+oracle id, head commit). Plans read memory through `MemoryReader` with
+`as_of` = plan time, and `select_memory` re-filters (confirmed, trusted,
+known and valid at `as_of`, not superseded).
+
+Offline sequence with `--memory local` (file `artifacts/memory/facts.json`):
+1. `run_gate.py --memory local --learn` -> `confirmed_regression`, fact
+   `fact-finding-attack-ui-primary-action-375-fd32708bcd61` written.
+2. `run_gate.py --clean --memory local` -> planner cites the fact and adds a
+   768 px attack; both pass (`passed`).
+3. `run_gate.py --memory local` -> the memory-added 768 px attack is also a
+   `confirmed_regression` (Help covers Checkout below 900 px), which the
+   memory-free plan did not test.
+
+`--memory surreal` uses Session 2's `SurrealTemporalMemory`: offline-tested by
+Session 2, **live NOT RUN** (`RUN_LIVE_INTEGRATIONS=1 uv run python
+scripts/run_gate.py --memory surreal --learn`). The scripted planner's use of
+memory is a fixed rule (widen the viewport sweep), not model judgement.
+
+### Session 1: P9 workers (2026-10-16)
+
+| Worker | Oracle (hard) | Adapter | Status |
+|---|---|---|---|
+| `accessibility` (browser port, `UIWorker(kind="accessibility")`) | `a11y.primary_action_target`: primary action >= 24x24 px (WCAG 2.2 SC 2.5.8) and its centre is not covered | simulated layout / local Chromium / Anchor | offline + **local Chromium run**: `run_gate.py --a11y` -> head 2/2 fail (covered by `help-button`), base 0/2 |
+| `api` (`ApiClient` port, `HttpxApiClient`, origin-locked, no redirects) | `api.order_contract`: invalid order bodies refused with 4xx, valid ones 201 with fixed invariants | simulated orders transport (offline), real HTTP for local/Daytona | offline-tested only; live NOT RUN |
+| `workflow`, `concurrency` | — | — | **not built** (selector allows them; planner proposals are reported `not_tested` with "no registered executor") |
+
+Local Chromium command: `CARTWHEEL_BASE_ORIGIN=http://127.0.0.1:3101 CARTWHEEL_HEAD_ORIGIN=http://127.0.0.1:3102 uv run --group live-providers python scripts/run_gate.py --sandbox local --browser local --a11y`.

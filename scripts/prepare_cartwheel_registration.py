@@ -18,6 +18,8 @@ from gauntlet.integrations.daytona.provider import RegisteredSnapshot, Registere
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "apps/cartwheel/fixture-manifest.v1.json"
 STATE = ROOT / "apps/cartwheel/fixture/base/fixture-state.json"
+# Unrelated "clean" revision (scripts/build_cartwheel_clean_fixture.py); deterministic.
+CLEAN_SHA = "27548050633077b5d865431fd736fb9b92a28085"
 _SUFFIX = re.compile(r"\.(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}\Z")
 
 
@@ -29,12 +31,12 @@ def prepare_registration(
     repo_path: str,
     preview_port: int,
     preview_domain_suffix: str,
+    clean_snapshot: str | None = None,
 ) -> dict[str, object]:
     """Bind explicit operator infrastructure choices to the committed baseline."""
-    if base_snapshot == head_snapshot or any(
-        name.upper().startswith("REPLACE_") for name in (base_snapshot, head_snapshot)
-    ):
-        raise ValueError("two distinct actual snapshot names are required")
+    names = [base_snapshot, head_snapshot] + ([clean_snapshot] if clean_snapshot else [])
+    if len(set(names)) != len(names) or any(name.upper().startswith("REPLACE_") for name in names):
+        raise ValueError("distinct actual snapshot names are required")
     path = PurePosixPath(repo_path)
     if (
         not path.is_absolute()
@@ -73,6 +75,9 @@ def prepare_registration(
         snapshots=(
             RegisteredSnapshot(manifest["git_refs"]["base_sha"], base_snapshot, image_digest),
             RegisteredSnapshot(manifest["git_refs"]["head_sha"], head_snapshot, image_digest),
+        )
+        + (
+            (RegisteredSnapshot(CLEAN_SHA, clean_snapshot, image_digest),) if clean_snapshot else ()
         ),
     )
     document = asdict(target)
@@ -91,6 +96,7 @@ def main() -> int:
     ):
         parser.add_argument(f"--{name}", required=True)
     parser.add_argument("--preview-port", type=int, required=True)
+    parser.add_argument("--clean-snapshot", help="optional snapshot of the clean revision")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     try:
@@ -101,6 +107,7 @@ def main() -> int:
             repo_path=args.repo_path,
             preview_port=args.preview_port,
             preview_domain_suffix=args.preview_domain_suffix,
+            clean_snapshot=args.clean_snapshot,
         )
         with args.output.open("x", encoding="utf-8") as stream:
             stream.write(json.dumps(document, indent=2) + "\n")
