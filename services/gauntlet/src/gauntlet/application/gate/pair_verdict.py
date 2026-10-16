@@ -7,6 +7,7 @@ bytes and bindings again; a serialized execution report is never a verdict input
 import hashlib
 from collections.abc import Sequence
 from dataclasses import dataclass
+from enum import StrEnum
 
 from gauntlet.contracts import (
     AttackSpec,
@@ -26,6 +27,33 @@ from gauntlet.ports.artifacts import StoredArtifact
 
 _MIN_PAIR_ATTEMPTS = 2
 _UI_ORACLE_ID = "ui.primary_action_reachable"
+
+
+class AttemptRejection(StrEnum):
+    """Typed reason an attempt cannot count. Only the environment reasons void the pair."""
+
+    IDENTITY_MISMATCH = "attempt identity, source, or fixture differs from the frozen pair"
+    ENVIRONMENT_ERROR = "attempt reported an environment error"
+    INCOMPLETE = "attempt did not complete"
+    ACTION_LOG_MISMATCH = "action log does not match the frozen attack"
+    EVIDENCE_ID_MISMATCH = "observation evidence IDs do not match action records"
+    VERDICT_COUNT = "one oracle verdict is required per UI attempt"
+    VERDICT_MISMATCH = "oracle verdict is missing, inconclusive, or mismatched"
+    SOFT_ORACLE = "oracle is not hard"
+    EVIDENCE_NOT_DISTINCT = "hard oracle verdict lacks distinct evidence"
+    DUPLICATE_ARTIFACT = "duplicate artifact ID"
+    EVIDENCE_MISSING = "hard oracle evidence is missing from the observation or store"
+    EVIDENCE_BYTES = "hard oracle evidence bytes differ from their stored binding"
+    EVIDENCE_BINDING = "hard oracle evidence is bound to a different attempt or step"
+
+    @property
+    def is_environment_problem(self) -> bool:
+        return self in _ENVIRONMENT_REJECTIONS
+
+
+_ENVIRONMENT_REJECTIONS = frozenset(
+    {AttemptRejection.IDENTITY_MISMATCH, AttemptRejection.ENVIRONMENT_ERROR}
+)
 
 
 @dataclass(frozen=True)
@@ -50,7 +78,7 @@ class PairedGateVerdict:
 
 def _checked_outcome(
     attempt: GateAttempt, *, attack: AttackSpec, run_id: str, sha: str, checksum: str
-) -> tuple[OracleOutcome | None, str | None]:
+) -> tuple[OracleOutcome | None, AttemptRejection | None]:
     subject, obs = attempt.subject, attempt.observation
     if (
         subject.run_id != run_id
@@ -64,16 +92,16 @@ def _checked_outcome(
         or subject.environment_id != obs.environment_id
         or obs.attack_id != attack.attack_id
     ):
-        return None, "attempt identity, source, or fixture differs from the frozen pair"
+        return None, AttemptRejection.IDENTITY_MISMATCH
     if obs.status == "environment_error":
-        return None, "attempt reported an environment error"
+        return None, AttemptRejection.ENVIRONMENT_ERROR
     if obs.status != "completed":
-        return None, "attempt did not complete"
+        return None, AttemptRejection.INCOMPLETE
     if len(obs.action_log) != len(attack.steps) or any(
         record.step_index != index or record.action != step.action
         for index, (step, record) in enumerate(zip(attack.steps, obs.action_log, strict=True))
     ):
-        return None, "action log does not match the frozen attack"
+        return None, AttemptRejection.ACTION_LOG_MISMATCH
     action_artifacts = tuple(
         artifact_id for record in obs.action_log for artifact_id in record.evidence_ids
     )
@@ -82,40 +110,40 @@ def _checked_outcome(
         or len(set(obs.evidence_ids)) != len(obs.evidence_ids)
         or set(obs.evidence_ids) != set(action_artifacts)
     ):
-        return None, "observation evidence IDs do not match action records"
+        return None, AttemptRejection.EVIDENCE_ID_MISMATCH
     if len(attempt.verdicts) != 1:
-        return None, "one oracle verdict is required per UI attempt"
+        return None, AttemptRejection.VERDICT_COUNT
     oracle = attempt.verdicts[0]
     if (
         oracle.oracle_id != attack.oracle_ids[0]
         or oracle.observation_id != obs.observation_id
         or oracle.outcome is OracleOutcome.INCONCLUSIVE
     ):
-        return None, "oracle verdict is missing, inconclusive, or mismatched"
+        return None, AttemptRejection.VERDICT_MISMATCH
     if oracle.oracle_kind is not OracleKind.HARD:
-        return None, "oracle is not hard"
+        return None, AttemptRejection.SOFT_ORACLE
     if not oracle.evidence_ids or len(set(oracle.evidence_ids)) != len(oracle.evidence_ids):
-        return None, "hard oracle verdict lacks distinct evidence"
+        return None, AttemptRejection.EVIDENCE_NOT_DISTINCT
     artifacts = {item.binding.evidence.artifact_id: item for item in attempt.artifacts}
     if len(artifacts) != len(attempt.artifacts):
-        return None, "duplicate artifact ID"
+        return None, AttemptRejection.DUPLICATE_ARTIFACT
     for artifact_id in oracle.evidence_ids:
         item = artifacts.get(artifact_id)
         if item is None or artifact_id not in obs.evidence_ids:
-            return None, "hard oracle evidence is missing from the observation or store"
+            return None, AttemptRejection.EVIDENCE_MISSING
         binding = item.binding
         if (
             binding.byte_size != len(item.content)
             or binding.evidence.sha256 != hashlib.sha256(item.content).hexdigest()
         ):
-            return None, "hard oracle evidence bytes differ from their stored binding"
+            return None, AttemptRejection.EVIDENCE_BYTES
         matching_steps = [
             record.step_index for record in obs.action_log if artifact_id in record.evidence_ids
         ]
         if len(matching_steps) != 1 or binding.subject != subject.model_copy(
             update={"step_index": matching_steps[0]}
         ):
-            return None, "hard oracle evidence is bound to a different attempt or step"
+            return None, AttemptRejection.EVIDENCE_BINDING
     return oracle.outcome, None
 
 
@@ -137,8 +165,11 @@ def adjudicate_ui_pair(
         raise ValueError("paired UI adjudication requires the registered UI oracle")
     if attack.target_id != change.target_id or attack.fixture_id != change.fixture_id:
         raise ValueError("attack target or fixture differs from the change")
-    if not attack.source_refs or any(ref.sha != change.head_sha for ref in attack.source_refs):
-        raise ValueError("attack source references must bind to the head revision")
+    # The plan validator accepts citations of either compared revision (e.g. a removed line).
+    if not attack.source_refs or any(
+        ref.sha not in {change.head_sha, change.base_sha} for ref in attack.source_refs
+    ):
+        raise ValueError("attack source references must bind to the base or head revision")
     if change.base_sha == change.head_sha:
         raise ValueError("base and head must be different revisions")
 
@@ -169,14 +200,14 @@ def adjudicate_ui_pair(
             outcome, reason = _checked_outcome(
                 attempt, attack=attack, run_id=run_id, sha=sha, checksum=fixture_checksum
             )
-            if reason:
+            if reason is not None:
                 complete = False
-                limitations.append(f"{side}: {reason}")
+                limitations.append(f"{side}: {reason.value}")
                 if side == "head" and any(
                     verdict.outcome is OracleOutcome.FAIL for verdict in attempt.verdicts
                 ):
                     unverified_head_failure = True
-                if "environment error" in reason or "source, or fixture" in reason:
+                if reason.is_environment_problem:
                     environment_ok = False
                 continue
             assert outcome is not None

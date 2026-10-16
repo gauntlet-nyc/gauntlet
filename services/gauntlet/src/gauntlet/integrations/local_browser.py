@@ -7,7 +7,7 @@ Browser routing is a local guard, not DNS/network isolation for a cloud run.
 
 import asyncio
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Protocol
 from urllib.parse import urlsplit
 from uuid import uuid4
@@ -30,6 +30,7 @@ from gauntlet.ports.errors import EnvironmentUnavailableError
 from gauntlet.ports.sandbox import EnvironmentHandle
 
 from .browser_evidence import BrowserEvidenceCollector, BrowserPage
+from .fixture_identity import canonical_loopback_origin
 
 _PRESS_KEYS = frozenset(
     {
@@ -113,22 +114,6 @@ class PlaywrightBrowser(Protocol):
     async def new_context(self, **options: object) -> _Context: ...
 
 
-def _loopback_origin(value: str) -> str:
-    try:
-        parsed = urlsplit(value)
-        port = parsed.port
-    except ValueError:
-        raise EnvironmentUnavailableError("local preview origin is malformed") from None
-    if (
-        parsed.scheme != "http"
-        or parsed.hostname not in {"127.0.0.1", "localhost"}
-        or port is None
-        or value != f"http://{parsed.hostname}:{port}"
-    ):
-        raise EnvironmentUnavailableError("local preview requires one exact loopback HTTP origin")
-    return value
-
-
 def _is_same_origin(url: str, origin: str) -> bool:
     try:
         candidate = urlsplit(url)
@@ -153,6 +138,13 @@ class _Session:
     next_step: int = 0
     egress_attempted: bool = False
     popup_attempted: bool = False
+    popup_closers: set["asyncio.Task[None]"] = field(default_factory=set)
+
+
+def _blocked(session: _Session, step_index: int, step: ActionStep, detail: str) -> ActionRecord:
+    """A blocked step is still a performed step: advance so the sequence stays aligned."""
+    session.next_step += 1
+    return ActionRecord(step_index=step_index, action=step.action, outcome="blocked", detail=detail)
 
 
 class ScopedPlaywrightProvider:
@@ -212,7 +204,10 @@ class ScopedPlaywrightProvider:
 
             def reject_popup(popup: _Page) -> None:
                 session.popup_attempted = True
-                asyncio.create_task(close_popup(popup))
+                # Keep a strong reference so the close task is not garbage-collected mid-run.
+                closer = asyncio.create_task(close_popup(popup))
+                session.popup_closers.add(closer)
+                closer.add_done_callback(session.popup_closers.discard)
 
             context.on("page", reject_popup)
         except BaseException as exc:
@@ -235,28 +230,13 @@ class ScopedPlaywrightProvider:
         if page is None:
             raise EnvironmentUnavailableError("browser page is unavailable")
         if session.egress_attempted or session.popup_attempted:
-            return ActionRecord(
-                step_index=step_index,
-                action=step.action,
-                outcome="blocked",
-                detail="Browser attempted to leave preview scope",
-            )
+            return _blocked(session, step_index, step, "Browser attempted to leave preview scope")
         if step.action in {"test_api", "chat"}:
-            return ActionRecord(
-                step_index=step_index,
-                action=step.action,
-                outcome="blocked",
-                detail="Action is outside the browser port",
-            )
+            return _blocked(session, step_index, step, "Action is outside the browser port")
         if not isinstance(step, (NavigateStep, ResizeStep)) and not _is_same_origin(
             page.url, session.origin
         ):
-            return ActionRecord(
-                step_index=step_index,
-                action=step.action,
-                outcome="blocked",
-                detail="Browser is outside its preview origin",
-            )
+            return _blocked(session, step_index, step, "Browser is outside its preview origin")
         try:
             if isinstance(step, NavigateStep):
                 await page.goto(session.origin + step.path, wait_until="domcontentloaded")
@@ -282,11 +262,8 @@ class ScopedPlaywrightProvider:
                 record = ActionRecord(step_index=step_index, action="type", outcome="ok")
             elif isinstance(step, PressStep):
                 if step.key not in _PRESS_KEYS:
-                    return ActionRecord(
-                        step_index=step_index,
-                        action="press",
-                        outcome="blocked",
-                        detail="Key is outside the browser action allowlist",
+                    return _blocked(
+                        session, step_index, step, "Key is outside the browser action allowlist"
                     )
                 await page.keyboard.press(step.key)
                 record = ActionRecord(step_index=step_index, action="press", outcome="ok")
@@ -333,4 +310,4 @@ class LocalBrowserProvider(ScopedPlaywrightProvider):
     """Loopback-only implementation for the local Cartwheel probes."""
 
     def __init__(self, browser: PlaywrightBrowser, collector: BrowserEvidenceCollector) -> None:
-        super().__init__(browser, collector, _loopback_origin)
+        super().__init__(browser, collector, canonical_loopback_origin)

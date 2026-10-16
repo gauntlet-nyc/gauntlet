@@ -17,6 +17,9 @@ from gauntlet.ports.errors import EnvironmentUnavailableError
 from gauntlet.ports.sandbox import EnvironmentHandle
 
 _SHA = re.compile(r"[0-9a-f]{40}\Z")
+
+DEFAULT_PREVIEW_TTL_SECONDS = 2400
+"""Signed preview lifetime. Must outlive the whole plan budget (1800 s) plus startup margin."""
 _DIGEST = re.compile(r"[0-9a-f]{64}\Z")
 
 
@@ -132,9 +135,12 @@ class DaytonaSandboxProvider:
         ready_timeout: float = 30,
         delete_timeout: float = 60,
         poll_interval: float = 0.5,
+        preview_ttl_seconds: int = DEFAULT_PREVIEW_TTL_SECONDS,
     ) -> None:
         if min(create_timeout, ready_timeout, delete_timeout, poll_interval) <= 0:
             raise ValueError("Daytona timeouts must be positive")
+        if preview_ttl_seconds < create_timeout + ready_timeout:
+            raise ValueError("Daytona preview TTL must outlive environment startup")
         if any(key != value.target_id for key, value in targets.items()):
             raise ValueError("Daytona registration keys must match target IDs")
         self._runtime = runtime
@@ -144,6 +150,7 @@ class DaytonaSandboxProvider:
         self._ready_timeout = ready_timeout
         self._delete_timeout = delete_timeout
         self._poll_interval = poll_interval
+        self._preview_ttl = preview_ttl_seconds
         self._active: dict[str, tuple[DaytonaSandbox, RegisteredTarget, str]] = {}
         self._pending_cleanup: set[str] = set()
         self._cleanup_tasks: dict[str, asyncio.Task[None]] = {}
@@ -228,7 +235,7 @@ class DaytonaSandboxProvider:
                 raise EnvironmentUnavailableError("Daytona source or fixture state does not match")
             await sandbox.start_cartwheel(target.repo_path, target.preview_port)
             origin = _preview_origin(
-                await sandbox.signed_preview_origin(target.preview_port, 900),
+                await sandbox.signed_preview_origin(target.preview_port, self._preview_ttl),
                 target.preview_domain_suffix,
             )
             async with asyncio.timeout(self._ready_timeout):

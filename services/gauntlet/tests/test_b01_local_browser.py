@@ -264,3 +264,38 @@ def test_popup_and_shortcut_are_blocked(tmp_path: Path) -> None:
         await adapter.close_session(session)
 
     asyncio.run(scenario())
+
+
+def test_blocked_step_advances_sequence(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        browser = FakeBrowser()
+        adapter = provider(tmp_path, browser)
+        session = await adapter.open_session(ENVIRONMENT, SUBJECT)
+        await adapter.perform(session, 0, NavigateStep(path="/checkout"))
+        blocked = await adapter.perform(session, 1, PressStep(key="Control+L"))
+        assert blocked.outcome == "blocked"
+        # The next index is accepted; a stale index is a sequence error.
+        assert (await adapter.perform(session, 2, PressStep(key="Tab"))).outcome == "ok"
+        with pytest.raises(EnvironmentUnavailableError):
+            await adapter.perform(session, 2, PressStep(key="Tab"))
+        await adapter.close_session(session)
+
+    asyncio.run(scenario())
+
+
+def test_loopback_rule_matches_fixture_identity(tmp_path: Path) -> None:
+    async def scenario() -> None:
+        browser = FakeBrowser()
+        adapter = provider(tmp_path, browser)
+        with pytest.raises(EnvironmentUnavailableError):
+            await adapter.open_session(
+                EnvironmentHandle(**{**vars(ENVIRONMENT), "preview_origin": "http://localhost:3100"}),
+                SUBJECT,
+            )
+        session = await adapter.open_session(
+            EnvironmentHandle(**{**vars(ENVIRONMENT), "preview_origin": "http://[::1]:3100"}),
+            SUBJECT,
+        )
+        await adapter.close_session(session)
+
+    asyncio.run(scenario())

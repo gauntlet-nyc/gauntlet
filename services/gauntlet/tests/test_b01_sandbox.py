@@ -14,7 +14,9 @@ from gauntlet.integrations.daytona import (
     RegisteredSnapshot,
     RegisteredTarget,
 )
+from gauntlet.integrations.daytona.provider import DEFAULT_PREVIEW_TTL_SECONDS
 from gauntlet.integrations.daytona.sdk import HttpxHealthProbe, SdkDaytonaRuntime, SdkSandbox
+from gauntlet.planning import PlanningLimits
 from gauntlet.ports.errors import EnvironmentUnavailableError
 
 BASE = "a" * 40
@@ -52,7 +54,7 @@ class FakeSandbox:
             raise RuntimeError("secret provider startup detail")
 
     async def signed_preview_origin(self, port: int, expires_in_seconds: int) -> str:
-        assert port == 3100 and expires_in_seconds == 900
+        assert port == 3100 and expires_in_seconds == DEFAULT_PREVIEW_TTL_SECONDS
         assert self.start_calls == [("/workspace/cartwheel", 3100)]
         return self.preview
 
@@ -437,3 +439,7 @@ def test_sdk_registered_startup_rejects_invalid_port_and_failed_command() -> Non
         assert "secret output" not in str(error.value)
 
     asyncio.run(scenario())
+
+
+def test_preview_ttl_outlives_the_plan_budget() -> None:
+    assert DEFAULT_PREVIEW_TTL_SECONDS > PlanningLimits().max_total_runtime_seconds
