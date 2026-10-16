@@ -1,6 +1,7 @@
 """GitHub App adapter: App JWT (RS256) -> installation token -> check runs. Checks-only.
 
-RS256 signing uses `cryptography` (RSASSA-PKCS1-v1_5 over SHA-256). The key file is read
+RS256 signing uses `cryptography` (RSASSA-PKCS1-v1_5 over SHA-256), an optional
+`live-providers` dependency imported only when a key is loaded. The key file is read
 from `GITHUB_PRIVATE_KEY_PATH`, never from the repo or a prompt, and the key never
 prints. The publisher only creates/updates check runs. It never pushes, comments,
 approves or merges, and the installation token is requested with `checks: write` only.
@@ -12,16 +13,17 @@ import re
 import time
 from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import Final
+from typing import TYPE_CHECKING, Final
 from urllib.parse import quote
 
 import httpx
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
 from gauntlet.ports.code_host import CheckRunReport
 from gauntlet.ports.errors import EnvironmentUnavailableError
 from gauntlet.settings import IntegrationSettings, require
+
+if TYPE_CHECKING:
+    from cryptography.hazmat.primitives.asymmetric import rsa
 
 _REPO: Final = re.compile(r"^[A-Za-z0-9_.-]{1,100}/[A-Za-z0-9_.-]{1,100}$")
 _SHA: Final = re.compile(r"^[0-9a-f]{40}$")
@@ -34,7 +36,7 @@ class RsaPrivateKey:
 
     __slots__ = ("_key",)
 
-    def __init__(self, key: rsa.RSAPrivateKey) -> None:
+    def __init__(self, key: "rsa.RSAPrivateKey") -> None:
         self._key = key
 
     def __repr__(self) -> str:
@@ -56,11 +58,21 @@ class RsaPrivateKey:
         return self._key.key_size
 
     def sign_sha256(self, message: bytes) -> bytes:
+        from cryptography.hazmat.primitives import hashes
+        from cryptography.hazmat.primitives.asymmetric import padding
+
         return self._key.sign(message, padding.PKCS1v15(), hashes.SHA256())
 
 
 def parse_rsa_private_key(pem: str, *, min_bits: int = 2048) -> RsaPrivateKey:
     """Accept an unencrypted RSA PEM: PKCS#1 (GitHub's download) or PKCS#8."""
+    try:
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+    except ImportError:
+        raise EnvironmentUnavailableError(
+            "missing cryptography (install the live-providers dependency group)"
+        ) from None
     try:
         key = serialization.load_pem_private_key(pem.encode("ascii"), password=None)
     except (ValueError, TypeError, UnicodeEncodeError):

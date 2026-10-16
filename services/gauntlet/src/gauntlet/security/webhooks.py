@@ -41,7 +41,8 @@ class WebhookRejectedError(Exception):
 
 
 class ReplayGuard:
-    """Remembers delivery IDs for `ttl_seconds`; a repeat is rejected. Bounded memory."""
+    """Remembers delivery IDs for `ttl_seconds`; a repeat is rejected. Bounded memory:
+    when full of unexpired entries, new deliveries are rejected rather than evicting."""
 
     def __init__(
         self,
@@ -61,7 +62,9 @@ class ReplayGuard:
         if key in self._seen:
             raise WebhookRejectedError("duplicate delivery")
         if len(self._seen) >= self._max:
-            self._seen.popitem(last=False)
+            # Every entry is still inside the TTL: evicting one would let that delivery
+            # be replayed, so refuse new deliveries until entries expire (fail closed).
+            raise WebhookRejectedError("replay cache full")
         self._seen[key] = now
 
 

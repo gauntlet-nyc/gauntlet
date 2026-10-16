@@ -16,6 +16,30 @@ jobs:
       - run: uv run pytest -q
       - run: uv run python scripts/export_schemas.py
       - run: git diff --exit-code packages/contracts/jsonschema
+  python-full:
+    # Whole-source lint and type check, with the optional live-provider SDKs installed
+    # so their adapters type-check. No keys and no live calls.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: '3.12'
+      - run: uv sync --frozen --group live-providers
+      - run: uv run --frozen ruff check services/gauntlet scripts
+      - run: uv run --frozen mypy services/gauntlet/src
+      - run: uv run --frozen pytest -q
+  python-macos:
+    # The demo laptop is a Mac. Advisory until the known macOS-only failures are fixed.
+    runs-on: macos-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: '3.12'
+      - run: uv sync --frozen
+      - run: uv run --frozen pytest -q
   dashboard:
     runs-on: ubuntu-latest
     steps:
