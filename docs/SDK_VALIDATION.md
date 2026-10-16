@@ -16,6 +16,24 @@
 
 **Record format:** `Date / owner / provider / pinned version / test SHA / command (no tokens) / raw sanitized result / failure / fallback / next verification`.
 
+## Session 2 adapter status (2026-10-16) — offline-tested, live NOT RUN
+
+Keys were not available. Every row below is **offline-tested, live NOT RUN** until an
+operator runs the listed command with real keys and records the result here. All settings
+come from `gauntlet.settings.load_settings()`; check readiness (names only, no values) with
+`uv run python scripts/check_settings.py`.
+
+| Adapter | Offline tests | Live status | Exact live command |
+|---|---|---|---|
+| Settings module | `tests/test_s2_settings.py` | n/a | `uv run python scripts/check_settings.py` |
+| Anchor without egress proxy (`GAUNTLET_ANCHOR_REQUIRE_PROXY=0`) | `tests/test_s2_settings.py` | live NOT RUN | `RUN_LIVE_INTEGRATIONS=1 GAUNTLET_ANCHOR_REQUIRE_PROXY=0 .venv/bin/python -m dotenv -f .env.local run --no-override -- .venv/bin/python scripts/probe_b01_provider_smoke.py --registration /tmp/cartwheel-registration.json --execute --authorize-spend` |
+
+Anchor without the proxy is **weaker isolation**: only the in-browser route guard limits
+navigation to the signed preview origin. The runtime logs a WARNING on construction and on
+every session, the smoke report records `egress_isolation`, and each capture records
+`browser_session` (`anchor_session_id`, `anchor_recording_id`, `egress_isolation`). Proxy
+support is unchanged and remains the default.
+
 ### Read-only credential checks (2026-10-15)
 
 Using the project `.venv` and values loaded from the gitignored `.env.local`,

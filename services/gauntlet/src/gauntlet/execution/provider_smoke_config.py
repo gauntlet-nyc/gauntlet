@@ -14,10 +14,8 @@ _REQUIRED_ENV = (
     "DAYTONA_API_URL",
     "DAYTONA_TARGET",
     "ANCHOR_API_KEY",
-    "ANCHOR_PROXY_SERVER",
-    "ANCHOR_PROXY_USERNAME",
-    "ANCHOR_PROXY_PASSWORD",
 )
+_ANCHOR_PROXY_ENV = ("ANCHOR_PROXY_SERVER", "ANCHOR_PROXY_USERNAME", "ANCHOR_PROXY_PASSWORD")
 
 
 def preflight(
@@ -35,11 +33,17 @@ def preflight(
         item.strip() for item in environment.get("GAUNTLET_ALLOWED_TARGET_IDS", "").split(",")
     }:
         missing.append("cartwheel_target_allowlist")
-    for key in _REQUIRED_ENV:
+    require_proxy = environment.get("GAUNTLET_ANCHOR_REQUIRE_PROXY", "1").strip() != "0"
+    for key in _REQUIRED_ENV + (_ANCHOR_PROXY_ENV if require_proxy else ()):
         value = environment.get(key, "").strip()
         if not value or value.upper().startswith("REPLACE_"):
             missing.append(key)
-    return {"scope": "local_prerequisites_only", "status": "not_tested", "missing": missing}
+    return {
+        "scope": "local_prerequisites_only",
+        "status": "not_tested",
+        "missing": missing,
+        "anchor_egress_isolation": "custom_proxy" if require_proxy else "none_weaker_isolation",
+    }
 
 
 def load_registration(

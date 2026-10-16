@@ -26,6 +26,26 @@ class AnchorConnection(Protocol):
     async def close(self) -> None: ...
 
 
+@dataclass(frozen=True)
+class AnchorSessionEvidence:
+    """Provider facts to persist with the run: the recording reference and isolation mode."""
+
+    browser_session_id: str
+    anchor_session_id: str | None
+    recording_id: str | None
+    egress_isolation: str
+
+    def as_payload(self) -> dict[str, str | bool | None]:
+        """Flat scalars suitable for a `RunEvent.payload`."""
+        return {
+            "browser_session_id": self.browser_session_id,
+            "anchor_session_id": self.anchor_session_id,
+            "anchor_recording_id": self.recording_id,
+            "egress_isolation": self.egress_isolation,
+            "egress_isolation_weaker": self.egress_isolation != "custom_proxy",
+        }
+
+
 class AnchorRuntime(Protocol):
     async def open(self) -> AnchorConnection: ...
 
@@ -198,6 +218,18 @@ class AnchorBrowserProvider:
         session_id = f"anchor-browser-{uuid4().hex}"
         self._sessions[session_id] = _Session(connection, scoped, scoped_id)
         return session_id
+
+    def session_evidence(self, session_id: str) -> AnchorSessionEvidence:
+        session = self._sessions.get(session_id)
+        if session is None:
+            raise EnvironmentUnavailableError("Anchor browser session is unavailable")
+        connection = session.connection
+        return AnchorSessionEvidence(
+            browser_session_id=session_id,
+            anchor_session_id=getattr(connection, "session_id", None),
+            recording_id=getattr(connection, "recording_id", None),
+            egress_isolation=getattr(connection, "egress_isolation", "unknown"),
+        )
 
     async def perform(self, session_id: str, step_index: int, step: ActionStep) -> ActionRecord:
         session = self._sessions.get(session_id)
