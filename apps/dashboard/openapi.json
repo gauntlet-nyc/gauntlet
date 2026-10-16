@@ -944,6 +944,13 @@
             "title": "Gaps",
             "type": "array"
           },
+          "proposals": {
+            "items": {
+              "$ref": "#/components/schemas/RemediationProposal"
+            },
+            "title": "Proposals",
+            "type": "array"
+          },
           "provenance": {
             "items": {
               "$ref": "#/components/schemas/Provenance"
@@ -966,6 +973,7 @@
           "cases",
           "gaps",
           "counts",
+          "proposals",
           "provenance"
         ],
         "title": "CounterfactualView",

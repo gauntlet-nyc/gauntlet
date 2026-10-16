@@ -9,8 +9,8 @@ from fastapi.testclient import TestClient
 
 from gauntlet.api.container import get_container
 from gauntlet.api.main import app
-from gauntlet.api.offline.history import FixtureHistory, HistoryIntegrityError
 from gauntlet.api.settings import REPO_ROOT, SettingsError, get_settings, load_settings
+from gauntlet.integrations.history_files import HistoryArchive, HistoryIntegrityError
 
 TOKEN = "dev-reviewer-token-0123456789"
 AUTH = {"Authorization": f"Bearer {TOKEN}"}
@@ -214,4 +214,4 @@ def test_tampered_history_is_refused(tmp_path: Path) -> None:
         ledger.read_text().replace("synthetic-customer-02", "synthetic-customer-03", 1)
     )
     with pytest.raises(HistoryIntegrityError):
-        FixtureHistory.load(copy)
+        HistoryArchive.load(copy)

@@ -8,9 +8,9 @@ from functools import lru_cache
 from importlib import resources
 
 from gauntlet.application.gate import ApprovalService
-from gauntlet.ports import ReplayWorld
+from gauntlet.composition import build_recall
+from gauntlet.settings import Settings
 
-from .offline.history import FixtureHistory
 from .services.gate import GateService
 from .services.recall import RecallService
 from .settings import REPO_ROOT, ApiSettings, get_settings
@@ -58,17 +58,15 @@ class Container:
 
 
 def build_container(settings: ApiSettings) -> Container:
-    refund = json.loads(settings.refund_manifest.read_text())
-    world = ReplayWorld(
-        source_sha=refund["change"]["head_sha"],
-        fixture_id=refund["fixture_id"],
-        fixture_checksum=refund["fixture_checksum_sha256"],
-    )
+    core = Settings.from_env()
+    model = core.model_provider
+    if model != "scripted" and (not core.run_live_integrations or GateService.missing(core, model)):
+        model = "scripted"
     store = InMemoryApprovalStore()
     return Container(
         settings=settings,
         gate=GateService(settings, _manifests(settings)),
-        recall=RecallService(FixtureHistory.load(settings.history_dir), world),
+        recall=RecallService(build_recall(core, model=model, history_dir=settings.history_dir)),
         approval_store=store,
         approvals=ApprovalService(
             store,

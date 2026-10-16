@@ -659,6 +659,8 @@ export interface components {
             };
             /** Gaps */
             gaps: string[];
+            /** Proposals */
+            proposals: components["schemas"]["RemediationProposal"][];
             /** Provenance */
             provenance: components["schemas"]["Provenance"][];
             /** Recall Id */

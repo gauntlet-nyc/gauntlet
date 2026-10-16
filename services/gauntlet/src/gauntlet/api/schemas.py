@@ -128,6 +128,7 @@ class CounterfactualView(BaseModel):
     cases: list[CounterfactualCase]
     gaps: list[str]
     counts: dict[str, int]
+    proposals: list[RemediationProposal]
     provenance: list[Provenance]
 
 

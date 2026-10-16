@@ -210,6 +210,10 @@ class GateService:
         return self._fixture["repo"], self._fixture["refs"]
 
     @staticmethod
+    def missing(core: Settings, adapter: str) -> tuple[str, ...]:
+        return readiness(core)[adapter]
+
+    @staticmethod
     def adapters(core: Settings) -> tuple[str, str, str]:
         """Live only where RUN_LIVE_INTEGRATIONS=1 and that adapter's keys are all set."""
         ready = readiness(core)
