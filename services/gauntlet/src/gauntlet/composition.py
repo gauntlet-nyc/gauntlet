@@ -723,6 +723,8 @@ def refund_verification_suite(target: GateTarget, original: "AttackSpec") -> "Ve
 
 MemoryKindSetting = Literal["none", "local", "surreal"]
 LOCAL_MEMORY_FILE: Final = REPO_ROOT / "artifacts" / "memory" / "facts.json"
+# Verified facts behind the hosted Agent Memory index (the index only holds summaries + ids).
+AGENT_MEMORY_LEDGER_FILE: Final = REPO_ROOT / "artifacts" / "memory" / "agent-memory-ledger.json"
 
 
 def build_memory(kind: MemoryKindSetting, settings: Settings) -> tuple[Any, str]:
@@ -739,4 +741,10 @@ def build_memory(kind: MemoryKindSetting, settings: Settings) -> tuple[Any, str]
     store = memory_store(
         settings.integrations(), backend=settings.optional("GAUNTLET_MEMORY_BACKEND") or "auto"
     )
+    if hasattr(store, "attach_ledger"):
+        # The hosted index only returns text chunks; verified facts live in a local ledger.
+        from gauntlet.integrations.fake.memory import JsonFileTemporalMemory
+
+        store.attach_ledger(JsonFileTemporalMemory(AGENT_MEMORY_LEDGER_FILE))
+        return store, "live_agent_memory_sdk"
     return store, "live_surreal_memory"

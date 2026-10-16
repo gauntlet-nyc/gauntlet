@@ -20,6 +20,7 @@ is not `http`), otherwise the HTTP SurrealDB memory context (`surreal_memory.py`
 import base64
 import binascii
 import logging
+import re
 from collections.abc import Sequence
 from typing import Any, Final
 
@@ -33,6 +34,8 @@ from .surreal_memory import LENS_KINDS
 
 _log = logging.getLogger("gauntlet.memory.agent_memory")
 MARKER: Final = "gauntlet-fact:"
+FACT_ID_PREFIX: Final = "Gauntlet fact id: "
+_FACT_ID: Final = re.compile(r"Gauntlet fact id: ([A-Za-z0-9._:-]{1,200})")
 _MAX_K: Final = 50
 
 
@@ -52,17 +55,23 @@ def decode_fact_text(text: str) -> TemporalMemoryFact | None:
     return None
 
 
+GAUNTLET_LABEL = "source=gauntlet"
+# Allowed categories on the hosted service: identity, knowledge, context.
+MEMORY_CATEGORY = "knowledge"
+
+
 def fact_labels(fact: TemporalMemoryFact) -> list[str]:
+    # The hosted service only accepts `key=value` labels (bare labels are rejected).
     labels = [
-        "gauntlet",
-        f"fact:{fact.fact_id}",
-        f"kind:{fact.kind}",
-        f"trust:{fact.trust}",
-        f"verification:{fact.verification}",
-        *(f"surface:{kind}" for kind in fact.surface_kinds),
+        GAUNTLET_LABEL,
+        f"fact={fact.fact_id}",
+        f"kind={fact.kind}",
+        f"trust={fact.trust}",
+        f"verification={fact.verification}",
+        *(f"surface={kind}" for kind in fact.surface_kinds),
     ]
     if fact.supersedes:
-        labels.append(f"supersedes:{fact.supersedes}")
+        labels.append(f"supersedes={fact.supersedes}")
     return labels
 
 
@@ -74,13 +83,43 @@ class AgentMemorySdkStore:
     def __init__(self, client: Any) -> None:  # noqa: ANN401 - optional SDK boundary
         self._client = client
         self.undecodable_hits = 0
+        self._registered_scopes: set[str] = set()
+        # The hosted service chunks text and returns only text hits, so a fact cannot round-trip
+        # through it. With a ledger attached, the verified fact is kept locally (write-once) and
+        # Agent Memory stores a readable summary plus the fact id for retrieval.
+        self._ledger: Any = None
+
+    def attach_ledger(self, ledger: Any) -> None:  # noqa: ANN401 - local fact store
+        self._ledger = ledger
+
+    async def _ensure_scope(self, scope: str) -> None:
+        """Hosted service rejects writes to unregistered scopes; registering is idempotent."""
+        if scope in self._registered_scopes:
+            return
+        scopes = getattr(self._client, "scopes", None)
+        if scopes is not None:
+            try:
+                await scopes.register(scope, description="Gauntlet target")
+            except Exception as exc:
+                raise EnvironmentUnavailableError(
+                    f"Agent Memory scope registration failed ({type(exc).__name__})"
+                ) from None
+        self._registered_scopes.add(scope)
 
     async def remember(self, fact: TemporalMemoryFact) -> None:
+        await self._ensure_scope(fact.scope)
+        if self._ledger is not None:
+            await self._ledger.remember(fact)
+        text = (
+            f"{fact.summary}\n{FACT_ID_PREFIX}{fact.fact_id}"
+            if self._ledger is not None
+            else encode_fact_text(fact)
+        )
         try:
             await self._client.remember(
-                encode_fact_text(fact),
+                text,
                 scopes=[fact.scope],
-                memory_category="gauntlet_fact",
+                memory_category=MEMORY_CATEGORY,
                 labels=fact_labels(fact),
             )
         except Exception as exc:
@@ -96,22 +135,54 @@ class AgentMemorySdkStore:
                 f"gauntlet findings for {query.scope}: {text}",
                 k=min(_MAX_K, max(query.limit * 3, query.limit)),
                 lens=[query.scope],
-                labels=["gauntlet"],
+                labels=[GAUNTLET_LABEL],
             )
         except Exception as exc:
             raise EnvironmentUnavailableError(
                 f"Agent Memory recall failed ({type(exc).__name__})"
             ) from None
-        facts: list[TemporalMemoryFact] = []
+        facts: list[TemporalMemoryFact] = list(self._ledger_facts(response))
         for hit in getattr(response, "hits", ()):
             fact = decode_fact_text(str(getattr(hit, "text", "")))
             if fact is None:
-                self.undecodable_hits += 1
+                if self._ledger is None:
+                    self.undecodable_hits += 1
                 continue
             facts.append(fact)
         if self.undecodable_hits:
             _log.warning("Agent Memory returned %d undecodable hits", self.undecodable_hits)
         return _visible(facts, query, kinds)
+
+    def _ledger_facts(self, response: Any) -> tuple[TemporalMemoryFact, ...]:  # noqa: ANN401
+        """Verified facts named by the hits' fact ids (never facts parsed from remote text)."""
+        if self._ledger is None:
+            return ()
+        ids = {
+            match
+            for hit in getattr(response, "hits", ())
+            for match in _FACT_ID.findall(str(getattr(hit, "text", "")))
+        }
+        return tuple(fact for fact in self._ledger.all() if fact.fact_id in ids)
+
+    async def all(self) -> tuple[TemporalMemoryFact, ...]:
+        """Every Gauntlet fact, newest first (read-only view)."""
+        if self._ledger is not None:
+            ledger_facts: tuple[TemporalMemoryFact, ...] = self._ledger.all()
+            return tuple(sorted(ledger_facts, key=lambda f: (f.known_at, f.fact_id), reverse=True))
+        try:
+            response = await self._client.recall(
+                "gauntlet findings", k=_MAX_K, labels=[GAUNTLET_LABEL]
+            )
+        except Exception as exc:
+            raise EnvironmentUnavailableError(
+                f"Agent Memory recall failed ({type(exc).__name__})"
+            ) from None
+        facts = {
+            fact.fact_id: fact
+            for hit in getattr(response, "hits", ())
+            if (fact := decode_fact_text(str(getattr(hit, "text", "")))) is not None
+        }
+        return tuple(sorted(facts.values(), key=lambda f: (f.known_at, f.fact_id), reverse=True))
 
     async def close(self) -> None:
         await self._client.close()
