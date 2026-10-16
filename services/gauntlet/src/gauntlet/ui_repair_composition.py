@@ -2,13 +2,18 @@
 
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import cast
+from typing import Literal, cast
 from uuid import uuid4
 
 from gauntlet.application.gate import ApprovalService
 from gauntlet.application.gate.attempts import OracleAttemptExecutor
 from gauntlet.application.gate.pair_verdict import GateAttempt
-from gauntlet.application.gate.repair import RepairDependencies, RepairUseCase, VerificationSuite
+from gauntlet.application.gate.repair import (
+    CheckResult,
+    RepairDependencies,
+    RepairUseCase,
+    VerificationSuite,
+)
 from gauntlet.composition import GateRuntime, GateTarget, RepairRuntime, build_model_gateway
 from gauntlet.contracts import AttackSpec, EvidenceSubject, ResizeStep
 from gauntlet.integrations.browser_evidence import BrowserEvidenceCollector
@@ -26,7 +31,9 @@ from gauntlet.workers.ui import UIWorker
 
 
 class LocalRepairExecutor:
-    collector = "browser_collector"
+    @property
+    def collector(self) -> Literal["browser_collector"]:
+        return "browser_collector"
 
     def __init__(self, artifacts: ArtifactStore, chromium: str | None) -> None:
         self.artifacts = artifacts
@@ -98,7 +105,7 @@ def build_ui_repair(
             proposer=proposer,
             approvals=approvals,
             runner=GitWorktreePatchRunner(target.repository_path),
-            executor=executor,  # type: ignore[arg-type]
+            executor=executor,
             sandbox_for=sandbox_for,
             clock=lambda: datetime.now(UTC),
             new_id=lambda prefix: f"{prefix}-{uuid4().hex}",
@@ -134,7 +141,7 @@ def ui_verification_suite(original: AttackSpec, settings: Settings) -> Verificat
         for width in (390, 1280)
     )
 
-    async def features(environment: EnvironmentHandle):
+    async def features(environment: EnvironmentHandle) -> tuple[CheckResult, ...]:
         return await check_ui_features(
             environment, chromium_path=settings.optional("GAUNTLET_CHROMIUM_PATH")
         )
