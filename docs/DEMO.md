@@ -81,12 +81,30 @@ Recall separates documented harm from assumptions."
 
 Set keys in a private, gitignored `.env.local` (template: `.env.example`), load with
 `.venv/bin/python -m dotenv -f .env.local run --no-override -- <command>`, and never paste keys
-into commands. First run `uv run python scripts/check_settings.py` — it prints only names.
+into commands.
+
+**Step 1 — one-command go-live check** (prints names and sanitized reasons only):
+
+```bash
+# a) which sponsors are configured; lists missing variable NAMES per sponsor
+.venv/bin/python -m dotenv -f .env.local run --no-override -- \
+  uv run --group live-providers python scripts/go_live_check.py
+# b) ONE cheap live call per configured sponsor (Azure tiny completion, Daytona list
+#    snapshots, Anchor create+delete one session, Arize one span, SurrealDB/memory
+#    RETURN 1, ElevenLabs auth, GitHub installation token). Exit 1 if any probe fails.
+RUN_LIVE_INTEGRATIONS=1 .venv/bin/python -m dotenv -f .env.local run --no-override -- \
+  uv run --group live-providers python scripts/go_live_check.py --probe
+```
+
+Fix every `missing:` / `probe failed:` row before the per-sponsor commands below. A
+`probe ok` row proves the key and endpoint work; it is not a recorded sponsor run for
+`docs/SDK_VALIDATION.md` (use the commands below for that). If the Anchor row says a session
+was "created but NOT deleted", delete that session ID in the Anchor console.
 
 | Sponsor | Env vars to set | Command that proves it live | Then |
 |---|---|---|---|
 | Azure OpenAI (planner) | `GAUNTLET_MODEL_PROVIDER=azure`, `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_DEPLOYMENT`, `AZURE_OPENAI_API_KEY`, `RUN_LIVE_INTEGRATIONS=1` | `RUN_LIVE_INTEGRATIONS=1 uv run python scripts/run_gate.py --model azure` | report `adapters.model = live_azure_openai`, plan accepted by the validator |
-| Daytona | `DAYTONA_API_KEY`, `DAYTONA_API_URL`, `DAYTONA_TARGET`, `GAUNTLET_DAYTONA_REGISTRATION` (file from `scripts/prepare_cartwheel_registration.py`) | with Anchor below: `RUN_LIVE_INTEGRATIONS=1 GAUNTLET_ANCHOR_REQUIRE_PROXY=0 uv run --group live-providers python scripts/run_gate.py --model azure --sandbox daytona --browser anchor` | provider console shows base/head sandboxes; report `sandbox = live_daytona` |
+| Daytona | `DAYTONA_API_KEY`, `DAYTONA_TARGET`, optional `DAYTONA_API_URL` (default `https://app.daytona.io/api`), `GAUNTLET_DAYTONA_REGISTRATION` (file from `scripts/prepare_cartwheel_registration.py`) | with Anchor below: `RUN_LIVE_INTEGRATIONS=1 GAUNTLET_ANCHOR_REQUIRE_PROXY=0 uv run --group live-providers python scripts/run_gate.py --model azure --sandbox daytona --browser anchor` | provider console shows base/head sandboxes; report `sandbox = live_daytona` |
 | Anchor | `ANCHOR_API_KEY`, `GAUNTLET_ANCHOR_REQUIRE_PROXY=0` (or the `ANCHOR_PROXY_*` trio with `=1`) | same command as Daytona | `browser = live_anchor_no_egress_proxy`; recording in Anchor console |
 | Arize AX | `ARIZE_API_KEY`, `ARIZE_SPACE_ID`, `ARIZE_PROJECT_NAME` | see the Arize row in `docs/SDK_VALIDATION.md` | correlated spans visible in AX |
 | SurrealDB core | `SURREAL_URL`, `SURREAL_NS`, `SURREAL_DB`, `SURREAL_USER`, `SURREAL_PASS` | see the SurrealDB row in `docs/SDK_VALIDATION.md` | records visible in Surrealist |

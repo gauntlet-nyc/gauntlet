@@ -65,6 +65,18 @@ class ElevenLabsVoice:
             headers={"xi-api-key": self._api_key},
         )
 
+    async def check_auth(self) -> None:
+        """Cheap authenticated read (no usage cost). Raises if the key is rejected."""
+        async with self._client() as client:
+            try:
+                response = await client.get("/v1/user")
+            except httpx.HTTPError as exc:
+                raise EnvironmentUnavailableError(
+                    f"ElevenLabs request failed ({type(exc).__name__})"
+                ) from None
+        if response.status_code != 200:
+            raise EnvironmentUnavailableError(f"ElevenLabs auth check HTTP {response.status_code}")
+
     async def signed_conversation_url(self) -> str:
         """Short-lived wss URL the dashboard uses to talk to the agent without our key."""
         async with self._client() as client:

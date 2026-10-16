@@ -175,6 +175,11 @@ class GitHubAppCheckRunPublisher:
         self._token_expires = self._clock() + 3600
         return token
 
+    async def check_installation(self) -> None:
+        """Mint an installation token (checks: write) without touching any repository."""
+        async with self._client() as client:
+            await self._installation_token(client)
+
     async def publish(
         self, repository_full_name: str, head_sha: str, external_id: str, report: CheckRunReport
     ) -> str:

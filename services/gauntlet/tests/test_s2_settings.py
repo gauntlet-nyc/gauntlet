@@ -56,7 +56,7 @@ def test_secrets_never_print() -> None:
 def test_partial_section_is_an_error_naming_keys_only() -> None:
     with pytest.raises(SettingsError) as raised:
         load_settings({"DAYTONA_API_KEY": SECRET_VALUE})
-    assert "DAYTONA_API_URL" in str(raised.value)
+    assert "DAYTONA_TARGET" in str(raised.value)
     assert SECRET_VALUE not in str(raised.value)
 
 
