@@ -15,6 +15,8 @@ from gauntlet.ports.oracle import OracleDescriptor
 
 from .stored_browser import _measurement
 
+_PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+
 DESCRIPTOR: Final = OracleDescriptor(
     oracle_id="workflow.completion_marker_visible",
     kind=OracleKind.HARD,
@@ -50,13 +52,14 @@ class WorkflowCompletionOracle:
             evidence_ids=evidence_ids,
         )
 
-    async def _checked_json(
-        self, artifact_id: str, subject: EvidenceSubject, index: int
+    async def _checked_artifact(
+        self, artifact_id: str, subject: EvidenceSubject, index: int, media_type: str
     ) -> bytes | None:
         stored = await self._store.get(artifact_id)
         if (
             stored is None
-            or stored.binding.evidence.media_type != "application/json"
+            or stored.binding.evidence.artifact_id != artifact_id
+            or stored.binding.evidence.media_type != media_type
             or len(stored.content) != stored.binding.byte_size
             or hashlib.sha256(stored.content).hexdigest() != stored.binding.evidence.sha256
             or not (
@@ -129,7 +132,14 @@ class WorkflowCompletionOracle:
         click = observation.action_log[click_index]
         if click.outcome not in {"ok", "blocked"} or len(click.evidence_ids) != 2:
             return self._verdict(observation, inconclusive, "Missing click receipt")
-        click_bytes = await self._checked_json(click.evidence_ids[0], subject, click_index)
+        click_bytes = await self._checked_artifact(
+            click.evidence_ids[0], subject, click_index, "application/json"
+        )
+        screenshot = await self._checked_artifact(
+            click.evidence_ids[1], subject, click_index, "image/png"
+        )
+        if screenshot is None or not screenshot.startswith(_PNG_SIGNATURE):
+            return self._verdict(observation, inconclusive, "Invalid click screenshot")
         click_measurement = (
             _measurement(click_bytes, submit, click=True) if click_bytes is not None else None
         )
@@ -155,7 +165,9 @@ class WorkflowCompletionOracle:
         marker = observation.action_log[marker_index]
         if len(marker.evidence_ids) != 1:
             return self._verdict(observation, inconclusive, "Missing completion inspection")
-        marker_bytes = await self._checked_json(marker.evidence_ids[0], subject, marker_index)
+        marker_bytes = await self._checked_artifact(
+            marker.evidence_ids[0], subject, marker_index, "application/json"
+        )
         marker_measurement = (
             _measurement(marker_bytes, complete, click=False) if marker_bytes is not None else None
         )
