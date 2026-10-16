@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
+
 from gauntlet.contracts import (
     AttackSpec,
     Finding,
@@ -13,7 +15,6 @@ from gauntlet.contracts import (
     RunEvent,
     SourceRef,
 )
-from pydantic import ValidationError
 
 EXAMPLES_DIR = Path(__file__).resolve().parents[3] / "docs" / "contracts" / "examples"
 
