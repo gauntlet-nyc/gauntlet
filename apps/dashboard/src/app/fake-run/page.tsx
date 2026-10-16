@@ -25,7 +25,11 @@ export default async function FakeRunPage() {
             {run.label} · <code className="font-mono text-sm">{run.run_id}</code>
           </>
         }
-        actions={<OfflineBadge provenance={[]} />}
+        actions={
+          <OfflineBadge
+            provenance={[{ provider: "golden-fixture", mode: "offline_recording", live: false, label: "Golden plan and event only" }]}
+          />
+        }
       />
       <Section title="Planned attack" icon={Lock}>
         <AttackCard attack={run.plan} />
