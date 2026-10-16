@@ -125,7 +125,18 @@ async def probe_surreal(settings: IntegrationSettings) -> str:
 
 
 async def probe_surreal_memory(settings: IntegrationSettings) -> str:
-    return await _surreal_round_trip("memory", settings) + " (HTTP memory context)"
+    """Agent Memory SDK `whoami` when the SDK is installed, else the HTTP memory context."""
+    config = require("surreal_memory", settings.surreal_memory)
+    try:
+        from surrealdb.memory import AsyncMemory
+    except ImportError:
+        return await _surreal_round_trip("memory", settings) + " (HTTP memory context)"
+    client = AsyncMemory(config.context, endpoint=config.endpoint, api_key=config.api_key.reveal())
+    try:
+        principal = await client.whoami()
+    finally:
+        await client.close()
+    return f"Agent Memory SDK authenticated as {getattr(principal, 'kind', 'principal')}"
 
 
 async def probe_elevenlabs(settings: IntegrationSettings) -> str:

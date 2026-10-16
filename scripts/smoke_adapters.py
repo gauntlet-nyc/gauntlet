@@ -14,6 +14,10 @@ from uuid import uuid4
 
 from gauntlet.contracts import ReplayResult, VoiceBriefing
 from gauntlet.integrations.arize.experiments import record_counterfactual_experiment
+from gauntlet.integrations.arize.experiments_sdk import (
+    ArizeExperimentPublisher,
+    RecallExperimentRow,
+)
 from gauntlet.integrations.arize.tracing import OtlpTracer, tracer_from_settings
 from gauntlet.integrations.elevenlabs import ElevenLabsVoice
 from gauntlet.integrations.github_app import GitHubAppCheckRunPublisher
@@ -40,7 +44,30 @@ async def _arize() -> dict[str, object]:
         verdict="tainted",
     )
     await tracer.flush()
+    experiment_object: str | None = None
+    try:
+        publisher = ArizeExperimentPublisher.from_settings(settings)
+        experiment_object = await publisher.publish(
+            f"gauntlet-smoke-{uuid4().hex[:8]}",
+            [
+                RecallExperimentRow(
+                    "smoke-decision",
+                    "smoke-control",
+                    "matched",
+                    "refund",
+                    "smoke-cf",
+                    "different",
+                    "deny",
+                    True,
+                    True,
+                    "tainted",
+                )
+            ],
+        )
+    except Exception as exc:  # noqa: BLE001 - report type only; SDK is optional
+        experiment_object = f"not created ({type(exc).__name__})"
     return {
+        "arize_experiment_id": experiment_object,
         "trace_id": root.trace_id,
         "experiment_trace_id": experiment.trace_id,
         "exported": tracer.exported,
