@@ -39,9 +39,11 @@ class RegisteredOracleRegistry:
         plans: tuple[AttackSpec, ...],
         primary_targets: Mapping[str, str],
         evidence: tuple[ClickEvidence, ...],
+        primary_routes: Mapping[str, str] | None = None,
     ) -> None:
         self._plans = {plan.attack_id: plan.model_copy(deep=True) for plan in plans}
         self._targets = dict(primary_targets)
+        self._routes = dict(primary_routes or {})
         self._evidence = {item.evidence_id: item for item in evidence}
         if len(self._plans) != len(plans) or len(self._evidence) != len(evidence):
             raise ValueError("plan and evidence identities must be unique")
@@ -67,9 +69,17 @@ class RegisteredOracleRegistry:
         text = "Checks whether the registered primary action receives a click"
         if not self._targets:
             return text
-        actions = ", ".join(f"{t}: data-testid={a}" for t, a in sorted(self._targets.items()))
-        # Authorized target context for the planner; still only an identifier, never logic.
-        return f"{text}. Registered primary actions ({actions})"
+        actions = ", ".join(
+            f"{t}: data-testid={a}" + (f" on {self._routes[t]}" if t in self._routes else "")
+            for t, a in sorted(self._targets.items())
+        )
+        # Authorized target context and the evidence contract; identifiers only, never logic.
+        return (
+            f"{text}. Registered primary actions ({actions}). Evidence contract: navigate to the "
+            "route that renders the primary action, optionally resize, `inspect` that data-testid, "
+            "then `click` it exactly once (a final `capture` is allowed). Every other step must "
+            "succeed. Step `target` values are bare data-testid values, never CSS selectors."
+        )
 
     def evaluate(self, oracle_id: str, observation: Observation) -> OracleVerdict:
         kind = self.descriptor(oracle_id).kind

@@ -1188,3 +1188,19 @@ Replay-triggering Recall reads require reviewer authentication when the composed
 runtime uses live providers. The combined API/dashboard passed the 12-step
 headless Chrome demo, including public offline Recall and reviewer login.
 No full live model/Daytona/Anchor Gate is claimed by these checks.
+
+### Live go-live probes and blind Azure planning (2026-10-16, owner machine)
+
+`scripts/go_live_check.py --probe` with `RUN_LIVE_INTEGRATIONS=1`: **probe ok** for Azure OpenAI
+(AI Foundry v1 endpoint, reasoning deployment), Daytona (snapshot list), Anchor (session created
+and deleted, WITHOUT egress proxy), Arize (span exported), SurrealDB core (local `surreal`
+3.2.3), SurrealDB Agent Memory (hosted context, service principal) and ElevenLabs (key accepted).
+GitHub App: not created.
+
+Blind planning, live: `run_gate.py --model azure --sandbox local --browser local` against the
+built base/head Cartwheel servers in real headless Chrome. After adding each oracle's evidence
+contract to its description and two generic prompt rules (cover every condition a change
+creates; oracle/worker pairing), three consecutive runs each planned attacks on both sides of
+the changed 900px breakpoint and returned `confirmed_regression` (below: head 2/2, base 0/2) and
+`passed` (at/above). One earlier run before the coverage rule planned desktop only and passed,
+so planner variance is real. Daytona/Anchor hosted Gate execution: in progress.

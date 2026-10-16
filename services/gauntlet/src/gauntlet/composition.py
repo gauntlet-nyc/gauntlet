@@ -235,7 +235,10 @@ def build_model_gateway(
 
 def _planner_registry(target: GateTarget) -> RegisteredOracleRegistry:
     return RegisteredOracleRegistry(
-        plans=(), primary_targets={target.target_id: target.primary_test_id}, evidence=()
+        plans=(),
+        primary_targets={target.target_id: target.primary_test_id},
+        evidence=(),
+        primary_routes={target.target_id: target.primary_route},
     )
 
 

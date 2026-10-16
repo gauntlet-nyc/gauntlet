@@ -159,3 +159,19 @@ def test_probe_reports_missing_azure_settings_without_spend(
     assert report["sponsor_evidence"] is False
     assert {"AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY"} <= set(report["missing"])
     assert "--region" not in report["missing"]
+
+
+def test_foundry_v1_base_url_puts_deployment_in_the_body() -> None:
+    recorder = Recorder(200, completion("{}"))
+    env = {**ENV, "AZURE_OPENAI_ENDPOINT": "https://demo-res.services.ai.azure.com/openai/v1/"}
+    asyncio.run(create_azure_openai_gateway(env, transport=recorder.transport()).complete(REQUEST))
+    sent = recorder.requests[0]
+    assert str(sent.url) == "https://demo-res.services.ai.azure.com/openai/v1/chat/completions"
+    assert json.loads(sent.content)["model"] == "planner-gpt"
+
+
+def test_other_paths_are_still_refused() -> None:
+    with pytest.raises(ValueError):
+        create_azure_openai_gateway(
+            {**ENV, "AZURE_OPENAI_ENDPOINT": "https://demo-res.services.ai.azure.com/openai/v2"}
+        )

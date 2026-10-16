@@ -6,7 +6,7 @@ Browser routing is a local guard, not DNS/network isolation for a cloud run.
 """
 
 import asyncio
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Protocol
 from urllib.parse import urlsplit
@@ -155,10 +155,14 @@ class ScopedPlaywrightProvider:
         browser: PlaywrightBrowser,
         collector: BrowserEvidenceCollector,
         origin_validator: Callable[[str], str],
+        *,
+        extra_http_headers: Mapping[str, str] | None = None,
     ) -> None:
         self._browser = browser
         self._collector = collector
         self._origin_validator = origin_validator
+        # Sent only to the scoped origin: the route guard aborts every other request.
+        self._extra_http_headers = dict(extra_http_headers or {})
         self._sessions: dict[str, _Session] = {}
 
     async def open_session(self, environment: EnvironmentHandle, subject: EvidenceSubject) -> str:
@@ -166,11 +170,14 @@ class ScopedPlaywrightProvider:
             raise EnvironmentUnavailableError("browser evidence subject does not match environment")
         origin = self._origin_validator(environment.preview_origin)
         try:
-            context = await self._browser.new_context(
-                viewport={"width": 1280, "height": 720},
-                service_workers="block",
-                accept_downloads=False,
-            )
+            options: dict[str, object] = {
+                "viewport": {"width": 1280, "height": 720},
+                "service_workers": "block",
+                "accept_downloads": False,
+            }
+            if self._extra_http_headers:
+                options["extra_http_headers"] = self._extra_http_headers
+            context = await self._browser.new_context(**options)
         except Exception as exc:
             raise EnvironmentUnavailableError("local browser context could not open") from exc
         session = _Session(origin, subject, context, None)
@@ -180,15 +187,23 @@ class ScopedPlaywrightProvider:
                 session.egress_attempted = True
                 await route.abort()
                 return
-            response = await route.fetch(max_redirects=0)
-            if 300 <= response.status < 400:
-                # Playwright routes only the first hop of a redirect chain.
-                # Fulfilling a 3xx lets the browser follow later hops without
-                # another route check, so this local adapter denies redirects.
-                session.egress_attempted = True
-                await route.abort()
-                return
-            await route.fulfill(response=response)
+            try:
+                response = await route.fetch(max_redirects=0)
+                if 300 <= response.status < 400:
+                    # Playwright routes only the first hop of a redirect chain.
+                    # Fulfilling a 3xx lets the browser follow later hops without
+                    # another route check, so this local adapter denies redirects.
+                    session.egress_attempted = True
+                    await route.abort()
+                    return
+                await route.fulfill(response=response)
+            except Exception:
+                # The page or context closed mid-request (e.g. navigation or session teardown).
+                # Fail closed: the request is not served, and teardown must not crash.
+                try:
+                    await route.abort()
+                except Exception:
+                    pass
 
         try:
             await context.route("**/*", route_request)
