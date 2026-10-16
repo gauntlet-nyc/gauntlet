@@ -1,0 +1,1053 @@
+[
+  {
+    "actor_ref": "synthetic-customer-02",
+    "agent_id": "support-test-agent",
+    "amount_minor": 1750,
+    "decision_id": "decision-001",
+    "input_messages_hash": "825a6630fb534854d9b3fdcf562bf6dbe047cc0833502ce1d614afb8d9c8b26c",
+    "kb_snapshot_hash": "52aab6f8de5a901b21fa279b574238308fa65219781df64d3a066836b1ea1a2c",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-07T09:40:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-120",
+      "kb-122",
+      "kb-117"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "f641995247a452530885f94c9ce9c928eee2def9a09b011e78189974c3f469bd"
+  },
+  {
+    "actor_ref": "synthetic-customer-02",
+    "agent_id": "support-test-agent",
+    "amount_minor": 2000,
+    "decision_id": "decision-002",
+    "input_messages_hash": "0ac904339dd7dbd1580b79b4324c27eb285ae6de1e4b903f857f6219274b804b",
+    "kb_snapshot_hash": "653bb8c21ae7cc3fed0361ffda9b415f9aa86d713b889a368d52b7c4fb93e403",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-07T11:25:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-111",
+      "kb-127"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "483de8f8690ca66b37dccccf3b1d51a612d1442645c0f5250587a292c744b75a"
+  },
+  {
+    "actor_ref": "synthetic-customer-05",
+    "agent_id": "support-test-agent",
+    "amount_minor": null,
+    "decision_id": "decision-003",
+    "input_messages_hash": "63d64fe43a9a42383d9256684284df72dbfcf8492c24973819331d83fba3638e",
+    "kb_snapshot_hash": "20f30d391e7a8046769597ec07d7f7c9a2e3be74a7af432606744cc97f34eaca",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-07T13:16:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-126",
+      "kb-114"
+    ],
+    "structured_action": "decline_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [],
+    "tool_results_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+    "actor_ref": "synthetic-customer-04",
+    "agent_id": "support-test-agent",
+    "amount_minor": 2500,
+    "decision_id": "decision-004",
+    "input_messages_hash": "cba36593f4b9c2c6437dafbdc75ca2e3aac4f7acdc4ff2a5a141a78e1ac3de81",
+    "kb_snapshot_hash": "57b4561de94b634c11d06dea4976988b97db354653d28ceba8acac03777faa92",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-07T15:36:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-107",
+      "kb-103",
+      "kb-117"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "d1f0cd05db4ba9985fedb553f37cb52c75152b379bd0a509acaa5b5907cc69dc"
+  },
+  {
+    "actor_ref": "synthetic-customer-05",
+    "agent_id": "support-test-agent",
+    "amount_minor": 2750,
+    "decision_id": "decision-005",
+    "input_messages_hash": "d069fa71b9509fbba2d3c4da707d68358370598564488c94d1abb8ef2fbf6d68",
+    "kb_snapshot_hash": "a99f4453abe89c46cfd8aea964ebc3bc5537c6232f4c5e453a4ae8d9a558ee34",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-07T17:44:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-111",
+      "kb-107"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "84de02a04c570afca772a614beecc6083064dcace77f5c0fbf2194058601a53e"
+  },
+  {
+    "actor_ref": "synthetic-customer-06",
+    "agent_id": "support-test-agent",
+    "amount_minor": 3000,
+    "decision_id": "decision-006",
+    "input_messages_hash": "6d3e5fa80cb76c78e324099da69350038df809a46d5ac6b6f1ae07240c1c0722",
+    "kb_snapshot_hash": "1ff3ed3225ee3ea9da999a675780713866b767a8af60ebb57f7862c4d3300b41",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-07T19:07:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-113",
+      "kb-104"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "81222a49549ee97c8bf68caacd8f1647f9e826b9e52833bc835538d43bc02e4f"
+  },
+  {
+    "actor_ref": "synthetic-customer-07",
+    "agent_id": "support-test-agent",
+    "amount_minor": 3250,
+    "decision_id": "decision-007",
+    "input_messages_hash": "126ec4723676cff46458a8c15a9a981401a6a5b16f5ec12c164a2c9ad1d57eec",
+    "kb_snapshot_hash": "2bb246e6538ee8e3caba0cd09f525280f5b68a8f1e52a3c8bafaaa7d5b7d7e8f",
+    "memory_snapshot_hash": "b89e3af166f6f3d19462b2095b8c3b4711ab6d02aab5f9f2cd69a11528331179",
+    "missing_inputs": [
+      {
+        "critical": true,
+        "field": "tool_results_hash",
+        "reason": "recorder dropped the tool result",
+        "schema_version": "1.0"
+      }
+    ],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-08T09:00:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-129",
+      "kb-125",
+      "mem-083"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": null
+  },
+  {
+    "actor_ref": "synthetic-customer-08",
+    "agent_id": "support-test-agent",
+    "amount_minor": 3500,
+    "decision_id": "decision-008",
+    "input_messages_hash": "65e22d189b3e7f40c9cf6a2977b1a3766d67e35d56259cbae058f3ec59a3955c",
+    "kb_snapshot_hash": "aaadd1f99c89c6a1dfb2b805836bcb8646abc8fe735bcafa63a98bb67b066d73",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-08T11:03:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-112",
+      "kb-109"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "56c6ca394570cf841fab13d4dcd179480b3a484844f675a3195d7cd431cea69b"
+  },
+  {
+    "actor_ref": "synthetic-customer-10",
+    "agent_id": "support-test-agent",
+    "amount_minor": 3750,
+    "decision_id": "decision-009",
+    "input_messages_hash": "6720b87f158382a764a1ac4eef0322ddad961f9b28d9a1c3fb0189c530f85fbf",
+    "kb_snapshot_hash": "dc58543d1beb8e677889f7be4e02bcb5756f7db52a3f4ee0805a63b0e32a61c0",
+    "memory_snapshot_hash": "b89e3af166f6f3d19462b2095b8c3b4711ab6d02aab5f9f2cd69a11528331179",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-08T13:25:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-104",
+      "kb-130",
+      "mem-083"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "7cfb8a56390813c63d906e423019ac8ed7c7fdd44668d89c2891ecf4e8b0be4e"
+  },
+  {
+    "actor_ref": "synthetic-customer-12",
+    "agent_id": "support-test-agent",
+    "amount_minor": null,
+    "decision_id": "decision-010",
+    "input_messages_hash": "304082b4ed804ead7caf6714b2f5b779b999f7795e39d95112f953a13b5f3c99",
+    "kb_snapshot_hash": "93abcdeff6f46c61c5caf7db675aee2ef62141b582cd1b8031505181f9b60593",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-08T15:27:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-113",
+      "kb-103"
+    ],
+    "structured_action": "decline_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [],
+    "tool_results_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+    "actor_ref": "synthetic-customer-11",
+    "agent_id": "support-test-agent",
+    "amount_minor": 4250,
+    "decision_id": "decision-011",
+    "input_messages_hash": "fc393f57c0d4cc26967417bc2ad085a65c4f1cbfd558353a4a2867fc83f0a0f9",
+    "kb_snapshot_hash": "f0994d3b5fc7c01eab831152fb7ef554e2186e3138715abb69a3b8fbcbdd0526",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-08T17:08:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-130",
+      "kb-105"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "381eddcf182f78291a6587d47efc01c2efac99679cfb0378f5e038b660c7cab2"
+  },
+  {
+    "actor_ref": "synthetic-customer-12",
+    "agent_id": "support-test-agent",
+    "amount_minor": 1500,
+    "decision_id": "decision-012",
+    "input_messages_hash": "7e8fee4b0403cde5afccd3a9de445664d5204960235ba83011bd602df5ac37ed",
+    "kb_snapshot_hash": "85cb15d9603534b05139ea6c7df0aeef9d0e146d22766ac8d07478daef8ec34c",
+    "memory_snapshot_hash": "b89e3af166f6f3d19462b2095b8c3b4711ab6d02aab5f9f2cd69a11528331179",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-08T19:46:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-126",
+      "kb-128",
+      "mem-083"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "8d686948510582438060db225d0352b4c9ad679a59d7eaf3fc583f885785f13c"
+  },
+  {
+    "actor_ref": "synthetic-customer-13",
+    "agent_id": "support-test-agent",
+    "amount_minor": 1750,
+    "decision_id": "decision-013",
+    "input_messages_hash": "d6926ba3b5f224a62eab9b9ac09eb21c288e01159f51c551774889034ceca99f",
+    "kb_snapshot_hash": "ece774796d039ec3addfeca121195383ea73df61501e7d2b57a790ea796dbc7e",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-09T09:17:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-112",
+      "kb-102"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "ab56797ebbf01afe5ce5aebf55ad57ef04d071e44686a71b8bdb469d41098dc2"
+  },
+  {
+    "actor_ref": "synthetic-customer-14",
+    "agent_id": "support-test-agent",
+    "amount_minor": 2000,
+    "decision_id": "decision-014",
+    "input_messages_hash": "c14ca21bda74ab9fdccd4e2b58f7fe8c56dca0dcddca4e28c820272e4d268554",
+    "kb_snapshot_hash": "de4284bfd5ef9ac0f90adecf9b64385e8987e5ba52506f4a89b25571a9458d56",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-09T11:23:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-129",
+      "kb-124"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "6fd58cb8febe85e0c220cf0f3dc0ca05d2e538a06f8255f3d15d2a229ed9c68f"
+  },
+  {
+    "actor_ref": "synthetic-customer-16",
+    "agent_id": "support-test-agent",
+    "amount_minor": 2250,
+    "decision_id": "decision-015",
+    "input_messages_hash": "0c93dc2a3e387eadcbb81bec2b9e11e67f69a283b062972a0bcf99a8ac5352f4",
+    "kb_snapshot_hash": "6e2d2515d54945a538db353a6a86b00f39a933b6672b430d7e1e3b2bf7488910",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-09T13:08:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-102",
+      "kb-107",
+      "kb-117"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "eaa66960376dcbdee3e91490a921ffede088c524738a0e4e9341667e2e6e0296"
+  },
+  {
+    "actor_ref": "synthetic-customer-16",
+    "agent_id": "support-test-agent",
+    "amount_minor": 2500,
+    "decision_id": "decision-016",
+    "input_messages_hash": "c33f4b48e9d03558da5e7425003528291f2c5c2df8da464c69f1534bc1d69966",
+    "kb_snapshot_hash": "973c55a9649792ed4c6ebaebe5c2813dc87bb8885d89cdcf11e9cf15bded3ac3",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-09T15:00:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-110",
+      "kb-118"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "ba7fcebc549295e755fb62bbb9505ad4a482b244c3031a1972c110f865f82bcf"
+  },
+  {
+    "actor_ref": "synthetic-customer-19",
+    "agent_id": "support-test-agent",
+    "amount_minor": null,
+    "decision_id": "decision-017",
+    "input_messages_hash": "8b2a7baf16dc6b77cc82b7ec9a0b9fecaba9ac42f1206ed3f1c61a4b61954af8",
+    "kb_snapshot_hash": "d0b01286d629134f9ca34f0f6d893043474f8ad12ed5d1d8f6c8fcf512cb3107",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-09T17:35:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-101",
+      "kb-128"
+    ],
+    "structured_action": "decline_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [],
+    "tool_results_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+    "actor_ref": "synthetic-customer-18",
+    "agent_id": "support-test-agent",
+    "amount_minor": 3000,
+    "decision_id": "decision-018",
+    "input_messages_hash": "5db00a9c258cd98b76d3147ce51ac672360ac740323e809835faa850fcd3fc2e",
+    "kb_snapshot_hash": "dd7ea62e55c27d5af65cdce934e1e3f4313bb37b26d80a25d966e3e0fdbfeb4a",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-09T19:17:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-129",
+      "kb-103"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "8b82748ae1b54fde0687cff76db7f028204ec9439707ba6615df56c10bdba0de"
+  },
+  {
+    "actor_ref": "synthetic-customer-19",
+    "agent_id": "support-test-agent",
+    "amount_minor": 3250,
+    "decision_id": "decision-019",
+    "input_messages_hash": "cfb5c2afd88e1b33eaf8f629b83ec5ae454f7a6c0f46e6ad031b1e1e7f6fed99",
+    "kb_snapshot_hash": "767206581826f07812e0e0607fc50ff946d2ca387290e7161b4db711fa3883da",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-10T09:23:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-119",
+      "kb-124"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "bcd34107d50ca2123718466fae60d020a938117769483e262beb5eda4c1d557a"
+  },
+  {
+    "actor_ref": "synthetic-customer-20",
+    "agent_id": "support-test-agent",
+    "amount_minor": 3500,
+    "decision_id": "decision-020",
+    "input_messages_hash": "c7db1003933352234f1468af455ecac4b4a41ae2f91d54f4278d35a4c504a3ee",
+    "kb_snapshot_hash": "3e72b4a0cf9d5a296e08f0120d5ac09f1ee21bf95cb86712cb6762cabb68c1c5",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-10T11:49:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-125",
+      "kb-116"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "498eb6d4ede5bcb703565de710a8bcc813d68e6ee3bd72d37c0ad583e780c3c5"
+  },
+  {
+    "actor_ref": "synthetic-customer-01",
+    "agent_id": "support-test-agent",
+    "amount_minor": 3750,
+    "decision_id": "decision-021",
+    "input_messages_hash": "a787996135a35385350223cea7124a5f8ceb7f6f02116a3aa71eac9e6dd5ecb6",
+    "kb_snapshot_hash": "7ca48654e1cd29400ea3ed7f73547d2f31f508a64be37245b0e07cb11b5d698f",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-10T13:47:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-104",
+      "kb-127"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "3b40ea80f1cbfe496b25504c05188974ee6df07b2ec57b1efacd282572b8458b"
+  },
+  {
+    "actor_ref": "synthetic-customer-02",
+    "agent_id": "support-test-agent",
+    "amount_minor": 4000,
+    "decision_id": "decision-022",
+    "input_messages_hash": "2253d2b44651b69949c2946aed2e995e51180bd107c811b5cad7d9064d027268",
+    "kb_snapshot_hash": "dbf9c0f81a9fb2ea1290c6293065977da4b6f446003bf36216103c6eeda5fd3b",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-10T15:22:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-101",
+      "kb-109"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "c2a31817bd7acc9d9d2beb2d5a9d073b70520f1a8c0b1f391038bf6705939e23"
+  },
+  {
+    "actor_ref": "synthetic-customer-03",
+    "agent_id": "support-test-agent",
+    "amount_minor": 4250,
+    "decision_id": "decision-023",
+    "input_messages_hash": "644d49ffb75dfe5f092aaeb4f867223302e515e8fe688e69ac2514b0297585e1",
+    "kb_snapshot_hash": "dae2d474b5e501b457987a167ed74903f34728a614f49214e3aef374cdd08770",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-10T17:00:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-104",
+      "kb-126"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "b0919c0b93ad0b9b6a7b9fae6ccc4a120511e52455ebf7153a2d37718aab6a31"
+  },
+  {
+    "actor_ref": "synthetic-customer-06",
+    "agent_id": "support-test-agent",
+    "amount_minor": null,
+    "decision_id": "decision-024",
+    "input_messages_hash": "f3caa94451f74386b02381bb509b7a7258014fc3918e536f209a1286fd4a71ab",
+    "kb_snapshot_hash": "284451469be0e43d0a21a1ea1891d5ff4e39af3e3331179520a784cac9af2454",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-10T19:36:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-116",
+      "kb-124"
+    ],
+    "structured_action": "decline_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [],
+    "tool_results_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+    "actor_ref": "synthetic-customer-05",
+    "agent_id": "support-test-agent",
+    "amount_minor": 1750,
+    "decision_id": "decision-025",
+    "input_messages_hash": "f575b94e241e021a211e2db94ed5c8d5d2f5854baa08e5a00c23c1286f78e8da",
+    "kb_snapshot_hash": "940817480327bb41e3bcba706904e9b05915284cedb3cba8277946c64242465f",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-11T09:01:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-107",
+      "kb-101"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "f9982d2119cead8e745a26fe76372350b7a025657a7cb46f7360160825c45023"
+  },
+  {
+    "actor_ref": "synthetic-customer-06",
+    "agent_id": "support-test-agent",
+    "amount_minor": 2000,
+    "decision_id": "decision-026",
+    "input_messages_hash": "6dfd5b9ccbf5a44d2c8254f3576830e9c8f1cf13125f622a7608221c2666ffa5",
+    "kb_snapshot_hash": "249ccbb1abf0781780575338e3bd58e0ef4bac526c686fb1c90502be82ceba48",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-11T11:47:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-106",
+      "kb-107"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "db1140250c8bdea31f4795e1db679433a70a717b2672111103f2e3efc8da44a1"
+  },
+  {
+    "actor_ref": "synthetic-customer-07",
+    "agent_id": "support-test-agent",
+    "amount_minor": 2250,
+    "decision_id": "decision-027",
+    "input_messages_hash": "0075886b06086a0c6e1abe39fca456b116dc538a9dd2fc42e8fac94f55a805bf",
+    "kb_snapshot_hash": "55335efd79930275dd7b0be2e8932d11778039dd83113a0659ab8201a3f3c2fc",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-11T13:35:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-111",
+      "kb-124"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "feebaa4a315fb74ff255cb291bc864f585b5e0ff1aedb6bb736da70e46fb5225"
+  },
+  {
+    "actor_ref": "synthetic-customer-08",
+    "agent_id": "support-test-agent",
+    "amount_minor": 2500,
+    "decision_id": "decision-028",
+    "input_messages_hash": "08ff294fa0260c3245ccff1cafa13f47af8c3b44cafbd35492a6880f34ab69ae",
+    "kb_snapshot_hash": "e7aad10f67056a26fb1287e957b32e8e8b638f5b72b3ba90163360b4fd539a21",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-11T15:14:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-128",
+      "kb-112"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "03b7088fbae8951b92a4b0c7fcf3ade16a6d8cf0ad7bb129d3a11202c9223d6e"
+  },
+  {
+    "actor_ref": "synthetic-customer-09",
+    "agent_id": "support-test-agent",
+    "amount_minor": 2750,
+    "decision_id": "decision-029",
+    "input_messages_hash": "c7137b184f89f4801f7c7daca720529a7fc88ad2cf941b8f7bbe155a8f9db1ee",
+    "kb_snapshot_hash": "940817480327bb41e3bcba706904e9b05915284cedb3cba8277946c64242465f",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-11T17:18:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-101",
+      "kb-107"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "9aed24fefcfbf403d06809f63f046c9f374304f83e02e6d5dc51953e5c3765f6"
+  },
+  {
+    "actor_ref": "synthetic-customer-10",
+    "agent_id": "support-test-agent",
+    "amount_minor": 3000,
+    "decision_id": "decision-030",
+    "input_messages_hash": "0f827880349d16b699c3dcabeaa406b775ca72e66cc8987119c8c23fe702989b",
+    "kb_snapshot_hash": "e57b32d1bca2b9016a2fe339eced4bc76cc94506e3659ad0250f9166d2da0db5",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-11T19:09:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-104",
+      "kb-125"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "3a09e9525b46032d207ad8b7994e711e4f0d376744d2af00aa27440552db0d78"
+  },
+  {
+    "actor_ref": "synthetic-customer-13",
+    "agent_id": "support-test-agent",
+    "amount_minor": null,
+    "decision_id": "decision-031",
+    "input_messages_hash": "4d24c543aa39132229f26f9dcc0b376d82f21c2c7706ef497489f9bed604f587",
+    "kb_snapshot_hash": "ca9f3d63062f3fd4693e1afd627050eede631d238d636ac2c3fd2fc1b232b678",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-12T09:37:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-120",
+      "kb-107"
+    ],
+    "structured_action": "decline_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [],
+    "tool_results_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+    "actor_ref": "synthetic-customer-12",
+    "agent_id": "support-test-agent",
+    "amount_minor": 3500,
+    "decision_id": "decision-032",
+    "input_messages_hash": "65c45810b5fa65cc99baeb8f74300014597a6929c0c58b162961ce33ee00e857",
+    "kb_snapshot_hash": "209dffc73135359c4c943322a4c955c969c25cde1c2ce5f3bb2a464746beb636",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-12T11:15:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-104",
+      "kb-124"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "4ebe269866f08133303129b7cf754223b3ca682e3d1eb5ee238b3b13a941da00"
+  },
+  {
+    "actor_ref": "synthetic-customer-13",
+    "agent_id": "support-test-agent",
+    "amount_minor": 3750,
+    "decision_id": "decision-033",
+    "input_messages_hash": "4feb7426c9aa9fa9362d9b8dab2620de5c00672b70d69899efde563265c9d81c",
+    "kb_snapshot_hash": "40ae962be263973bbfa4ddc7382cf12b77d20c58bc18f9a820e74687bf9ab619",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-12T13:13:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-112",
+      "kb-119"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "2a2d421bf89098fde80e415a2512b993a47772835333fde248e253d338fe3d93"
+  },
+  {
+    "actor_ref": "synthetic-customer-14",
+    "agent_id": "support-test-agent",
+    "amount_minor": 4000,
+    "decision_id": "decision-034",
+    "input_messages_hash": "40196cfd61f0ed779a24dee26443312a1b4239a2466fe59efacafc4125f80db8",
+    "kb_snapshot_hash": "73b348d427539c64fe104300a700dfa44e3899a797f6dcc25615a63e5d927c35",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-12T15:16:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-118",
+      "kb-105"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "a9020282f89b7b9602947c28608167f38b04228d3da093755694f895ef913996"
+  },
+  {
+    "actor_ref": "synthetic-customer-15",
+    "agent_id": "support-test-agent",
+    "amount_minor": 4250,
+    "decision_id": "decision-035",
+    "input_messages_hash": "38feba1686b3c965b821112b4db3a8f10790725f39307fb37bbf3e34357e2151",
+    "kb_snapshot_hash": "ff76b05db5bbd1674c06e87964a2fe4dd76527d55c6032c85f7b35313441ae9e",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-12T17:38:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-107",
+      "kb-105"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "c7e78f20f5ca1dd0c030c5fa6794d378e8b0dcf69d8e543b7c6798876dd5049a"
+  },
+  {
+    "actor_ref": "synthetic-customer-16",
+    "agent_id": "support-test-agent",
+    "amount_minor": 1500,
+    "decision_id": "decision-036",
+    "input_messages_hash": "4455ef8c2c891428cdff9c49691a7f5588724acd0226eda4857b1f84aede2e65",
+    "kb_snapshot_hash": "e0587159d8afbddbaa2047997f520f1e8c2790167e3b8e18e8f1d28ffdffba8b",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-12T19:01:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-101",
+      "kb-115"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "c711ee5d176c6c839b3a271ed3eedf79643cd21e3e1dd7448c579cb02437ca09"
+  },
+  {
+    "actor_ref": "synthetic-customer-17",
+    "agent_id": "support-test-agent",
+    "amount_minor": 1750,
+    "decision_id": "decision-037",
+    "input_messages_hash": "0f0220f6ff3aeeec054f07c8327610571604d2c4bb0b4318e6925819b11fff7f",
+    "kb_snapshot_hash": "d334d78a40545b307b48a4e6a12f08d4af9a78ee5ae793ae7a288e3e10fcf877",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-13T09:37:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-118",
+      "kb-116"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "41859edacaa48908a81200fdbf8b32369aba306042d2764f99f2b845c2e7b759"
+  },
+  {
+    "actor_ref": "synthetic-customer-20",
+    "agent_id": "support-test-agent",
+    "amount_minor": null,
+    "decision_id": "decision-038",
+    "input_messages_hash": "c211ee077bd42955ed7cc10c6354bf8f06e8635f8504512117583a559196734c",
+    "kb_snapshot_hash": "07b13f71ca9b8a3b0da38998652f6e593f9aa62278d295070502cbe07a488cb3",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-13T11:30:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-121",
+      "kb-115"
+    ],
+    "structured_action": "decline_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [],
+    "tool_results_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  {
+    "actor_ref": "synthetic-customer-19",
+    "agent_id": "support-test-agent",
+    "amount_minor": 2250,
+    "decision_id": "decision-039",
+    "input_messages_hash": "83a571849738f1fb9d56d8187014ee2594959ddf76c7e3a0b5cb4bd81f7fddde",
+    "kb_snapshot_hash": "98c0df44ebe99fcf57717c616a9d667ae5adfd7ba237259281ab65f3c07c1f3c",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-13T13:42:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-127",
+      "kb-124"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "a22b7c715bf8bf73618357a4af8ffa43b334de49b1f7b85ecdac37c36bdb5db6"
+  },
+  {
+    "actor_ref": "synthetic-customer-20",
+    "agent_id": "support-test-agent",
+    "amount_minor": 2500,
+    "decision_id": "decision-040",
+    "input_messages_hash": "a24f7bb3f17fc7c117817f33f4dcf08f1021a4b629f78da08ac829548249c6ad",
+    "kb_snapshot_hash": "32c0c14190d40418055f884d88e62413896928f278d77f1ef4ec7037434a3ddf",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-13T15:00:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-116",
+      "kb-129"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "92cbb595655d1e40405c3631898d1d23af839657e953562d4fd49d5b0ff8915f"
+  },
+  {
+    "actor_ref": "synthetic-customer-01",
+    "agent_id": "support-test-agent",
+    "amount_minor": 2750,
+    "decision_id": "decision-041",
+    "input_messages_hash": "4b6a9366398803d2fab48fb26a0de97837bd84c328d41f0700dc7753dda2d931",
+    "kb_snapshot_hash": "b17ef25a895bb6ec249cc857d987579125ec5595bc66b193b80f50d94bff4fde",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-13T17:46:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-115",
+      "kb-127"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "4a453d057d066872f12f92a790263e894c7bbc8d83ee148c2e5bafb27d9086a8"
+  },
+  {
+    "actor_ref": "synthetic-customer-02",
+    "agent_id": "support-test-agent",
+    "amount_minor": 3000,
+    "decision_id": "decision-042",
+    "input_messages_hash": "1fab2cb03c2c00b71355c344b5a84835a59646ab27be77aa41583e5953811f1d",
+    "kb_snapshot_hash": "815d26b0f79790b7d3160c08184c84d39daccb90dad93f1f1ae35aca5cd61478",
+    "memory_snapshot_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "missing_inputs": [],
+    "model_id": "synthetic-model-v1",
+    "occurred_at": "2026-10-13T19:19:00Z",
+    "policy_version": "refund-policy-7",
+    "prompt_version": "support-v3",
+    "schema_version": "1.0",
+    "source_ids": [
+      "kb-109",
+      "kb-108"
+    ],
+    "structured_action": "start_refund",
+    "target_id": "cartwheel-fixture",
+    "tool_names": [
+      "request_refund"
+    ],
+    "tool_results_hash": "0c28a5990a528b6ce8c74f57b8294897c4daa1176723148801c9204d1828c8d1"
+  }
+]
