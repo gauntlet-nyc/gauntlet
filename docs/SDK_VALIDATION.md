@@ -1422,3 +1422,31 @@ After integrating teammate PR88 memory changes, the full MAIN Python suite was
 rerun:946 passed,4 skipped (125.22s). Ruff/mypy171 and wheel/sdist build also
 passed again. This merge was reviewed for overlap; it does not claim a new live
 Agent Memory smoke in this UI repair task.
+
+### Approved model UI patch verified (2026-10-16)
+
+User explicitly approved reviewed plan
+`1f2fddf49747545220ccd84c3df146e276f02695da8a4ede4f6260d6dfa4b086`.
+Authenticated `POST /approvals` returned201; `POST
+/gate/runs/gh-2c202ade18efc1e4af86/repair` returned200 and
+`fix_verified_review_required`. Approval ID
+`approval-61637c53907246e0a5e2ba521c2e1435`; patched synthetic commit
+`bb544cd2fc449669245c9f055b0d6f4eea44a2b5`. Actual Git diff changes only
+`src/components/FloatingHelp.module.css`, bottom16px to96px, one line.
+
+Real fresh local Next build and headless Chromium verified original replay2/2,
+390px variant2/2,1280px variant2/2, legitimate replay2/2, and Help open/close plus
+checkout receipt on both mobile and desktop. All six reported checks passed.
+The repair API serves16 PNG screenshots; independent review checked every image,
+recomputed the exact plan hash, checked the authenticated approval and event
+ordering, and inspected the actual Git diff. No additional model or hosted
+browser calls were needed. Local temporary build/server resources were cleaned.
+
+Saved result `artifacts/pr87-hosted-demo/ui-repair-result.json`, approval
+`ui-approval.json`, screenshots `approved-repair/`; dashboard at
+`http://localhost:3000/gate/runs/gh-2c202ade18efc1e4af86`. Original hosted regression
+remains visible above the successful repair result. Local patch was not pushed,
+merged into the target branch, or deployed. This is local Chrome repair proof,
+not hosted Anchor repair proof. No source-code change accompanied this execution;
+prior main verification remains946 Python tests,21 dashboard tests and passing
+builds. The session restoration script also reads saved repair results now.
