@@ -215,3 +215,29 @@ def test_tampered_history_is_refused(tmp_path: Path) -> None:
     )
     with pytest.raises(HistoryIntegrityError):
         HistoryArchive.load(copy)
+
+
+def test_adapter_selection_never_goes_live_without_opt_in() -> None:
+    from gauntlet.api.services.gate import GateService
+    from gauntlet.settings import Settings
+
+    keys = {
+        "DAYTONA_API_KEY": "k" * 20,
+        "DAYTONA_TARGET": "eu",
+        "GAUNTLET_DAYTONA_REGISTRATION": "/tmp/r.json",
+        "ANCHOR_API_KEY": "k" * 20,
+        "GAUNTLET_ANCHOR_REQUIRE_PROXY": "0",
+        "GAUNTLET_MODEL_PROVIDER": "azure",
+        "AZURE_OPENAI_ENDPOINT": "https://x.openai.azure.com",
+        "AZURE_OPENAI_DEPLOYMENT": "d",
+        "AZURE_OPENAI_API_KEY": "k" * 20,
+    }
+    assert GateService.adapters(Settings.from_env(keys)) == ("scripted", "fake", "fake")
+    live = Settings.from_env({**keys, "RUN_LIVE_INTEGRATIONS": "1"})
+    assert GateService.adapters(live) == ("azure", "daytona", "anchor")
+    local = {
+        "CARTWHEEL_BASE_ORIGIN": "http://127.0.0.1:3101",
+        "CARTWHEEL_HEAD_ORIGIN": "http://127.0.0.1:3102",
+    }
+    assert GateService.adapters(Settings.from_env(local)) == ("scripted", "local", "local")
+    assert GateService.adapters(Settings.from_env(local), "clean") == ("scripted", "fake", "fake")

@@ -214,16 +214,23 @@ class GateService:
         return readiness(core)[adapter]
 
     @staticmethod
-    def adapters(core: Settings) -> tuple[str, str, str]:
-        """Live only where RUN_LIVE_INTEGRATIONS=1 and that adapter's keys are all set."""
+    def adapters(core: Settings, change_id: str = "help-button") -> tuple[str, str, str]:
+        """Live only where RUN_LIVE_INTEGRATIONS=1 and that adapter's keys are all set.
+
+        Without Daytona/Anchor, pre-started local Cartwheel servers (CARTWHEEL_BASE_ORIGIN /
+        CARTWHEEL_HEAD_ORIGIN) give a real local-Chromium run for the Help-button change.
+        Otherwise the offline fake sandbox and simulated layout browser run.
+        """
         ready = readiness(core)
         live = core.run_live_integrations
         model: str = core.model_provider
         if model != "scripted" and not (live and not ready[model]):
             model = "scripted"
-        infra_live = live and not ready["daytona"] and not ready["anchor"]
-        sandbox, browser = ("daytona", "anchor") if infra_live else ("fake", "fake")
-        return model, sandbox, browser
+        if live and not ready["daytona"] and not ready["anchor"]:
+            return model, "daytona", "anchor"
+        if change_id == "help-button" and not ready["local"]:
+            return model, "local", "local"
+        return model, "fake", "fake"
 
     def _base_view(self, run_id: str, change: ChangeDef) -> GateRunView:
         refs = self.manifests[change.change_id]
@@ -272,14 +279,14 @@ class GateService:
             return record.view
         try:
             record.view = await self._execute(change, record)
-        except (MissingSettingError, RuntimeError, ValueError) as exc:
+        except (MissingSettingError, RuntimeError, ValueError, ImportError) as exc:
             record.view = self._not_tested(record.view, f"Run could not start: {exc}.", "setup")
         return record.view
 
     async def _execute(self, change: ChangeDef, record: GateRunRecord) -> GateRunView:
         run_id = record.view.run_id
         core = Settings.from_env()
-        model, sandbox, browser = self.adapters(core)
+        model, sandbox, browser = self.adapters(core, change.change_id)
         repo, refs = self._fixture_repo()
         target = GateTarget.cartwheel(repo)
         if change.change_id == "clean":
