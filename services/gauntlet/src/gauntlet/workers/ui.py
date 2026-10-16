@@ -68,6 +68,10 @@ class UIWorker:
                         if record.outcome == "blocked" and record.action != "click":
                             status = "aborted"
                             break
+                        if self.kind == "workflow" and record.outcome == "blocked":
+                            # A state-changing workflow must not run later steps after a
+                            # blocked submit. The checked click receipt can still prove failure.
+                            break
             except TimeoutError:
                 status = "budget_exceeded"
             except EnvironmentUnavailableError:
