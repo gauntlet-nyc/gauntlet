@@ -80,6 +80,12 @@ class RevisionCheckoutSandbox:
         self._allowed = allowed_shas
         self._active: dict[str, tuple[EnvironmentHandle, Path]] = {}
 
+    def allow(self, source_sha: str) -> None:
+        """Register one more revision (e.g. an approved patch commit) for this run only."""
+        if re.fullmatch(r"[0-9a-f]{40}", source_sha) is None:
+            raise ValueError("revision must be a full commit SHA")
+        self._allowed = self._allowed | {source_sha}
+
     def root_of(self, environment_id: str) -> Path:
         active = self._active.get(environment_id)
         if active is None:

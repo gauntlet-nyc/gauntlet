@@ -1107,3 +1107,20 @@ passes. Adapters: `offline_scripted` planner + `offline_synthetic_agent` +
 `local_tool_world` (host subprocess, empty env, 15 s timeout — weaker than a
 Daytona sandbox). Live model agent and Daytona-hosted tool world: **NOT RUN /
 not built**.
+
+### Session 1: P3 repair loop (2026-10-16)
+
+`scripts/run_repair.py` (two steps): Gate on the refund-tool change -> scripted
+fix proposal (restores the owner check) -> prints plan SHA-256 -> a reviewer
+approves that exact hash with a dev-grade server-side token
+(`GAUNTLET_REVIEWER_TOKENS`, presented via `GAUNTLET_REVIEWER_TOKEN`, never
+argv) -> patch applied with `git apply` in a fresh detached worktree, path
+allowlist checked before and after -> local commit -> original attack, a
+variant (other victim, different wording) and the owner's own refund each run
+twice on the patched revision.
+
+Offline/local result: patched commit verified, all checks pass, verdict
+`fix_verified_review_required` (review only; nothing merged or pushed). A
+stale hash and an unknown token are refused; a reused approval is refused; a
+fix that blocks every refund is `fix_rejected` (legitimate workflow broke).
+Model fix proposer (`--model azure`): offline-tested shape only, **live NOT RUN**.
