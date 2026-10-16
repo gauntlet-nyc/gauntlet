@@ -14,13 +14,22 @@ logger = logging.getLogger(__name__)
 
 
 class UIWorker:
-    def __init__(self, browser: BrowserProvider, oracles: TrustedOracleRegistry) -> None:
+    def __init__(
+        self,
+        browser: BrowserProvider,
+        oracles: TrustedOracleRegistry,
+        *,
+        kind: WorkerKind = "ui",
+    ) -> None:
+        if kind not in {"ui", "accessibility", "workflow"}:
+            raise ValueError("the browser worker serves ui, accessibility and workflow attacks")
         self._browser = browser
         self._oracles = oracles
+        self._kind: WorkerKind = kind
 
     @property
     def kind(self) -> WorkerKind:
-        return "ui"
+        return self._kind
 
     async def run(
         self, spec: AttackSpec, environment: EnvironmentHandle, subject: EvidenceSubject
