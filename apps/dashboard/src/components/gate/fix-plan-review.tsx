@@ -6,13 +6,13 @@ import { PatchDisclosure } from "@/components/gate/patch-disclosure";
 import { PendingButton } from "@/components/gate/pending-button";
 import { ScrollIntoView } from "@/components/gate/scroll-into-view";
 import { DecideForm, DiffView, TONE_CLASSES } from "@/components/shared";
-import type { GateRunView } from "@/lib/gauntlet";
+import { artifactUrl, type GateRunView } from "@/lib/gauntlet";
 import { cn } from "@/lib/utils";
 
 type FixPlan = NonNullable<GateRunView["fix_plan"]>;
 type Repair = NonNullable<GateRunView["repair"]>;
 
-function RepairResult({ repair }: { repair: Repair }) {
+function RepairResult({ repair, runId }: { repair: Repair; runId: string }) {
   const ok = repair.verdict === "fix_verified_review_required";
   const tone = TONE_CLASSES[ok ? "good" : "bad"];
   const Icon = ok ? CheckCircle2 : XCircle;
@@ -40,6 +40,18 @@ function RepairResult({ repair }: { repair: Repair }) {
         })}
       </ul>
       <p className="text-muted-foreground mt-3 pl-7 text-xs">{repair.note}</p>
+      {(repair.screenshot_artifact_ids ?? []).length > 0 && (
+        <section className="mt-4" aria-label="After repair evidence">
+          <h4 className="text-sm font-medium">After repair — local browser evidence</h4>
+          <div className="mt-2 grid grid-cols-2 gap-3 md:grid-cols-4">
+            {repair.screenshot_artifact_ids.slice(0, 8).map((id) => (
+              // Stored evidence may be PNG or JPEG; preserve the original bytes.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img key={id} src={artifactUrl(runId, id)} alt="Patched revision browser evidence" className="max-h-64 rounded border object-contain" />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
@@ -131,7 +143,7 @@ export function FixPlanReview({
       ) : (
         <p className="text-muted-foreground text-xs">Sample plan for review only; the repair runner is wired for AI-agent findings.</p>
       )}
-      {repair && <RepairResult repair={repair} />}
+      {repair && <RepairResult runId={runId} repair={repair} />}
     </section>
   );
 }

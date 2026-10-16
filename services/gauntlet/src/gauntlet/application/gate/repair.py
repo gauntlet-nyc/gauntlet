@@ -10,7 +10,7 @@
 """
 
 import re
-from collections.abc import Callable, Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum
@@ -108,6 +108,7 @@ class VerificationSuite:
     variants: tuple[AttackSpec, ...]
     legitimate: AttackSpec
     legitimate_ok: Callable[[Observation], bool]
+    feature_checks: Callable[[EnvironmentHandle], Awaitable[tuple[CheckResult, ...]]] | None = None
 
 
 class RepairUseCase:
@@ -234,9 +235,11 @@ class RepairUseCase:
                 CheckResult(
                     "legitimate_workflow",
                     all(legit),
-                    "owner flow still succeeds" if all(legit) else "legitimate flow broke",
+                    "legitimate flow still succeeds" if all(legit) else "legitimate flow broke",
                 )
             )
+            if suite.feature_checks is not None:
+                results.extend(await suite.feature_checks(environment))
         finally:
             await sandbox.destroy(environment.environment_id)
         return tuple(results)

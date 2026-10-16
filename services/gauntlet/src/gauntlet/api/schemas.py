@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from gauntlet.contracts import (
     ApprovalRecord,
@@ -66,6 +66,7 @@ class RepairCheckView(BaseModel):
 
 
 class RepairView(BaseModel):
+    screenshot_artifact_ids: list[str] = Field(default_factory=list)
     approval_id: str
     patched_sha: str | None
     touched_paths: list[str]

@@ -226,6 +226,8 @@ def _repair_provenance(labels: dict[str, str]) -> list[Provenance]:
         "offline_scripted_fix": "OFFLINE scripted fix proposer (no model call)",
         "local_git_worktree": "Patch applied in a fresh local git worktree; never pushed",
         "in_memory": "Single-use approval store in API memory",
+        "local_headless_chromium": "Real local headless Chromium repair verification (not Anchor)",
+        "local_ui_rebuild": "Fresh local Cartwheel build at the approved patched SHA (not Daytona)",
     }
     return [
         Provenance(
@@ -587,7 +589,8 @@ class GateService:
         model: str,
     ) -> bool:
         """For confirmed AI-agent findings, freeze a real fix proposal for human review."""
-        if "ai_agent" not in runtime.routes:
+        ui_repair = "ui" in runtime.routes and core.optional("GAUNTLET_UI_REPAIR_NODE_MODULES")
+        if "ai_agent" not in runtime.routes and not ui_repair:
             return False
         confirmed = [
             o for o in report.outcomes if o.finding.status is GateStatus.CONFIRMED_REGRESSION
@@ -595,7 +598,15 @@ class GateService:
         if not confirmed:
             return False
         outcome = confirmed[0]
-        repair = build_repair(core, target, runtime, model=model)  # type: ignore[arg-type]
+        if ui_repair:
+            from gauntlet.ui_repair_composition import build_ui_repair
+
+            fix_model = core.optional("GAUNTLET_FIX_MODEL_PROVIDER") or model
+            if fix_model not in {"scripted", "azure", "bedrock"}:
+                raise ValueError("GAUNTLET_FIX_MODEL_PROVIDER must be scripted, azure or bedrock")
+            repair = build_ui_repair(core, target, runtime, model=fix_model)  # type: ignore[arg-type]
+        else:
+            repair = build_repair(core, target, runtime, model=model)  # type: ignore[arg-type]
         plan, _ = await repair.use_case.propose(
             record.view.run_id, outcome.finding, outcome.attack, target.head_sha
         )
@@ -635,16 +646,30 @@ class GateService:
             raise ValueError("this run has no repairable fix plan")
         if context.approval_id is None:
             raise PermissionError("approve the fix plan hash before running the repair")
+        if context.attack.worker_kind == "ui":
+            from gauntlet.ui_repair_composition import ui_verification_suite
+
+            suite = ui_verification_suite(context.attack, Settings.from_env())
+        else:
+            suite = refund_verification_suite(context.target, context.attack)
         report = await context.repair.use_case.execute(
             context.approval_id,
             context.plan,
             target_id=context.target.target_id,
             fixture_id=context.target.fixture_id,
             fixture_checksum=context.target.fixture_checksum,
-            suite=refund_verification_suite(context.target, context.attack),
+            suite=suite,
         )
         context.approval_id = None  # spent by authorize()
+        screenshots: list[str] = []
+        for attempt in context.repair.attempts:
+            for artifact in attempt.artifacts:
+                ref = artifact.binding.evidence
+                record.artifacts[ref.artifact_id] = (ref.media_type, artifact.content)
+                if ref.media_type.startswith("image/"):
+                    screenshots.append(ref.artifact_id)
         repair_view = RepairView(
+            screenshot_artifact_ids=screenshots,
             approval_id=report.approval_id,
             patched_sha=report.patched_sha,
             touched_paths=list(report.touched_paths),

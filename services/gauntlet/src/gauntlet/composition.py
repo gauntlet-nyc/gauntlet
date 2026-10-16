@@ -65,6 +65,7 @@ from gauntlet.workers.ui import UIWorker
 
 if TYPE_CHECKING:
     from gauntlet.application.gate import ApprovalService
+    from gauntlet.application.gate.pair_verdict import GateAttempt
     from gauntlet.application.gate.repair import RepairUseCase, VerificationSuite
     from gauntlet.application.recall import RunRecallUseCase
     from gauntlet.contracts import AttackSpec
@@ -627,6 +628,7 @@ class RepairRuntime:
     use_case: "RepairUseCase"
     approvals: "ApprovalService"
     labels: dict[str, str]
+    attempts: list["GateAttempt"] = field(default_factory=list)
 
 
 def build_repair(
