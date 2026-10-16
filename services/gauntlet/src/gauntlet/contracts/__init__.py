@@ -9,6 +9,12 @@ from .approvals import (
 )
 from .common import EvidenceRef, MissingInput, SourceRef, StrictDTO
 from .events import RunEvent
+from .evidence import (
+    EVIDENCE_MEDIA_TYPES,
+    EvidenceBinding,
+    EvidenceCollector,
+    EvidenceSubject,
+)
 from .gate import (
     ActionRecord,
     ActionStep,
@@ -48,6 +54,7 @@ from .remediation import AuditSummary, RemediationAction, RemediationProposal
 from .replay import ReplayMode, ReplayResult, ReplaySpec
 
 __all__ = [
+    "EVIDENCE_MEDIA_TYPES",
     "ActionRecord",
     "ActionStep",
     "ApprovalChannel",
@@ -64,7 +71,10 @@ __all__ = [
     "ChangeSignal",
     "ChatStep",
     "ClickStep",
+    "EvidenceBinding",
+    "EvidenceCollector",
     "EvidenceRef",
+    "EvidenceSubject",
     "ExposureRecord",
     "Finding",
     "FixPlan",

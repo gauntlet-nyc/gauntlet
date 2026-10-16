@@ -6,6 +6,7 @@ from typing import Final
 from .approvals import ApprovalDecision, ApprovalRecord, FixPlan
 from .common import StrictDTO
 from .events import RunEvent
+from .evidence import EvidenceBinding
 from .gate import AttackSpec, ChangeImpactMap, ChangeRequest, Finding, Observation, OracleVerdict
 from .lineage import ExposureRecord, LineageEdge, ToolEvent
 from .recall import HistoricalDecision, RecallTrigger, RecallVerdict
@@ -21,6 +22,7 @@ EXPORTED_MODELS: Final[dict[str, type[StrictDTO]]] = {
     "audit-summary": AuditSummary,
     "change-impact-map": ChangeImpactMap,
     "change-request": ChangeRequest,
+    "evidence-binding": EvidenceBinding,
     "exposure-record": ExposureRecord,
     "finding": Finding,
     "fix-plan": FixPlan,

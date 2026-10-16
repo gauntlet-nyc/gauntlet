@@ -15,6 +15,7 @@ from fakes import (
     ScriptedModelGateway,
     StaticTargetCatalog,
 )
+
 from gauntlet.analysis import GitRepositoryInspector, extract_signals, parse_unified_diff
 from gauntlet.application import TargetNotAuthorizedError
 from gauntlet.application.gate import PlanChangeDependencies, PlanChangeUseCase
