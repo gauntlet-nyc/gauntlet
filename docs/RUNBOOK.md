@@ -63,6 +63,9 @@ Log UTC/run_id/attempt_id/replay_id/trace_id for every attempt. Track sandbox le
 
 Approved and pinned for B-01a only, in the non-default dependency group `live-providers` (root `pyproject.toml`, resolved in `uv.lock`): `daytona==0.224.1`, `anchorbrowser==1.0.1`, `playwright==1.64.0`, and `boto3==1.43.114` (A-01c planning probe). Default `uv sync` and CI do not install them; use `uv sync --frozen --group live-providers`. Checked: PyPI publisher metadata matches the vendors, none are yanked, and `pip-audit` on the resolved set reported no known vulnerabilities. Approval is for installing and signature checking only. Live calls still need `RUN_LIVE_INTEGRATIONS=1`, explicit spend authorization and an approved synthetic target. `playwright install` (browser download) is not part of this approval.
 
+Approved 2026-10-16 (owner decision): `cryptography>=46` as a runtime dependency of
+`gauntlet-control`, used only for GitHub App RS256 JWT signing (locked at 50.0.2).
+
 Not yet approved: `surrealdb`/`surrealdb[memory]` (the memory extra is a prerelease that needs a separately resolved lock), `arize`/`arize-otel`, ElevenLabs. Each needs its own owner proposal. New packages need A/B/C review per CONTRIBUTING.
 
 Dashboard: `pnpm audit --prod` found four postcss advisories (two high, two moderate) bundled by Next 15.5.28, the latest 15.x. A root `pnpm.overrides` entry forces `postcss>=8.5.23`; typecheck, lint, tests and build pass and the audit is clean. Revisit when Next ships a patched dependency.

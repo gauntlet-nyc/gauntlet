@@ -1,128 +1,75 @@
 """GitHub App adapter: App JWT (RS256) -> installation token -> check runs. Checks-only.
 
-No new dependency: RS256 is RSASSA-PKCS1-v1_5 over SHA-256 implemented with Python
-integers (the key file is read from `GITHUB_PRIVATE_KEY_PATH`, never from the repo or a
-prompt). Python big-int arithmetic is not constant-time; acceptable for this dev-grade
-signer running on our own host, but a production deployment should use a vetted library.
-
-The publisher only creates/updates check runs. It never pushes, comments, approves or
-merges, and the installation token is requested with `checks: write` only.
+RS256 signing uses `cryptography` (RSASSA-PKCS1-v1_5 over SHA-256). The key file is read
+from `GITHUB_PRIVATE_KEY_PATH`, never from the repo or a prompt, and the key never
+prints. The publisher only creates/updates check runs. It never pushes, comments,
+approves or merges, and the installation token is requested with `checks: write` only.
 """
 
 import base64
-import hashlib
 import json
 import re
 import time
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Final
 from urllib.parse import quote
 
 import httpx
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
 from gauntlet.ports.code_host import CheckRunReport
 from gauntlet.ports.errors import EnvironmentUnavailableError
 from gauntlet.settings import IntegrationSettings, require
 
-_SHA256_DIGEST_INFO: Final = bytes.fromhex("3031300d060960864801650304020105000420")
 _REPO: Final = re.compile(r"^[A-Za-z0-9_.-]{1,100}/[A-Za-z0-9_.-]{1,100}$")
 _SHA: Final = re.compile(r"^[0-9a-f]{40}$")
 _EXTERNAL_ID: Final = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 _MAX_SUMMARY: Final = 65_000
 
 
-# ---- minimal DER reader for RSA private keys (PKCS#1 and PKCS#8) ----
-
-
-def _der_read(data: bytes, offset: int) -> tuple[int, bytes, int]:
-    tag = data[offset]
-    length = data[offset + 1]
-    offset += 2
-    if length & 0x80:
-        count = length & 0x7F
-        if count == 0 or count > 4:
-            raise ValueError("unsupported DER length")
-        length = int.from_bytes(data[offset : offset + count], "big")
-        offset += count
-    end = offset + length
-    if end > len(data):
-        raise ValueError("truncated DER")
-    return tag, data[offset:end], end
-
-
-def _der_sequence(data: bytes) -> list[tuple[int, bytes]]:
-    items: list[tuple[int, bytes]] = []
-    offset = 0
-    while offset < len(data):
-        tag, value, offset = _der_read(data, offset)
-        items.append((tag, value))
-    return items
-
-
-@dataclass(frozen=True)
 class RsaPrivateKey:
-    n: int
-    e: int
-    d: int
-    p: int
-    q: int
-    dp: int
-    dq: int
-    qinv: int
+    """An RSA signing key whose material never appears in repr/str."""
+
+    __slots__ = ("_key",)
+
+    def __init__(self, key: rsa.RSAPrivateKey) -> None:
+        self._key = key
 
     def __repr__(self) -> str:
-        return f"RsaPrivateKey(bits={self.n.bit_length()})"
+        return f"RsaPrivateKey(bits={self._key.key_size})"
+
+    __str__ = __repr__
+
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, RsaPrivateKey)
+            and other._key.private_numbers() == self._key.private_numbers()
+        )
+
+    def __hash__(self) -> int:
+        return hash(self._key.public_key().public_numbers().n)
 
     @property
-    def size_bytes(self) -> int:
-        return (self.n.bit_length() + 7) // 8
+    def key_size(self) -> int:
+        return self._key.key_size
 
     def sign_sha256(self, message: bytes) -> bytes:
-        digest_info = _SHA256_DIGEST_INFO + hashlib.sha256(message).digest()
-        k = self.size_bytes
-        if k < len(digest_info) + 11:
-            raise ValueError("RSA key too small")
-        encoded = b"\x00\x01" + b"\xff" * (k - len(digest_info) - 3) + b"\x00" + digest_info
-        m = int.from_bytes(encoded, "big")
-        # CRT signing, then verify before release (guards against fault/key errors).
-        s1 = pow(m, self.dp, self.p)
-        s2 = pow(m, self.dq, self.q)
-        h = (self.qinv * (s1 - s2)) % self.p
-        s = s2 + h * self.q
-        if pow(s, self.e, self.n) != m:
-            raise ValueError("RSA signature self-check failed")
-        return s.to_bytes(k, "big")
+        return self._key.sign(message, padding.PKCS1v15(), hashes.SHA256())
 
 
 def parse_rsa_private_key(pem: str, *, min_bits: int = 2048) -> RsaPrivateKey:
-    """Accept `RSA PRIVATE KEY` (PKCS#1, GitHub's download) or `PRIVATE KEY` (PKCS#8)."""
-    match = re.search(
-        r"-----BEGIN (RSA )?PRIVATE KEY-----([A-Za-z0-9+/=\s]+)-----END (RSA )?PRIVATE KEY-----",
-        pem,
-    )
-    if match is None:
-        raise ValueError("GitHub App private key is not an unencrypted RSA PEM")
-    der = base64.b64decode("".join(match.group(2).split()))
-    tag, body, _ = _der_read(der, 0)
-    if tag != 0x30:
-        raise ValueError("private key is not a DER sequence")
-    items = _der_sequence(body)
-    if match.group(1) is None:  # PKCS#8: version, algorithm, OCTET STRING(PKCS#1)
-        if len(items) < 3 or items[2][0] != 0x04:
-            raise ValueError("unsupported PKCS#8 private key")
-        if bytes.fromhex("2a864886f70d010101") not in items[1][1]:
-            raise ValueError("PKCS#8 key is not RSA")
-        tag, body, _ = _der_read(items[2][1], 0)
-        items = _der_sequence(body)
-    integers = [int.from_bytes(value, "big") for tag, value in items if tag == 0x02]
-    if len(integers) < 9 or integers[0] != 0:
-        raise ValueError("unsupported RSA private key structure")
-    _, n, e, d, p, q, dp, dq, qinv = integers[:9]
-    if p * q != n or n.bit_length() < min_bits:
-        raise ValueError("RSA key is inconsistent or too small")
-    return RsaPrivateKey(n=n, e=e, d=d, p=p, q=q, dp=dp, dq=dq, qinv=qinv)
+    """Accept an unencrypted RSA PEM: PKCS#1 (GitHub's download) or PKCS#8."""
+    try:
+        key = serialization.load_pem_private_key(pem.encode("ascii"), password=None)
+    except (ValueError, TypeError, UnicodeEncodeError):
+        raise ValueError("GitHub App private key is not an unencrypted RSA PEM") from None
+    if not isinstance(key, rsa.RSAPrivateKey):
+        raise ValueError("GitHub App private key is not RSA")
+    if key.key_size < min_bits:
+        raise ValueError("RSA key is too small")
+    return RsaPrivateKey(key)
 
 
 def _b64url(data: bytes) -> str:
