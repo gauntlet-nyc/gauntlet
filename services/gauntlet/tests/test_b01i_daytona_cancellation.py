@@ -30,6 +30,9 @@ class Sandbox:
     async def read_file(self, path: str) -> bytes:
         return FIXTURE
 
+    async def start_cartwheel(self, repo_path: str, port: int) -> None:
+        assert (repo_path, port) == ("/workspace/repo", 3100)
+
     async def signed_preview_origin(self, port: int, expires_in_seconds: int) -> str:
         return "https://token.proxy.daytona.work"
 
@@ -62,7 +65,7 @@ class Health:
 
 def provider(runtime: Runtime, *, delete_timeout: float = 1) -> DaytonaSandboxProvider:
     target = RegisteredTarget(
-        target_id="fixture",
+        target_id="cartwheel-fixture",
         fixture_id="baseline",
         fixture_checksum="c" * 64,
         fixture_state_digest=hashlib.sha256(FIXTURE).hexdigest(),
@@ -71,11 +74,12 @@ def provider(runtime: Runtime, *, delete_timeout: float = 1) -> DaytonaSandboxPr
         preview_port=3100,
         preview_domain_suffix=".proxy.daytona.work",
         ready_path="/ready",
+        startup_profile="cartwheel_next_v1",
         snapshots=(RegisteredSnapshot(SHA, "fixture-snapshot", "d" * 64),),
     )
     return DaytonaSandboxProvider(
         runtime,
-        {"fixture": target},
+        {"cartwheel-fixture": target},
         Health(),
         delete_timeout=delete_timeout,
     )
@@ -84,7 +88,7 @@ def provider(runtime: Runtime, *, delete_timeout: float = 1) -> DaytonaSandboxPr
 def create(adapter: DaytonaSandboxProvider) -> asyncio.Task[object]:
     return asyncio.create_task(
         adapter.create(
-            target_id="fixture",
+            target_id="cartwheel-fixture",
             source_sha=SHA,
             fixture_id="baseline",
             mode="gate_compare",
@@ -197,7 +201,7 @@ def test_cancelled_destroy_of_ready_sandbox_remains_retryable() -> None:
         runtime.sandbox = ReadySandbox()
         adapter = provider(runtime)
         environment = await adapter.create(
-            target_id="fixture",
+            target_id="cartwheel-fixture",
             source_sha=SHA,
             fixture_id="baseline",
             mode="gate_compare",
