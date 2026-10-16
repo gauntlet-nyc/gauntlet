@@ -16,6 +16,7 @@ from gauntlet.contracts import (
     MissingInput,
     NodeRef,
     RecallTrigger,
+    ToolEvent,
 )
 
 DAY = datetime(2026, 10, 5, 10, 0, tzinfo=UTC)
@@ -92,6 +93,11 @@ class History:
 
     async def get_decision(self, decision_id: str) -> HistoricalDecision | None:
         return self.decisions.get(decision_id)
+
+    async def tool_events(
+        self, target_id: str, tool_name: str, start_at: datetime, end_at: datetime
+    ) -> Sequence[ToolEvent]:
+        return ()
 
 
 def trigger(kind: str = "document", reference: str = "kb-117") -> RecallTrigger:

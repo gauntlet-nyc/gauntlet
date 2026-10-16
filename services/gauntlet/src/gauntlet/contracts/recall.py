@@ -69,7 +69,8 @@ class RecallTrigger(StrictDTO):
 class RecallVerdict(StrictDTO):
     verdict_id: Identifier
     recall_id: Identifier
-    decision_id: Identifier
+    decision_id: Identifier | None = None
+    tool_event_id: Identifier | None = None
     mode: RecallMode
     classification: RecallClassification
     rationale: ShortText
@@ -83,6 +84,10 @@ class RecallVerdict(StrictDTO):
     @model_validator(mode="after")
     def classification_matches_mode_and_evidence(self) -> Self:
         cls = self.classification
+        if self.mode == "event_audit" and self.tool_event_id is None:
+            raise ValueError("event_audit verdicts must reference the audited tool_event_id")
+        if self.mode == "decision_counterfactual" and self.decision_id is None:
+            raise ValueError("counterfactual verdicts must reference a decision_id")
         if self.mode == "event_audit":
             if cls in (RecallClassification.TAINTED, RecallClassification.CLEARED):
                 raise ValueError("event_audit cannot produce counterfactual classifications")

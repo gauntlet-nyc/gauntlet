@@ -21,3 +21,11 @@
 - **Scoping** (`application/recall/scope.py`): breadth-first over recorded edges from the trigger node (document, memory, model/prompt/policy version), so each decision gets its shortest provenance path. Only decisions on the trigger's target and inside the incident window are exposures; edges recorded after the window are ignored (no hindsight). Hop/node limits, and edges to unrecorded decisions, become explicit gaps. `finding` and `tool_result_window` triggers are routed to event audit.
 - **Replay readiness** (`application/recall/readiness.py`): `tool_results_hash` and `input_messages_hash` are always critical; `kb_snapshot_hash` becomes critical if the decision retrieved KB content and `memory_snapshot_hash` if it read memory, even when the recorder flagged them optional. Any critical gap → not replayable (still exposed, manual review).
 - Ports `LineageStore` and `HistoricalEventStore` are read-only; B implements them on SurrealDB core.
+
+## Event audit (A-05)
+
+- `application/recall/event_audit.py` `EventAuditUseCase.run(recall_id, trigger, tool_name)`: only for `mode=event_audit`. Reads recorded `ToolEvent`s for the target/tool/window, asks B's `AuditEvidenceProvider` for authoritative `AuditFacts`, and classifies with `classify_event_audit`.
+- **Hard rules:** an `unknown` outcome forces inconclusive; an effect reported for a non-succeeded operation is discarded and forces inconclusive; a caller/owner mismatch without an authoritative forbidden result is at most inconclusive.
+- `RecallVerdict` now references `tool_event_id` (event audit) or `decision_id` (counterfactual); the contract requires the right one per mode.
+- `AuditSummary` counts are computed from verdicts and must add up; an empty window is a gap ("absence of logs is not clearance").
+- `RemediationProposal` is draft-only and every action is a `*_review` / evidence-collection request; there is no executed status. Violations → `reverse_transaction_review`; inconclusive → `collect_missing_evidence`. Approval for review uses the A-03 `remediation` approval subject.

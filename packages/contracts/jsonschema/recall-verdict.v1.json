@@ -38,11 +38,19 @@
       "type": "string"
     },
     "decision_id": {
-      "maxLength": 128,
-      "minLength": 1,
-      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
-      "title": "Decision Id",
-      "type": "string"
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Decision Id"
     },
     "evidence_ids": {
       "default": [],
@@ -115,6 +123,21 @@
       "title": "Schema Version",
       "type": "string"
     },
+    "tool_event_id": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tool Event Id"
+    },
     "verdict_id": {
       "maxLength": 128,
       "minLength": 1,
@@ -126,7 +149,6 @@
   "required": [
     "verdict_id",
     "recall_id",
-    "decision_id",
     "mode",
     "classification",
     "rationale",

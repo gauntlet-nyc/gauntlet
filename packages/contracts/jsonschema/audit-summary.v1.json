@@ -1,0 +1,78 @@
+{
+  "additionalProperties": false,
+  "description": "Counts computed from verdict records; never typed in by hand or by a model.",
+  "properties": {
+    "audited": {
+      "minimum": 0,
+      "title": "Audited",
+      "type": "integer"
+    },
+    "clear": {
+      "minimum": 0,
+      "title": "Clear",
+      "type": "integer"
+    },
+    "end_at": {
+      "format": "date-time",
+      "title": "End At",
+      "type": "string"
+    },
+    "gaps": {
+      "default": [],
+      "items": {
+        "maxLength": 2500,
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Gaps",
+      "type": "array"
+    },
+    "inconclusive": {
+      "minimum": 0,
+      "title": "Inconclusive",
+      "type": "integer"
+    },
+    "recall_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "title": "Recall Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "start_at": {
+      "format": "date-time",
+      "title": "Start At",
+      "type": "string"
+    },
+    "tool_name": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "title": "Tool Name",
+      "type": "string"
+    },
+    "violations": {
+      "minimum": 0,
+      "title": "Violations",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "recall_id",
+    "tool_name",
+    "start_at",
+    "end_at",
+    "audited",
+    "violations",
+    "clear",
+    "inconclusive"
+  ],
+  "title": "AuditSummary",
+  "type": "object"
+}

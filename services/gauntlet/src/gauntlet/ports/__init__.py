@@ -2,6 +2,7 @@
 
 from .approvals import ApprovalStore
 from .artifacts import ArtifactStore, StoredArtifact
+from .audit import AuditEvidenceProvider, AuditFacts
 from .browser import BrowserProvider
 from .errors import (
     ApprovalAlreadyConsumedError,
@@ -28,6 +29,8 @@ __all__ = [
     "ApprovalStore",
     "ArtifactRejectedError",
     "ArtifactStore",
+    "AuditEvidenceProvider",
+    "AuditFacts",
     "BrowserProvider",
     "DuplicateApprovalError",
     "DuplicateIdempotencyKeyError",

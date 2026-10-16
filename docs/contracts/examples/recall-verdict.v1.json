@@ -3,6 +3,7 @@
   "verdict_id": "verdict-001",
   "recall_id": "recall-001",
   "decision_id": "decision-002",
+  "tool_event_id": null,
   "mode": "decision_counterfactual",
   "classification": "inconclusive",
   "rationale": "Control replay did not reproduce the historical outcome",

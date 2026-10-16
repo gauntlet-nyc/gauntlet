@@ -50,6 +50,7 @@ from .lineage import (
     ToolEvent,
 )
 from .recall import HistoricalDecision, RecallMode, RecallTrigger, RecallVerdict
+from .remediation import AuditSummary, RemediationAction, RemediationProposal
 from .replay import ReplayMode, ReplayResult, ReplaySpec
 
 __all__ = [
@@ -63,6 +64,7 @@ __all__ = [
     "AffectedSurface",
     "ApiRequestStep",
     "AttackSpec",
+    "AuditSummary",
     "CaptureStep",
     "ChangeImpactMap",
     "ChangeRequest",
@@ -90,6 +92,8 @@ __all__ = [
     "RecallTrigger",
     "RecallVerdict",
     "Relation",
+    "RemediationAction",
+    "RemediationProposal",
     "ReplayMode",
     "ReplayResult",
     "ReplaySpec",

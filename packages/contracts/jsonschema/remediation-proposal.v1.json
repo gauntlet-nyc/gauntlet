@@ -1,0 +1,101 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "enum": [
+        "reverse_transaction_review",
+        "customer_contact_review",
+        "collect_missing_evidence",
+        "policy_fix_review"
+      ],
+      "title": "Action",
+      "type": "string"
+    },
+    "affected_actor_refs": {
+      "default": [],
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+        "type": "string"
+      },
+      "maxItems": 500,
+      "title": "Affected Actor Refs",
+      "type": "array"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "evidence_ids": {
+      "default": [],
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+        "type": "string"
+      },
+      "title": "Evidence Ids",
+      "type": "array"
+    },
+    "proposal_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "title": "Proposal Id",
+      "type": "string"
+    },
+    "rationale": {
+      "maxLength": 2500,
+      "minLength": 1,
+      "title": "Rationale",
+      "type": "string"
+    },
+    "recall_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "title": "Recall Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "default": "draft",
+      "enum": [
+        "draft",
+        "approved_for_review",
+        "dismissed"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "verdict_ids": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+        "type": "string"
+      },
+      "maxItems": 500,
+      "minItems": 1,
+      "title": "Verdict Ids",
+      "type": "array"
+    }
+  },
+  "required": [
+    "proposal_id",
+    "recall_id",
+    "action",
+    "verdict_ids",
+    "rationale",
+    "created_at"
+  ],
+  "title": "RemediationProposal",
+  "type": "object"
+}
