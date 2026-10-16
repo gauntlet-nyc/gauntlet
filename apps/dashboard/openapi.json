@@ -3194,6 +3194,7 @@
         "type": "object"
       },
       "StartGateRun": {
+        "additionalProperties": false,
         "properties": {
           "change_id": {
             "default": "help-button",
@@ -3951,7 +3952,26 @@
         ]
       },
       "post": {
+        "description": "Offline runs are open. A run that would call a live, paid provider needs a reviewer.",
         "operationId": "start_gate_run_gate_runs_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {

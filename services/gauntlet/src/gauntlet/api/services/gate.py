@@ -328,6 +328,12 @@ class GateService:
             return model, "local", "local"
         return model, "fake", "fake"
 
+    @classmethod
+    def uses_live_provider(cls, core: Settings, change_id: str) -> bool:
+        """True when this run would call a paid/remote provider (model, Daytona or Anchor)."""
+        model, sandbox, browser = cls.adapters(core, change_id)
+        return model != "scripted" or sandbox == "daytona" or browser == "anchor"
+
     def _base_view(self, run_id: str, change: ChangeDef) -> GateRunView:
         refs = self.manifests[change.change_id]
         return GateRunView(

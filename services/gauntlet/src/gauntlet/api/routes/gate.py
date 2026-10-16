@@ -1,12 +1,15 @@
 """Gate runs: start, list, get (diff, plan, attempts, verdict, fix plan, events, briefing)."""
 
-from fastapi import APIRouter, HTTPException, Response
+from typing import Annotated
+
+from fastapi import APIRouter, Header, HTTPException, Response
 
 from gauntlet.application.errors import ApprovalDeniedError
 from gauntlet.application.voice import build_briefing
 from gauntlet.intake.github import render_check_run
+from gauntlet.settings import Settings
 
-from ..auth import Reviewer
+from ..auth import Reviewer, authenticated_reviewer
 from ..container import get_container
 from ..schemas import (
     BriefingView,
@@ -34,8 +37,14 @@ async def list_changes() -> list[ChangeOption]:
 
 
 @router.post("/runs", status_code=201)
-async def start_gate_run(body: StartGateRun) -> GateRunView:
-    return await get_container().gate.start(body.change_id)
+async def start_gate_run(
+    body: StartGateRun, authorization: Annotated[str | None, Header()] = None
+) -> GateRunView:
+    """Offline runs are open. A run that would call a live, paid provider needs a reviewer."""
+    service = get_container().gate
+    if service.uses_live_provider(Settings.from_env(), body.change_id):
+        authenticated_reviewer(authorization)  # raises 401 without a valid reviewer token
+    return await service.start(body.change_id)
 
 
 @router.get("/runs")

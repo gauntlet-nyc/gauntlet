@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from gauntlet.contracts import (
     ApprovalRecord,
@@ -110,6 +110,8 @@ class GateRunSummary(BaseModel):
 
 
 class StartGateRun(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     change_id: Literal["help-button", "refund-tool", "clean"] = "help-button"
 
 

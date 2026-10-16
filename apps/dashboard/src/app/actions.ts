@@ -23,12 +23,15 @@ export async function logout(): Promise<void> {
 
 export async function startRun(form: FormData): Promise<void> {
   const changeId = String(form.get("change_id") ?? "help-button");
+  // Offline runs are open; a run that would call a live provider needs the reviewer token.
+  const token = (await cookies()).get(COOKIE)?.value;
   const res = await fetch(`${API_URL}/gate/runs`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) },
     body: JSON.stringify({ change_id: changeId }),
     cache: "no-store",
   });
+  if (res.status === 401) redirect(`/login?next=${encodeURIComponent("/gate")}`);
   if (!res.ok) redirect(`/gate?error=${res.status}`);
   const run = (await res.json()) as { run_id: string };
   redirect(`/gate/runs/${encodeURIComponent(run.run_id)}`);
