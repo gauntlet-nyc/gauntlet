@@ -1,8 +1,11 @@
-import Link from "next/link";
+import { AlertTriangle, History } from "lucide-react";
 
 import { startRun } from "@/app/actions";
-import { ErrorPanel, OfflineBadge, Section, StatusPill } from "@/components/ui";
-import { api, shortSha } from "@/lib/gauntlet";
+import { RunsTable } from "@/components/gate/runs-table";
+import { StartRunForm } from "@/components/gate/start-run-form";
+import { Reveal } from "@/components/motion/reveal";
+import { EmptyState, ErrorPanel, OfflineBadge, PageHeader, toneOf } from "@/components/shared";
+import { api } from "@/lib/gauntlet";
 
 export const dynamic = "force-dynamic";
 
@@ -14,46 +17,42 @@ export default async function GatePage({ searchParams }: { searchParams: Promise
   } catch (err) {
     return <ErrorPanel what="Gate" error={err} />;
   }
+  const regressions = runs.filter((r) => toneOf(r.status) === "bad").length;
+  const passed = runs.filter((r) => toneOf(r.status) === "good").length;
   return (
     <main>
-      <h1>Gate</h1>
-      <p>Read a PR diff, plan attacks, run them on base and head, let independent oracles decide.</p>
-      {runs.some((r) => r.offline) && <OfflineBadge provenance={[]} />}
-      {params.error && <p role="alert">Could not start run (HTTP {params.error}).</p>}
-      <Section title="Start a run">
-        <form action={startRun} style={{ display: "flex", gap: 8 }}>
-          <select name="change_id" defaultValue="help-button">
-            {changes.map((c) => (
-              <option key={c.change_id} value={c.change_id}>
-                {c.feature_intent} ({shortSha(c.base_sha)}..{shortSha(c.head_sha)})
-                {c.offline_recording_available ? " — offline recording" : " — needs live run"}
-              </option>
-            ))}
-          </select>
-          <button type="submit">Start Gate run</button>
-        </form>
-      </Section>
-      <Section title="Runs">
+      <PageHeader
+        title="Gate"
+        description="Attack each pull request on base and head; independent oracles decide."
+        actions={runs.some((r) => r.offline) ? <OfflineBadge provenance={[]} /> : undefined}
+      />
+      {params.error && (
+        <p role="alert" className="text-regression mb-4 flex items-center gap-2 text-sm">
+          <AlertTriangle className="size-4 shrink-0" aria-hidden />
+          Could not start run (HTTP {params.error}).
+        </p>
+      )}
+
+      <Reveal>
+        <StartRunForm action={startRun} changes={changes} />
+      </Reveal>
+
+      <Reveal index={1} className="mt-12">
+        <div className="mb-3 flex items-baseline justify-between gap-4">
+          <h2 className="text-base font-semibold tracking-tight">Runs</h2>
+          {runs.length > 0 && (
+            <p className="text-muted-foreground text-xs tabular-nums">
+              {runs.length} runs · <span className={regressions > 0 ? "text-regression" : undefined}>{regressions} regressions</span> ·{" "}
+              <span className={passed > 0 ? "text-passed" : undefined}>{passed} passed</span>
+            </p>
+          )}
+        </div>
         {runs.length === 0 ? (
-          <p>No runs yet in this API process.</p>
+          <EmptyState icon={History} title="No runs yet" description="Pick a change above and start one; offline runs take a few seconds." />
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr><th align="left">Run</th><th align="left">Change</th><th align="left">Verdict</th><th align="left">Source</th></tr>
-            </thead>
-            <tbody>
-              {runs.map((r) => (
-                <tr key={r.run_id}>
-                  <td><Link href={`/gate/runs/${encodeURIComponent(r.run_id)}`}>{r.run_id}</Link></td>
-                  <td>{r.change_id}</td>
-                  <td><StatusPill value={r.status} /> {r.attribution !== "unknown" && r.attribution}</td>
-                  <td>{r.offline ? "OFFLINE" : "live"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <RunsTable runs={runs} changes={changes} />
         )}
-      </Section>
+      </Reveal>
     </main>
   );
 }

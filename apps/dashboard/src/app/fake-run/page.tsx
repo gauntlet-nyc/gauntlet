@@ -1,3 +1,8 @@
+import { Activity, FlaskConical, Lock } from "lucide-react";
+
+import { AttackCard } from "@/components/gate/plan-pipeline";
+import { EventTimeline } from "@/components/gate/run-sections";
+import { ErrorPanel, OfflineBadge, PageHeader, Section } from "@/components/shared";
 import { getFakeRun } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
@@ -7,34 +12,27 @@ export default async function FakeRunPage() {
   try {
     run = await getFakeRun();
   } catch (err) {
-    return (
-      <main>
-        <h1>Fake run unavailable</h1>
-        <p>Could not load /runs/fake from the control API: {String(err)}</p>
-      </main>
-    );
+    return <ErrorPanel what="Fake run" error={err} />;
   }
   return (
     <main>
-      <h1>{run.label}</h1>
-      <p>
-        Run {run.run_id}, attack {run.plan.attack_id}
-      </p>
-      <p>{run.plan.hypothesis}</p>
-      <h2>Planned steps</h2>
-      <ol>
-        {run.plan.steps.map((s, i) => (
-          <li key={i}>{s.action}</li>
-        ))}
-      </ol>
-      <h2>Events</h2>
-      <ul>
-        {run.events.map((e) => (
-          <li key={e.event_id}>
-            #{e.sequence} {e.event_type} by {e.actor}
-          </li>
-        ))}
-      </ul>
+      <PageHeader
+        eyebrow="Diagnostics"
+        icon={FlaskConical}
+        title="Fake run"
+        description={
+          <>
+            {run.label} · <code className="font-mono text-sm">{run.run_id}</code>
+          </>
+        }
+        actions={<OfflineBadge provenance={[]} />}
+      />
+      <Section title="Planned attack" icon={Lock}>
+        <AttackCard attack={run.plan} />
+      </Section>
+      <Section title="Events" icon={Activity}>
+        <EventTimeline events={run.events} />
+      </Section>
     </main>
   );
 }
