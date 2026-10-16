@@ -32,7 +32,12 @@ async def probe_azure(settings: IntegrationSettings) -> str:
         reasoning_model=config.reasoning_model,
     )
     response = await gateway.complete(
-        ModelRequest(system="Reply with the single word OK.", user="OK", max_output_tokens=16)
+        ModelRequest(
+            system="Reply with the JSON object {\"ok\": true}.",
+            user="Return the json now.",
+            # Reasoning deployments spend tokens before answering.
+            max_output_tokens=1024,
+        )
     )
     return f"model {response.model_id} replied"
 

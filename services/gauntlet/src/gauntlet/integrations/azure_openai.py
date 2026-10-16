@@ -20,12 +20,18 @@ _MAX_RESPONSE_BYTES: Final = 1_000_000
 _SAFE_REQUEST_ID: Final = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 _DEPLOYMENT: Final = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 _API_VERSION: Final = re.compile(r"^\d{4}-\d{2}-\d{2}(?:-preview)?$")
-_AZURE_HOSTS: Final = (".openai.azure.com", ".cognitiveservices.azure.com")
+_AZURE_HOSTS: Final = (
+    ".openai.azure.com",
+    ".cognitiveservices.azure.com",
+    ".services.ai.azure.com",
+)
+_V1_PATH: Final = "/openai/v1"
 
 
-def _endpoint(value: str) -> str:
+def _endpoint(value: str) -> tuple[str, bool]:
+    """Return (origin, is_v1). Accepts a bare resource origin or the AI Foundry v1 base URL."""
     try:
-        parsed = urlsplit(value.rstrip("/"))
+        parsed = urlsplit(value.strip().rstrip("/"))
         host = parsed.hostname
         port = parsed.port
     except ValueError:
@@ -35,12 +41,14 @@ def _endpoint(value: str) -> str:
         or host is None
         or not host.endswith(_AZURE_HOSTS)
         or port is not None
-        or parsed.path
+        or parsed.path not in ("", _V1_PATH)
         or parsed.query
         or parsed.username is not None
     ):
-        raise ValueError("Azure OpenAI endpoint must be an https://<resource> Azure host")
-    return f"https://{host}"
+        raise ValueError(
+            "Azure OpenAI endpoint must be https://<resource> or https://<resource>/openai/v1"
+        )
+    return f"https://{host}", parsed.path == _V1_PATH
 
 
 class AzureOpenAIGateway:
@@ -62,8 +70,12 @@ class AzureOpenAIGateway:
             raise ValueError("Azure OpenAI API version is invalid")
         if not api_key.strip():
             raise ValueError("Azure OpenAI API key is required")
+        origin, self._v1 = _endpoint(endpoint)
+        # The v1 API takes the deployment as `model` and needs no api-version.
         self._url = (
-            f"{_endpoint(endpoint)}/openai/deployments/{quote(deployment, safe='')}"
+            f"{origin}{_V1_PATH}/chat/completions"
+            if self._v1
+            else f"{origin}/openai/deployments/{quote(deployment, safe='')}"
             f"/chat/completions?api-version={api_version}"
         )
         self._deployment = deployment
@@ -89,6 +101,8 @@ class AzureOpenAIGateway:
             "max_completion_tokens": request.max_output_tokens,
             "response_format": {"type": "json_object"},
         }
+        if self._v1:
+            body["model"] = self._deployment
         if not self._reasoning_model:
             # Reasoning deployments only accept their default temperature.
             body["temperature"] = request.temperature

@@ -180,15 +180,23 @@ class ScopedPlaywrightProvider:
                 session.egress_attempted = True
                 await route.abort()
                 return
-            response = await route.fetch(max_redirects=0)
-            if 300 <= response.status < 400:
-                # Playwright routes only the first hop of a redirect chain.
-                # Fulfilling a 3xx lets the browser follow later hops without
-                # another route check, so this local adapter denies redirects.
-                session.egress_attempted = True
-                await route.abort()
-                return
-            await route.fulfill(response=response)
+            try:
+                response = await route.fetch(max_redirects=0)
+                if 300 <= response.status < 400:
+                    # Playwright routes only the first hop of a redirect chain.
+                    # Fulfilling a 3xx lets the browser follow later hops without
+                    # another route check, so this local adapter denies redirects.
+                    session.egress_attempted = True
+                    await route.abort()
+                    return
+                await route.fulfill(response=response)
+            except Exception:
+                # The page or context closed mid-request (e.g. navigation or session teardown).
+                # Fail closed: the request is not served, and teardown must not crash.
+                try:
+                    await route.abort()
+                except Exception:
+                    pass
 
         try:
             await context.route("**/*", route_request)
