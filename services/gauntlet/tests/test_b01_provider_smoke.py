@@ -7,6 +7,7 @@ from pathlib import Path
 
 import httpx
 import pytest
+from image_samples import JPEG, PNG
 
 from gauntlet.contracts import ActionRecord, ChangeRequest, EvidenceSubject
 from gauntlet.execution.provider_smoke import capture_provider_pair
@@ -20,7 +21,6 @@ from gauntlet.ports.sandbox import EnvironmentHandle
 BASE = "a" * 40
 HEAD = "b" * 40
 CHECKSUM = "c" * 64
-PNG = b"\x89PNG\r\n\x1a\nsynthetic-smoke-image"
 
 
 def change() -> ChangeRequest:
@@ -92,6 +92,8 @@ class RecordingBrowser:
         self.navigated: list[str] = []
         self.fail_head_navigation = False
         self.corrupt_capture = False
+        self.image = PNG
+        self.media_type = "image/png"
 
     async def open_session(self, environment: EnvironmentHandle, subject: EvidenceSubject) -> str:
         assert is_browser_subject_for(environment, subject)
@@ -111,8 +113,8 @@ class RecordingBrowser:
             return ActionRecord(step_index=0, action="navigate", outcome=outcome)
         assert step_index == 1 and step.action == "capture"  # type: ignore[attr-defined]
         binding = await self.store.put(
-            b"not a png" if self.corrupt_capture else PNG,
-            "image/png",
+            b"not a png" if self.corrupt_capture else self.image,
+            self.media_type,
             subject.model_copy(update={"step_index": 1}),
         )
         return ActionRecord(
@@ -126,11 +128,15 @@ class RecordingBrowser:
         self.sessions.pop(session_id)
 
 
-def test_pair_smoke_captures_bound_png_for_each_revision(tmp_path: Path) -> None:
+@pytest.mark.parametrize("image,media", [(PNG, "image/png"), (JPEG, "image/jpeg")])
+def test_pair_smoke_captures_bound_image_for_each_revision(
+    tmp_path: Path, image: bytes, media: str
+) -> None:
     async def scenario() -> None:
         sandbox = RecordingSandbox()
         store = LocalArtifactStore(tmp_path)
         browser = RecordingBrowser(store)
+        browser.image, browser.media_type = image, media
         captures = await capture_provider_pair(
             sandbox,
             browser,
@@ -146,7 +152,7 @@ def test_pair_smoke_captures_bound_png_for_each_revision(tmp_path: Path) -> None
         assert len({item.artifact_id for item in captures}) == 2
         for capture in captures:
             stored = await store.get(capture.artifact_id)
-            assert stored is not None and stored.content == PNG
+            assert stored is not None and stored.content == image
             assert stored.binding.evidence.sha256 == capture.sha256
         assert browser.sessions == {}
         assert all(
@@ -224,6 +230,40 @@ def test_repeated_cancel_during_browser_close_still_cleans_up(tmp_path: Path) ->
         browser.release_close.set()
         with pytest.raises(asyncio.CancelledError):
             await task
+        assert browser.sessions == {}
+        assert all(
+            [
+                not await FakeSandboxProvider.verify_fixture(sandbox, env.environment_id, CHECKSUM)
+                for env in sandbox.created
+            ]
+        )
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize(
+    "image,media",
+    [(JPEG, "image/png"), (PNG, "image/jpeg"), (JPEG[:-2], "image/jpeg"), (PNG[:-1], "image/png")],
+)
+def test_smoke_rejects_mime_mismatch_and_truncation(
+    tmp_path: Path, image: bytes, media: str
+) -> None:
+    async def scenario() -> None:
+        sandbox = RecordingSandbox()
+        store = LocalArtifactStore(tmp_path)
+        browser = RecordingBrowser(store)
+        browser.image, browser.media_type = image, media
+        with pytest.raises(EnvironmentUnavailableError, match="evidence is missing or invalid"):
+            await capture_provider_pair(
+                sandbox,
+                browser,
+                store,
+                change(),
+                CHECKSUM,
+                ready_path="/checkout",
+                registered_target=target(),
+                receipt_transport=receipt_transport(),
+            )
         assert browser.sessions == {}
         assert all(
             [

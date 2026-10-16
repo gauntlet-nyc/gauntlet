@@ -7,6 +7,7 @@ from pathlib import Path
 from threading import Thread
 
 import pytest
+from image_samples import JPEG, PNG
 
 from gauntlet.contracts import AttackSpec, EvidenceSubject
 from gauntlet.integrations.browser_evidence import BrowserEvidenceCollector
@@ -84,9 +85,20 @@ def _server(*, covered: bool) -> tuple[ThreadingHTTPServer, Thread]:
 
 
 @pytest.mark.skipif(not CHROME.exists(), reason="local Chrome is needed for browser evidence")
+@pytest.mark.parametrize("image_format", ["png", "jpeg"])
 @pytest.mark.parametrize("covered,expected", [(False, "pass"), (True, "fail")])
-def test_checkout_workflow_from_real_browser(tmp_path: Path, covered: bool, expected: str) -> None:
-    async_playwright = pytest.importorskip("playwright.async_api").async_playwright
+def test_checkout_workflow_from_real_browser(
+    tmp_path: Path, covered: bool, expected: str, image_format: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    api = pytest.importorskip("playwright.async_api")
+    async_playwright = api.async_playwright
+    original_screenshot = api.Page.screenshot
+
+    async def screenshot(page: object, **kwargs: object) -> bytes:
+        kwargs["type"] = image_format
+        return await original_screenshot(page, **kwargs)
+
+    monkeypatch.setattr(api.Page, "screenshot", screenshot)
 
     server, thread = _server(covered=covered)
 
@@ -151,8 +163,12 @@ def test_checkout_workflow_from_real_browser(tmp_path: Path, covered: bool, expe
                                 stored.binding.model_copy(update={"evidence": evidence}),
                                 stored.content,
                             )
-                        if alteration == "invalid_png":
+                        if alteration in {"invalid_png", "mislabeled", "truncated"}:
                             content = b"not a PNG"
+                            if alteration == "mislabeled":
+                                content = JPEG if image_format == "png" else PNG
+                            elif alteration == "truncated":
+                                content = stored.content[:-2]
                             evidence = stored.binding.evidence.model_copy(
                                 update={"sha256": hashlib.sha256(content).hexdigest()}
                             )
@@ -176,6 +192,8 @@ def test_checkout_workflow_from_real_browser(tmp_path: Path, covered: bool, expe
                     "wrong_subject",
                     "wrong_media",
                     "invalid_png",
+                    "mislabeled",
+                    "truncated",
                 ):
                     tampered = await WorkflowCompletionOracle(
                         AlteredScreenshotStore(),

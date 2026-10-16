@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 import pytest
+from image_samples import PNG
 
 from gauntlet.application.evidence import check_evidence
 from gauntlet.contracts import EvidenceSubject
@@ -27,7 +28,6 @@ GEOMETRY = {
     "viewport": {"width": 375, "height": 812},
     "hit_target": "help-button",
 }
-PNG = b"\x89PNG\r\n\x1a\nsynthetic-browser-image"
 
 
 class FakeMouse:
@@ -39,7 +39,8 @@ class FakeMouse:
 
 
 class FakePage:
-    def __init__(self, *evaluations: object) -> None:
+    def __init__(self, *evaluations: object, image: bytes = PNG) -> None:
+        self.image = image
         self.evaluations = list(evaluations)
         self.mouse = FakeMouse()
 
@@ -48,7 +49,7 @@ class FakePage:
         return self.evaluations.pop(0)
 
     async def screenshot(self, *, type: str | None = None) -> bytes:
-        return PNG if type == "png" else b"\xff\xd8\xff\xe0synthetic-jpeg"
+        return self.image if type == "png" else b"\xff\xd8\xff\xe0synthetic-jpeg"
 
 
 def test_inspection_writes_step_bound_json(tmp_path: Path) -> None:
@@ -174,5 +175,32 @@ def test_non_png_screenshot_is_never_stored_as_png(tmp_path: Path, action: str) 
             artifact = await store.get(path.stem)
             assert artifact is not None
             assert artifact.binding.evidence.media_type != "image/png"
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("action", ["capture", "click"])
+def test_jpeg_response_is_stored_with_actual_media_type(tmp_path: Path, action: str) -> None:
+    from image_samples import JPEG
+
+    class JpegPage(FakePage):
+        async def screenshot(self, *, type: str | None = None) -> bytes:
+            assert type == "png"
+            return JPEG
+
+    async def scenario() -> None:
+        store = LocalArtifactStore(tmp_path / "artifacts")
+        collector = BrowserEvidenceCollector(store)
+        page = JpegPage(GEOMETRY, None, {"received_target": "help-button", "trusted": True})
+        record = (
+            await collector.capture(page, SUBJECT, 0)
+            if action == "capture"
+            else await collector.click(page, "checkout-primary-action", SUBJECT, 0)
+        )
+        stored = await store.get(record.evidence_ids[-1])
+        assert stored is not None
+        assert stored.content == JPEG
+        assert stored.binding.evidence.media_type == "image/jpeg"
+        assert stored.binding.subject == SUBJECT.model_copy(update={"step_index": 0})
 
     asyncio.run(scenario())
