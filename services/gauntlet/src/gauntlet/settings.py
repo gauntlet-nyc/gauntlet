@@ -331,6 +331,7 @@ class ReviewerSettings:
     tokens: tuple[tuple[str, Secret], ...]
 
 
+DEFAULT_DAYTONA_API_URL: Final = "https://app.daytona.io/api"
 DEFAULT_ARIZE_OTLP_ENDPOINT: Final = "https://otlp.arize.com/v1/traces"
 
 
@@ -367,7 +368,7 @@ class IntegrationSettings:
 SECTION_KEYS: Final[dict[str, tuple[str, ...]]] = {
     "azure_openai": ("AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_DEPLOYMENT", "AZURE_OPENAI_API_KEY"),
     "bedrock": ("AWS_REGION", "BEDROCK_MODEL_ID"),
-    "daytona": ("DAYTONA_API_KEY", "DAYTONA_API_URL", "DAYTONA_TARGET"),
+    "daytona": ("DAYTONA_API_KEY", "DAYTONA_TARGET"),
     "anchor": ("ANCHOR_API_KEY",),
     "arize": ("ARIZE_API_KEY", "ARIZE_SPACE_ID"),
     "surreal": ("SURREAL_URL", "SURREAL_NS", "SURREAL_DB", "SURREAL_USER", "SURREAL_PASS"),
@@ -493,13 +494,14 @@ def load_settings(environ: Mapping[str, str] | None = None) -> IntegrationSettin
     daytona = None
     daytona_values = {
         "DAYTONA_API_KEY": env.secret("DAYTONA_API_KEY"),
-        "DAYTONA_API_URL": env.url("DAYTONA_API_URL", schemes=frozenset({"https"})),
         "DAYTONA_TARGET": env.get("DAYTONA_TARGET"),
     }
     if _all_or_none("Daytona", daytona_values):
         daytona = DaytonaSettings(
             api_key=env.secret("DAYTONA_API_KEY") or Secret(""),
-            api_url=str(daytona_values["DAYTONA_API_URL"]),
+            # Same default as the composition root when DAYTONA_API_URL is unset.
+            api_url=env.url("DAYTONA_API_URL", schemes=frozenset({"https"}))
+            or DEFAULT_DAYTONA_API_URL,
             target=str(daytona_values["DAYTONA_TARGET"]),
         )
 
