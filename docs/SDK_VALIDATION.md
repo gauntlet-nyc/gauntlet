@@ -1,10 +1,10 @@
 # SDK integration validation checklist — B owns
 
-**Status: all live smokes NOT RUN in starter.** Record installed SDK version, exact API call, invocation environment, sanitized output/trace ID, elapsed time, cleanup result and SDK doc URL. Never commit keys. Package APIs and feature entitlements may change.
+**Starter baseline; see dated updates below for current results.** Record installed SDK version, exact API call, invocation environment, sanitized output/trace ID, elapsed time, cleanup result and SDK doc URL. Never commit keys. Package APIs and feature entitlements may change.
 
 | Provider | Required live smoke | Known docs | Recorded result |
 |---|---|---|---|
-| Daytona | create sandbox, execute, access preview, optionally eligible VM fork, destroy | https://www.daytona.io/docs/en/python-sdk/ | NOT RUN |
+| Daytona | create sandbox, execute, access preview, optionally eligible VM fork, destroy | https://www.daytona.io/docs/en/python-sdk/ | 2026-10-16 cold restore and signed preview receipts PASSED; VM fork not tested |
 | Anchor | create cloud session, resize, inspect, click approved preview, capture recording, close | https://github.com/anchorbrowser/AnchorBrowser-SDK-Python | NOT RUN |
 | Arize AX | `arize.otel.register`, correlated span visible in AX, one actual evaluated experiment | https://arize.com/docs/ax/quickstarts/quickstart-write-first-eval | NOT RUN |
 | SurrealDB core | AsyncSurreal connect, param insert/query, relation, update and close | https://surrealdb.com/docs/reference/python/api/core/surreal | NOT RUN |
@@ -55,6 +55,175 @@ each selected revision's synthetic `/api/build-info` receipt over its signed
 preview before opening Anchor. A mismatched receipt stops that browser action
 and the environment pair is cleaned. This verifies an app-served SHA claim;
 the sandbox image and custom proxy egress policy still need separate proof.
+
+### B-01p Daytona snapshot bootstrap preparation (2026-10-16)
+
+The project-local Daytona 0.224.1 package was inspected without credentials or
+provider calls. Its installed signatures expose
+`AsyncDaytona.snapshot.create(CreateSnapshotParams(name, image, entrypoint), timeout=...)`,
+`AsyncDaytona.create(CreateSandboxFromSnapshotParams(snapshot, domain_allow_list), timeout=...)`,
+`AsyncSandbox.fs.upload_file`, `AsyncSandbox.process.exec`, `AsyncSandbox.stop`,
+`AsyncSandbox.create_snapshot(name, timeout=...)`, `AsyncDaytona.snapshot.get/delete`,
+and `AsyncDaytona.delete(sandbox, wait=True)`. The [official snapshot docs](https://www.daytona.io/docs/en/snapshots/)
+say container cold snapshots retain filesystem state and require a stopped
+sandbox; the [Python SDK reference](https://www.daytona.io/docs/en/python-sdk/async/async-sandbox/)
+documents the snapshot call. The [network policy docs](https://www.daytona.io/docs/en/network-limits/)
+document `domain_allow_list` and warn that organization policy can still block
+the npm registry.
+
+`scripts/provision_cartwheel_snapshots.py` performs a local preflight against the
+committed synthetic manifest, rebuilt base/head SHAs, identical fixture-state
+bytes and a trusted, operator-supplied npm lockfile. Its hash is recorded for
+reproduction; this is not a supply-chain verification. It accepts only the
+tested full Node 22 Bookworm image index
+`node:22-bookworm@sha256:0e5f906573693feaa1e21057ebdcfdb5bd5021f050b2dc7c9deceb629c7da2a8`.
+On 2026-10-16, a local Docker linux/amd64 run found `/usr/bin/git`,
+`/usr/bin/tar` and `/usr/local/bin/npm` in that image. The exact check was
+`docker run --rm --pull=never --platform linux/amd64 --network none
+--entrypoint /bin/sh <pinned-image> -c 'command -v git && command -v tar &&
+command -v npm'` (exit 0). The slim candidate
+`node:22-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392`
+was rejected because it has no `git`; both the bootstrap and later Daytona
+attestation require `git rev-parse HEAD`. The optional paid path requires both CLI flags,
+`RUN_LIVE_INTEGRATIONS=1`, the Cartwheel target allowlist and Daytona credentials.
+It creates one temporary image snapshot with a conditional Next startup
+entrypoint, seeds two private revision sandboxes,
+stops them, captures cold snapshots and originally checked for an inherited
+entrypoint. The live finding below supersedes that assumption.
+Temporary sandboxes and image snapshot are deleted; failed runs also delete
+revision snapshots. Output is an untracked registration file and sanitized
+metadata, including the actual SDK version and lockfile hash. No paid path was
+run for B-01p; offline fakes establish call order and cleanup only.
+
+### B-01q local build and blocked-network seed (2026-10-16)
+
+A bounded live Daytona diagnostic using SDK 0.224.1 created, fetched and
+deleted the pinned image snapshot, but sandbox creation returned HTTP 400:
+`Network access is restricted and cannot be overridden at the sandbox level.
+Remove domainAllowList from the request.` No sandbox was created. The B-01q
+bootstrap installs dependencies locally in the pinned linux/amd64 Node image
+with Docker bridge networking, then runs `npm run build` with Docker networking
+disabled and `NEXT_TELEMETRY_DISABLED=1`. For each committed revision it checks
+the exact checkout SHA, clean source tree, compiled output and served
+`/api/build-info` SHA in a no-network local container. It uploads the built
+source tree, `node_modules` and `.next` as compressed tar to a private Daytona
+sandbox created with `network_block_all=True` and no `domain_allow_list`.
+Remote commands unpack and attest the uploaded tree before stop and snapshot.
+The installed SDK defines `auto_delete_interval` in minutes; these temporary
+sandboxes use 20 minutes as a fallback while explicit cleanup handles normal
+and failed runs. Daytona restore/startup behavior remains unverified.
+
+The external lockfile is operator reviewed, SHA-256 recorded, and must match
+the fixture's root dependencies plus approved Next 15.5.28 and Linux x64 GNU
+SWC 15.5.28 entries. The SWC entry must carry sha512 integrity. An older
+macOS-generated lock lacked this optional Linux dependency and failed local
+Docker build when Next attempted to fetch it without network access. Neither
+the lockfile check nor its hash is supply-chain verification. No B-01q paid
+provider call was made by the coding agent.
+
+The real no-spend local preflight used the reviewed Linux lock at SHA-256
+`c0cfffa2614271ec288c3ef7379316f1bbad8b678dcd302ab151e9d23dbff738`.
+With the pinned linux/amd64 image it rebuilt base
+`ad74b08a77ceb1d9452d4335261c99c1db7376e9` and head
+`fd32708bcd615e072327c0771f49c69329e123e3`, including network-disabled
+Next builds and both loopback build receipt checks. The command exited 0 and
+reported `status=not_tested`, SDK 0.224.1 and missing spend/provider opt-ins;
+no Daytona call occurred. The compressed base/head upload bundles measured
+138,661,350 and 138,685,600 bytes. The lockfile remains outside Git.
+
+### B-01r seed stage diagnostics (2026-10-16)
+
+An authorized bounded B-01q Daytona run built both revisions locally, created
+the runtime snapshot and reached a base snapshot, then returned a sanitized
+`RuntimeError` without identifying the failed seed operation. Subsequent
+read-only Daytona listing found no Cartwheel snapshots or sandboxes; cleanup
+completed. That run did not establish cold restore or preview startup.
+
+The bootstrap now reports fixed stage codes such as `base_upload`,
+`base_extract`, `base_source`, `base_state`, `base_clean`, `base_build`,
+`base_stop`, `base_snapshot`, and corresponding `head_*` codes. Runtime create
+and fetch, sandbox create, output writing and client close also have fixed
+codes. Provider exception text, signed origins and credentials remain absent
+from the JSON error report. Offline tests exercise a head-stage failure and
+verify cleanup; no paid retry was made for B-01r.
+
+### B-01s explicit cold start (2026-10-16)
+
+A bounded Daytona run confirmed the runtime image snapshot retained the
+configured entrypoint, while the sandbox-created cold snapshot was `active`
+with `entrypoint=null`. Container cold snapshots capture filesystem state; the
+bootstrap now accepts exactly that observed metadata and registers the fixed
+`cartwheel_next_v1` startup profile. This profile names one SDK-owned command;
+registration cannot supply arbitrary shell. Existing registration files without
+`startup_profile` must be regenerated from the bootstrap or registration
+script. After a restored sandbox's Git SHA
+and fixture-state digest match the registered values, the provider starts the
+compiled Next build in the background on the validated preview port. It then
+obtains the signed preview and waits for `/checkout` readiness. The hosted
+`/api/build-info` receipt remains required before Anchor opens a browser.
+
+Daytona SDK 0.224.1 `AsyncProcess.exec(command, cwd, timeout)` documents a
+redirected background command for a long-running server. B-01s uses that
+method with a constant command template and the registered integer port.
+Offline fakes establish ordering and cleanup. At B-01s branch completion, its
+live restore and preview remained unverified; the integrated run below resolves
+that checkpoint.
+
+Run the local preflight from the repository root with
+`uv run --frozen --no-sync --group live-providers python -m scripts.provision_cartwheel_snapshots
+--lockfile <reviewed-package-lock-outside-git> --image
+node:22-bookworm@sha256:0e5f906573693feaa1e21057ebdcfdb5bd5021f050b2dc7c9deceb629c7da2a8 --preview-domain-suffix
+.daytonaproxy01.net --output /tmp/cartwheel-snapshot-registration.json`.
+Without `--execute --authorize-spend`, it prints missing prerequisite names and
+does not write a registration or call Daytona. Keep the lockfile and output
+outside Git; the lockfile is a trusted operator input, and its hash is retained
+for audit. The registration output's parent must already exist outside any Git
+checkout. The integrated live run below established Daytona acceptance and
+restored startup; the full Gate still requires planner and browser validation.
+
+The generated fixture currently has no committed `package-lock.json`, so an
+operator must supply a reviewed lockfile matching its `package.json`. A
+successful snapshot creation would still be `not_tested` for P1: the installed
+SDK cannot by itself prove that restored cold snapshots can start and serve the
+selected compiled build. The integrated live check below restored both
+snapshots and verified their preview receipts. P1 remains open.
+
+### Integrated Daytona cold restore smoke (2026-10-16)
+
+With explicit live/spend opt-in and Daytona 0.224.1, the bootstrap created two
+private Cartwheel cold snapshots from the reviewed Linux lockfile SHA-256
+`c0cfffa2614271ec288c3ef7379316f1bbad8b678dcd302ab151e9d23dbff738`
+and pinned Node image digest above. Base and head were the manifest SHAs
+`ad74b08a77ceb1d9452d4335261c99c1db7376e9` and
+`fd32708bcd615e072327c0771f49c69329e123e3`. The local bundles measured
+138,652,980 and 138,686,356 bytes. The successful bootstrap reported
+`snapshots_created=true`, `restore_smoke_verified=false`, and `gate_status=not_tested`.
+The registration is `/tmp/cartwheel-b01s-registration-current-domain-20261016.json`;
+the two final snapshots intentionally remain private in Daytona for subsequent
+authorized smokes.
+
+The first restore diagnosed a real adapter signature error: installed
+`AsyncFileSystem.download_file(self, *args)` rejects `timeout=30`. A base-only
+diagnostic confirmed the file existed with the registered SHA-256. The SDK
+adapter and fake signature were corrected, then a second restore diagnosed a
+registered preview suffix mismatch. The signed origin was an exact HTTPS origin
+under `.daytonaproxy01.net`; the registration was regenerated for that suffix.
+No signed URL, token or provider exception text was recorded. Both failed
+restores deleted their temporary sandboxes with no pending cleanup IDs.
+
+The final invocation was `RUN_LIVE_INTEGRATIONS=1` with the project-local
+`python -m dotenv -f <gitignored .env.local> run --no-override -- python
+scripts/probe_b01_snapshot_restore.py --registration <current-domain-registration>
+--output /tmp/gauntlet-c01e-live-restore-current-domain-20261016 --execute
+--authorize-spend`. It returned `status=passed`,
+`synthetic_build_receipt_verified=true`, `gate_status=not_tested`, no cleanup
+errors and no pending sandbox IDs. It independently verified each restored Git
+SHA, fixture-state digest, fixed startup, `/checkout` readiness and exact
+`/api/build-info` response. Sandbox IDs in the sanitized report are
+`f5d21668-9ff4-4f81-b3e9-5871cc4bb580` (base) and
+`9fbfabda-784e-4659-9c25-9412ac1681ae` (head); both were deleted. The
+report explicitly says `sandbox_image_attested=false`. No Anchor browser or
+Bedrock model ran, so P1 Gate remains open.
 
 On the integrated tree, the rebuilt fixture passed `npm run build` on both
 revisions. Headless Chrome with one frozen, diff-cited scripted plan produced
@@ -324,15 +493,15 @@ Daytona 0.224.1 installed signature inspection matched the calls used here:
 `AsyncDaytona.create(params, timeout=...)`,
 `AsyncDaytona.delete(sandbox, timeout=..., wait=True)`,
 `AsyncSandbox.process.exec(command, cwd=..., timeout=...)`,
-`AsyncSandbox.fs.download_file(path, timeout=...)` and
+`AsyncSandbox.fs.download_file(path)` and
 `AsyncSandbox.create_signed_preview_url(port, expires_in_seconds=...,
 request_timeout=...)`. Nine offline tests pass with a fake runtime and a real
 loopback HTTP readiness probe;
 this is not a provider smoke. The B-01b and B-01a live checkboxes stay open.
 
-The current Cartwheel generated repository has no Daytona snapshots or
-`fixture-state.json`, and no server revision attestation or ready endpoint is
-currently provisioned in Daytona. Before a live run, build and register two
+At this earlier B-01b checkpoint, the generated repository had no Daytona
+snapshots or `fixture-state.json`, and no server revision attestation or ready
+endpoint was provisioned in Daytona. Before a live run, build and register two
 private snapshots from the pinned base/head commits with the same actual image
 digest, include the same deterministic fixture-state file in each, provide a
 running synthetic app and health path, and register the preview proxy domain.
@@ -756,7 +925,8 @@ created, so cloud cleanup behavior remains unverified.
   revisions, and approved preview/network configuration. A successful planning
   call alone does not satisfy hosted execution or P1 acceptance.
 
-AWS, Daytona and Anchor live results remain NOT RUN. P1 is not yet accepted.
+AWS and Anchor live results remain NOT RUN. Daytona results are recorded in the
+2026-10-16 live restore update above. P1 is not yet accepted.
 
 ## P1 handoff and infrastructure recheck (2026-10-16)
 
