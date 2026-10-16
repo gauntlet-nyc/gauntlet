@@ -27,10 +27,10 @@ export default async function GatePage({ searchParams }: { searchParams: Promise
         actions={runs.some((r) => r.offline) ? (
           <span
             role="status"
-            title="At least one listed run contains offline evidence; open a run for its provider details."
+            title="At least one listed run contains offline evidence or has no execution adapter recorded; open a run for details."
             className="border-inconclusive/25 bg-inconclusive/[0.06] text-inconclusive inline-flex h-6 items-center rounded-full border px-2.5 text-[11px] font-medium whitespace-nowrap"
           >
-            SOME RUNS INCLUDE OFFLINE EVIDENCE
+            SOME RUNS: OFFLINE OR UNREPORTED EVIDENCE
           </span>
         ) : undefined}
       />

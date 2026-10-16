@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { classificationTone, parseGateRun, provenanceBadge, provenanceMode, type Provenance } from "./gauntlet";
+import { classificationTone, executionProvenance, gateSummaryEvidence, parseGateRun, provenanceBadge, provenanceMode, type Provenance } from "./gauntlet";
 
 const offline: Provenance = { provider: "golden-recording", mode: "offline_recording", live: false, label: "OFFLINE" };
 const live: Provenance = { provider: "anchor", mode: "live", live: true, label: "Anchor session" };
+const template: Provenance = { provider: "cartwheel-templates", mode: "offline_fixture", live: false, label: "Diff computed from templates" };
 
 describe("provenanceMode", () => {
   it("keeps mixed live and recorded evidence distinct from fully offline evidence", () => {
@@ -33,6 +34,17 @@ describe("provenanceBadge", () => {
   it("shows absent provenance as unknown", () => {
     expect(provenanceBadge([]).text).toBe("PROVENANCE UNKNOWN");
     expect(provenanceBadge([]).title).not.toContain("no provider was contacted");
+  });
+});
+
+describe("Gate execution evidence", () => {
+  it("excludes the static template diff from execution status while retaining providers", () => {
+    expect(executionProvenance([template, live])).toEqual([live]);
+    expect(provenanceMode(executionProvenance([template]))).toBe("unknown");
+  });
+  it("keeps the summary boolean qualified because it covers mixed and missing adapters", () => {
+    expect(gateSummaryEvidence(true)).toBe("Offline or unreported evidence");
+    expect(gateSummaryEvidence(false)).toBe("No offline execution reported");
   });
 });
 
