@@ -2,6 +2,10 @@
 
 You are an implementation agent, **not** a project manager with permission to redefine Gauntlet. Your job is the smallest validated phase ticket in your owned directory.
 
+## Dev environment
+
+See [`docs/RUNBOOK.md`](docs/RUNBOOK.md#dev-environment-worktree-bootstrap) for worktree-local `.venv` setup and offline checks.
+
 ## Mandatory read order
 
 1. `docs/DEVELOPMENT_PLAN.md` (v3 architecture and phase gates)

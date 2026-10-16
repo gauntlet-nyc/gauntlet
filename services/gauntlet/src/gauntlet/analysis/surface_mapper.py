@@ -109,7 +109,7 @@ def map_surfaces(
     rules: tuple[SurfaceRule, ...] = DEFAULT_RULES,
 ) -> SurfaceMapping:
     surfaces: list[AffectedSurface] = []
-    gaps: list[str] = [f"Could not parse diff section: {h}" for h in diff.unparsed_sections]
+    gaps: list[str] = ["Could not parse diff section" for _ in diff.unparsed_sections]
     for change in diff.files:
         gap = _file_gap(change)
         if gap is not None:

@@ -72,6 +72,13 @@ def test_mapper_cites_changed_lines_and_reports_gaps() -> None:
     assert any("Could not parse" in g for g in mapping.coverage_gaps)
 
 
+def test_unparsed_diff_header_does_not_reveal_sensitive_filename() -> None:
+    diff = 'diff --git "a/.env.secret" "b/.env.secret"\n'
+    mapping = map_surfaces(parse_unified_diff(diff), base_sha="1111111", head_sha="2222222")
+    assert mapping.coverage_gaps
+    assert ".env.secret" not in " ".join(mapping.coverage_gaps)
+
+
 @pytest.mark.parametrize(
     ("path", "allowed"),
     [
