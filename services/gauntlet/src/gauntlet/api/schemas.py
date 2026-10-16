@@ -33,14 +33,15 @@ class Provenance(BaseModel):
 
 
 class AttemptView(BaseModel):
+    attack_id: str
     revision: Literal["base", "head"]
     attempt: int
     source_sha: str
     oracle_id: str
     outcome: str
+    observed: str
     evidence_ids: list[str]
     screenshot_artifact_ids: list[str]
-    provenance: Provenance
 
 
 class FileDiff(BaseModel):
@@ -67,8 +68,10 @@ class GateRunView(BaseModel):
     attribution: str
     not_tested_reason: str | None
     diff: list[FileDiff]
-    frozen_plan: AttackSpec | None
+    attacks: list[AttackSpec]
+    rejected_attacks: list[str]
     plan_sha256: str | None
+    model_id: str | None
     attempts: list[AttemptView]
     findings: list[Finding]
     fix_plan: FixPlanView | None

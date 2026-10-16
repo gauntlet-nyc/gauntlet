@@ -31,7 +31,7 @@ const gateRunSchema = z
     run_id: z.string(),
     status: z.string(),
     attribution: z.string(),
-    attempts: z.array(z.object({ revision: z.string(), outcome: z.string(), provenance: provenanceSchema }).passthrough()),
+    attempts: z.array(z.object({ revision: z.string(), outcome: z.string(), screenshot_artifact_ids: z.array(z.string()) }).passthrough()),
     provenance: z.array(provenanceSchema),
     events: z.array(z.object({ sequence: z.number(), event_type: z.string() }).passthrough()),
   })
@@ -84,3 +84,7 @@ export const api = {
   sponsors: () => get<SponsorStatus[]>("/sponsors", asArray),
   approvals: () => get<ApprovalRecord[]>("/approvals", asArray),
 };
+
+export function artifactUrl(runId: string, artifactId: string): string {
+  return `${API_URL}/gate/runs/${encodeURIComponent(runId)}/artifacts/${encodeURIComponent(artifactId)}`;
+}

@@ -34,8 +34,8 @@ describe("parseGateRun", () => {
   it("rejects a run without provenance", () => {
     expect(() => parseGateRun({ run_id: "r", status: "passed", attribution: "unknown", attempts: [], events: [] })).toThrow();
   });
-  it("rejects an attempt whose provenance lacks the live flag", () => {
-    const bad = { run_id: "r", status: "passed", attribution: "unknown", provenance: [offline], events: [], attempts: [{ revision: "head", outcome: "pass", provenance: { provider: "x" } }] };
+  it("rejects an attempt without its screenshot list", () => {
+    const bad = { run_id: "r", status: "passed", attribution: "unknown", provenance: [offline], events: [], attempts: [{ revision: "head", outcome: "pass" }] };
     expect(() => parseGateRun(bad)).toThrow();
   });
 });

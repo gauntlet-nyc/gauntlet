@@ -431,6 +431,10 @@
       },
       "AttemptView": {
         "properties": {
+          "attack_id": {
+            "title": "Attack Id",
+            "type": "string"
+          },
           "attempt": {
             "title": "Attempt",
             "type": "integer"
@@ -442,6 +446,10 @@
             "title": "Evidence Ids",
             "type": "array"
           },
+          "observed": {
+            "title": "Observed",
+            "type": "string"
+          },
           "oracle_id": {
             "title": "Oracle Id",
             "type": "string"
@@ -449,9 +457,6 @@
           "outcome": {
             "title": "Outcome",
             "type": "string"
-          },
-          "provenance": {
-            "$ref": "#/components/schemas/Provenance"
           },
           "revision": {
             "enum": [
@@ -474,14 +479,15 @@
           }
         },
         "required": [
+          "attack_id",
           "revision",
           "attempt",
           "source_sha",
           "oracle_id",
           "outcome",
+          "observed",
           "evidence_ids",
-          "screenshot_artifact_ids",
-          "provenance"
+          "screenshot_artifact_ids"
         ],
         "title": "AttemptView",
         "type": "object"
@@ -1404,6 +1410,13 @@
       },
       "GateRunView": {
         "properties": {
+          "attacks": {
+            "items": {
+              "$ref": "#/components/schemas/AttackSpec"
+            },
+            "title": "Attacks",
+            "type": "array"
+          },
           "attempts": {
             "items": {
               "$ref": "#/components/schemas/AttemptView"
@@ -1462,19 +1475,20 @@
             "title": "Fixture Id",
             "type": "string"
           },
-          "frozen_plan": {
+          "head_sha": {
+            "title": "Head Sha",
+            "type": "string"
+          },
+          "model_id": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/AttackSpec"
+                "type": "string"
               },
               {
                 "type": "null"
               }
-            ]
-          },
-          "head_sha": {
-            "title": "Head Sha",
-            "type": "string"
+            ],
+            "title": "Model Id"
           },
           "not_tested_reason": {
             "anyOf": [
@@ -1505,6 +1519,13 @@
             "title": "Provenance",
             "type": "array"
           },
+          "rejected_attacks": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Rejected Attacks",
+            "type": "array"
+          },
           "run_id": {
             "title": "Run Id",
             "type": "string"
@@ -1530,8 +1551,10 @@
           "attribution",
           "not_tested_reason",
           "diff",
-          "frozen_plan",
+          "attacks",
+          "rejected_attacks",
           "plan_sha256",
+          "model_id",
           "attempts",
           "findings",
           "fix_plan",
@@ -3230,6 +3253,55 @@
           }
         },
         "summary": "Get Gate Run",
+        "tags": [
+          "gate"
+        ]
+      }
+    },
+    "/gate/runs/{run_id}/artifacts/{artifact_id}": {
+      "get": {
+        "description": "Serves stored evidence bytes only by exact run and artifact ID.",
+        "operationId": "get_gate_artifact_gate_runs__run_id__artifacts__artifact_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "artifact_id",
+            "required": true,
+            "schema": {
+              "title": "Artifact Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {},
+              "image/png": {}
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Gate Artifact",
         "tags": [
           "gate"
         ]

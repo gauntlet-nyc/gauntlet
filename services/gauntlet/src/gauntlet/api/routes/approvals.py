@@ -36,9 +36,9 @@ def _scope(body: ApprovalRequest) -> ApprovalScope:
             current_plan_sha256=view.fix_plan.plan_sha256,
             allowed_paths=tuple(view.fix_plan.allowed_paths),
         )
-    if view.frozen_plan is None or view.plan_sha256 is None:
+    if not view.attacks or view.plan_sha256 is None:
         raise HTTPException(status_code=409, detail="run has no frozen plan to approve")
-    if view.frozen_plan.attack_id != body.subject_id:
+    if body.subject_id not in {a.attack_id for a in view.attacks}:
         raise HTTPException(status_code=404, detail="unknown attack for this run")
     return ApprovalScope(
         run_id=view.run_id,

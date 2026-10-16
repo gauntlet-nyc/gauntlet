@@ -1,7 +1,7 @@
 import { decide } from "@/app/actions";
 import { VoiceBriefingButton } from "@/components/VoiceBriefing";
 import { Banner, Card, DecideForm, ErrorPanel, OfflineBadge, ProvenanceList, Section, StatusPill } from "@/components/ui";
-import { api, shortSha, type AttemptView } from "@/lib/gauntlet";
+import { api, artifactUrl, shortSha, type AttemptView } from "@/lib/gauntlet";
 
 export const dynamic = "force-dynamic";
 
@@ -9,17 +9,17 @@ function AttemptTable({ attempts }: { attempts: AttemptView[] }) {
   return (
     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
       <thead>
-        <tr><th align="left">Revision</th><th align="left">#</th><th align="left">SHA</th><th align="left">Oracle</th><th align="left">Outcome</th><th align="left">Evidence</th></tr>
+        <tr><th align="left">Attack</th><th align="left">Revision</th><th align="left">#</th><th align="left">SHA</th><th align="left">Outcome</th><th align="left">Oracle observed</th></tr>
       </thead>
       <tbody>
         {attempts.map((a) => (
-          <tr key={`${a.revision}-${a.attempt}`}>
+          <tr key={`${a.attack_id}-${a.revision}-${a.attempt}`} style={{ verticalAlign: "top" }}>
+            <td><code>{a.attack_id}</code></td>
             <td>{a.revision}</td>
             <td>{a.attempt}</td>
             <td><code>{shortSha(a.source_sha)}</code></td>
-            <td><code>{a.oracle_id}</code></td>
             <td><StatusPill value={a.outcome} /></td>
-            <td>{a.evidence_ids.join(", ")}</td>
+            <td>{a.observed}</td>
           </tr>
         ))}
       </tbody>
@@ -77,21 +77,32 @@ export default async function GateRunPage({
       </Section>
 
       <Section title="Frozen plan">
-        {run.frozen_plan ? (
+        {run.attacks.length > 0 ? (
           <>
-            <p>
-              <strong>{run.frozen_plan.attack_id}</strong> ({run.frozen_plan.worker_kind} worker): {run.frozen_plan.hypothesis}
+            <p style={{ fontSize: 13 }}>
+              Plan hash <code>{run.plan_sha256}</code> frozen before any worker ran · planner <code>{run.model_id}</code>
             </p>
-            <p style={{ fontSize: 13 }}>Plan hash <code>{run.plan_sha256}</code> — frozen before any worker ran.</p>
-            <ol>
-              {run.frozen_plan.steps.map((s, i) => (
-                <li key={i}><code>{JSON.stringify(s)}</code></li>
-              ))}
-            </ol>
-            <p>Oracles: {run.frozen_plan.oracle_ids.map((o) => <code key={o}>{o} </code>)}</p>
+            {run.attacks.map((attack) => (
+              <Card key={attack.attack_id}>
+                <strong>{attack.attack_id}</strong> ({attack.worker_kind} worker): {attack.hypothesis}
+                <p style={{ fontSize: 13, margin: "4px 0" }}>Why this change: {attack.why_this_change}</p>
+                <ol style={{ fontSize: 13 }}>
+                  {attack.steps.map((s, i) => (
+                    <li key={i}><code>{JSON.stringify(s)}</code></li>
+                  ))}
+                </ol>
+                <small>Oracles: {attack.oracle_ids.join(", ")} · cites {(attack.source_refs ?? []).map((r) => `${r.path}:${r.start_line}`).join(", ")}</small>
+              </Card>
+            ))}
           </>
         ) : (
-          <p>No plan was frozen for this run.</p>
+          <p>No attack was accepted for this change.</p>
+        )}
+        {run.rejected_attacks.length > 0 && (
+          <>
+            <p>Rejected by the validator:</p>
+            <ul>{run.rejected_attacks.map((r) => <li key={r}>{r}</li>)}</ul>
+          </>
         )}
       </Section>
 
@@ -106,10 +117,21 @@ export default async function GateRunPage({
         )}
         <h3 style={{ fontSize: 15 }}>Screenshots</h3>
         {run.attempts.some((a) => a.screenshot_artifact_ids.length > 0) ? (
-          <ul>{run.attempts.flatMap((a) => a.screenshot_artifact_ids.map((s) => <li key={s}><code>{s}</code></li>))}</ul>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {run.attempts.flatMap((a) =>
+              a.screenshot_artifact_ids.map((id) => (
+                <figure key={id} style={{ margin: 0, fontSize: 11 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={artifactUrl(run.run_id, id)} alt={`${a.revision} attempt ${a.attempt}`} width={96} height={96} style={{ border: "1px solid #ccc", imageRendering: "pixelated" }} />
+                  <figcaption>{a.revision} #{a.attempt}</figcaption>
+                </figure>
+              )),
+            )}
+          </div>
         ) : (
-          <p>No screenshots: offline recordings carry no image bytes. Live Anchor runs attach them here.</p>
+          <p>No screenshots were captured for this run.</p>
         )}
+        <p style={{ fontSize: 12, color: "#555" }}>Screenshot bytes are served only by exact run and artifact ID from the write-once store.</p>
       </Section>
 
       <Section title="Findings">
@@ -146,7 +168,7 @@ export default async function GateRunPage({
         <ol>
           {run.events.map((e) => (
             <li key={e.event_id}>
-              #{e.sequence} <code>{e.event_type}</code> by {e.actor} <small>{JSON.stringify(e.payload)}</small>
+              #{e.sequence} <code>{e.event_type}</code> by {e.actor} <small style={{ wordBreak: "break-all" }}>{JSON.stringify(e.payload)}</small>
             </li>
           ))}
         </ol>
