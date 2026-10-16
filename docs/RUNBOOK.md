@@ -211,3 +211,28 @@ pnpm --filter @gauntlet/dashboard build && (cd apps/dashboard && npx next start 
 - After changing API routes: `uv run python scripts/export_openapi.py` then
   `pnpm --filter @gauntlet/dashboard generate:api`.
 - Demo click-path, go-live checklist and fallback: `docs/DEMO.md`.
+
+## Core engine commands (Session 1)
+
+All default to offline adapters and print JSON with an `adapters` block. Offline labels
+mean no provider was contacted.
+
+| What | Command | Expected offline result |
+|---|---|---|
+| Gate, Help button | `uv run python scripts/run_gate.py` | `confirmed_regression`, head 2/2, base 0/2 |
+| Gate, unrelated change | `uv run python scripts/run_gate.py --clean` | `passed` |
+| Gate + accessibility worker | `uv run python scripts/run_gate.py --a11y` | both attacks `confirmed_regression` |
+| Gate, AI refund tool (P2) | `uv run python scripts/run_gate.py --change refund-tool` | `confirmed_regression` (needs `node`) |
+| Repair (P3), step 1 | `uv run python scripts/run_repair.py --run-id demo-1` | prints `plan_sha256` + diff |
+| Repair, step 2 | `GAUNTLET_REVIEWER_TOKENS=alice:<16+ chars> GAUNTLET_REVIEWER_TOKEN=<same> uv run python scripts/run_repair.py --run-id demo-1 --approve-hash <sha256>` | `fix_verified_review_required` |
+| Memory (P7) | `run_gate.py --memory local --learn`, then `run_gate.py --clean --memory local` | second plan cites the fact |
+| Recall (P4–P6) | `uv run python scripts/run_recall.py` | 3 tainted, 2 cleared, 1 not_replayable; audit 3 violations |
+
+Real browser, no cloud: build base/head with `scripts/build_cartwheel_fixture.py`, run
+`npx next build && npx next start -p 3101|3102 -H 127.0.0.1` in clean checkouts (exclude
+`package-lock.json` via `.git/info/exclude`), then
+`CARTWHEEL_BASE_ORIGIN=http://127.0.0.1:3101 CARTWHEEL_HEAD_ORIGIN=http://127.0.0.1:3102 uv run --group live-providers python scripts/run_gate.py --sandbox local --browser local`.
+
+Live (needs keys + `RUN_LIVE_INTEGRATIONS=1`): `--model azure`, `--sandbox daytona --browser anchor`
+(`GAUNTLET_DAYTONA_REGISTRATION`, `GAUNTLET_ANCHOR_REQUIRE_PROXY=0`), `--memory surreal`,
+`run_recall.py --model azure`. See `docs/SDK_VALIDATION.md`; all are NOT RUN so far.
