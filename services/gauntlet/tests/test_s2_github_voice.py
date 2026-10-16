@@ -83,7 +83,7 @@ def test_jwt_signature_verifies_with_openssl(key_pem: Path, tmp_path: Path) -> N
         text=True,
     )
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "bits=2048" in repr(key) and str(key.d) not in repr(key)
+    assert repr(key) == "RsaPrivateKey(bits=2048)"
 
 
 @needs_openssl
