@@ -27,6 +27,12 @@ come from `gauntlet.settings.load_settings()`; check readiness (names only, no v
 |---|---|---|---|
 | Settings module | `tests/test_s2_settings.py` | n/a | `uv run python scripts/check_settings.py` |
 | Anchor without egress proxy (`GAUNTLET_ANCHOR_REQUIRE_PROXY=0`) | `tests/test_s2_settings.py` | live NOT RUN | `RUN_LIVE_INTEGRATIONS=1 GAUNTLET_ANCHOR_REQUIRE_PROXY=0 .venv/bin/python -m dotenv -f .env.local run --no-override -- .venv/bin/python scripts/probe_b01_provider_smoke.py --registration /tmp/cartwheel-registration.json --execute --authorize-spend` |
+| SurrealDB core run store + lineage/history (`persistence/surreal_store.py`, HTTP `/rpc`, httpx) | `tests/test_s2_surreal_core.py` (offline transport) | **local SurrealDB v2.3.7 RUN 2026-10-16** (pinned compose image, in-memory): append-only, sequence/idempotency conflicts, concurrent append, lineage edges, decision/tool-event window all passed; hosted live NOT RUN | `RUN_LIVE_INTEGRATIONS=1 .venv/bin/python -m dotenv -f .env.local run --no-override -- .venv/bin/python scripts/smoke_surreal.py` |
+| Temporal memory on a separate SurrealDB memory context (`memory/surreal_memory.py`) | `tests/test_s2_memory.py` | **local SurrealDB RUN 2026-10-16**: provenance, as-of (no hindsight), supersession history, lens filtering passed. SurrealDB **Agent Memory product SDK not used** (`surrealdb[memory]` not approved); Agent Memory live NOT RUN | `RUN_LIVE_INTEGRATIONS=1 .venv/bin/python -m dotenv -f .env.local run --no-override -- .venv/bin/python scripts/smoke_surreal.py --memory` |
+
+Local SurrealDB tests: `docker compose --env-file .env.local -f infra/local/docker-compose.yml up surrealdb`, then
+`SURREAL_TEST_URL=ws://127.0.0.1:8001 SURREAL_TEST_PASS=<local pass> uv run pytest -q services/gauntlet/tests/test_s2_surreal_core.py services/gauntlet/tests/test_s2_memory.py`
+(loopback only; each test uses a fresh database).
 
 Anchor without the proxy is **weaker isolation**: only the in-browser route guard limits
 navigation to the signed preview origin. The runtime logs a WARNING on construction and on
