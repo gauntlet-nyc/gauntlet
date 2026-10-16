@@ -2,7 +2,7 @@
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 from gauntlet.contracts import Observation, OracleVerdict, WorkerKind
 from gauntlet.domain import OracleKind
@@ -17,6 +17,23 @@ class OracleDescriptor:
     criterion_version: str
     worker_kinds: frozenset[WorkerKind]
     description: str
+
+
+@dataclass(frozen=True)
+class PrimaryActionContract:
+    """Trusted UI action and optional route needed to make primary-click evidence usable."""
+
+    target: str
+    route: str | None = None
+
+
+@runtime_checkable
+class PrimaryActionContractSource(Protocol):
+    """Optional typed planning metadata supplied by a trusted oracle registry."""
+
+    def primary_action_contract(
+        self, oracle_id: str, target_id: str
+    ) -> PrimaryActionContract | None: ...
 
 
 class TrustedOracleRegistry(Protocol):

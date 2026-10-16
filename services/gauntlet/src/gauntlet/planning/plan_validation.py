@@ -12,10 +12,13 @@ from gauntlet.contracts import (
     ChangeImpactMap,
     ChangeRequest,
     ChatStep,
+    ClickStep,
+    InspectStep,
     NavigateStep,
     SourceRef,
 )
 from gauntlet.ports import TargetProfile, TrustedOracleRegistry
+from gauntlet.ports.oracle import PrimaryActionContract, PrimaryActionContractSource
 
 from .worker_selector import allowed_workers
 
@@ -99,6 +102,11 @@ class PlanValidator:
                 continue
             reasons = self._policy_reasons(spec, change, workers, changed_refs, allowed_shas)
             reasons.extend(_step_reasons(spec, target))
+            if isinstance(self._oracles, PrimaryActionContractSource):
+                for oracle_id in spec.oracle_ids:
+                    contract = self._oracles.primary_action_contract(oracle_id, spec.target_id)
+                    if contract is not None:
+                        reasons.extend(_primary_action_reasons(spec, contract))
             if spec.attack_id in seen_ids:
                 reasons.append("duplicate attack_id")
             if runtime_used + spec.max_runtime_seconds > self._limits.max_total_runtime_seconds:
@@ -151,3 +159,33 @@ def _step_reasons(spec: AttackSpec, target: TargetProfile) -> list[str]:
         if isinstance(step, ChatStep) and step.agent_id not in target.agent_ids:
             reasons.append(f"step {index}: agent is not registered for this target")
     return reasons
+
+
+def _primary_action_reasons(spec: AttackSpec, contract: PrimaryActionContract) -> list[str]:
+    """Reject candidates that the hard click oracle could only judge inconclusive."""
+    clicks = [
+        index
+        for index, step in enumerate(spec.steps)
+        if isinstance(step, ClickStep) and step.target == contract.target
+    ]
+    if len(clicks) != 1:
+        return ["primary action must be clicked exactly once"]
+    click_index = clicks[0]
+    preceding = spec.steps[:click_index]
+    last_navigation = max(
+        (index for index, step in enumerate(preceding) if isinstance(step, NavigateStep)),
+        default=-1,
+    )
+    if last_navigation < 0:
+        return ["primary action requires navigation before the click"]
+    if contract.route is not None:
+        route = spec.steps[last_navigation]
+        assert isinstance(route, NavigateStep)
+        if route.path.split("?", 1)[0].split("#", 1)[0] != contract.route:
+            return ["primary action requires its registered route before the click"]
+    if not any(
+        isinstance(step, InspectStep) and step.target == contract.target
+        for step in preceding[last_navigation + 1 :]
+    ):
+        return ["primary action requires a matching inspect before the click"]
+    return []

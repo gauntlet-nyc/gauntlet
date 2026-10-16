@@ -68,7 +68,7 @@ async def freeze_live_plan(
             inspector=GitRepositoryInspector({change.repository_id: repository}),
             planner=AttackPlanner(
                 gateway,
-                RegisteredOracleRegistry(plans=(), primary_targets={}, evidence=()),
+                _cartwheel_planner_registry(),
                 instructions,
                 PlanningLimits(),
             ),
@@ -86,6 +86,27 @@ def _cartwheel_catalog() -> StaticTargetCatalog:
     """The only authorized target is the committed synthetic Cartwheel manifest."""
     manifest = json.loads(MANIFEST.read_text())
     return StaticTargetCatalog(profile_from_manifest(manifest))
+
+
+def _cartwheel_planner_registry() -> RegisteredOracleRegistry:
+    manifest = json.loads(MANIFEST.read_text())
+    actions = [
+        (route["path"], route["primary_action"])
+        for route in manifest["routes"]
+        if isinstance(route, dict)
+        and isinstance(route.get("path"), str)
+        and isinstance(route.get("primary_action"), str)
+    ]
+    if len(actions) != 1:
+        raise ValueError("Cartwheel manifest must register exactly one primary action")
+    route, action = actions[0]
+    target_id = manifest["target_id"]
+    return RegisteredOracleRegistry(
+        plans=(),
+        primary_targets={target_id: action},
+        primary_routes={target_id: route},
+        evidence=(),
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
