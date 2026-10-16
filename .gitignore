@@ -16,3 +16,5 @@ artifacts/
 bench/private/*
 !bench/private/README.md
 !bench/private/.gitkeep
+tsconfig.tsbuildinfo
+next-env.d.ts
