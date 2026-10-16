@@ -44,7 +44,7 @@ _LINE_RULES: Final[tuple[_LineRule, ...]] = (
         "layout_positioning",
         "added",
         re.compile(
-            r"position:\s*(fixed|sticky)|z-index|\bz-\d+\b"
+            r"position['\"]?\s*:\s*['\"]?(fixed|sticky)|z-?index|\bz-\d+\b"
             r"|\b(fixed|sticky)\b[^\n]*\b(top|bottom|left|right|inset)-",
             re.IGNORECASE,
         ),

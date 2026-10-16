@@ -47,7 +47,7 @@ DEFAULT_RULES: Final[tuple[SurfaceRule, ...]] = (
     _rule(
         "style",
         r"\.(tsx|jsx|html|vue|svelte)$",
-        r"position:\s*(fixed|sticky|absolute)|z-?index|\b(fixed|sticky)\b[^\n]*\b(top|bottom|left|right|inset)-",
+        r"position['\"]?\s*:\s*['\"]?(fixed|sticky|absolute)|z-?index|\b(fixed|sticky)\b[^\n]*\b(top|bottom|left|right|inset)-",
         0.75,
     ),
     _rule("route", r"(^|/)app/(.+/)?(page|layout)\.(tsx|jsx)$", None, 0.85),
@@ -83,7 +83,7 @@ def _hunk_ref(path: str, hunk: Hunk, base_sha: str, head_sha: str) -> SourceRef:
     )
 
 
-def _identifier(kind: SurfaceKind, path: str) -> str:
+def surface_identifier(kind: SurfaceKind, path: str) -> str:
     if kind == "route":
         parts = PurePosixPath(path).parts
         anchor = "app" if "app" in parts else "pages"
@@ -128,7 +128,7 @@ def map_surfaces(
         surfaces.extend(
             AffectedSurface(
                 kind=kind,
-                identifier=_identifier(kind, change.path),
+                identifier=surface_identifier(kind, change.path),
                 source_refs=refs,
                 confidence=confidence,
                 signals=signals,

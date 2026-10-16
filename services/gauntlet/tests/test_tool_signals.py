@@ -185,6 +185,20 @@ def test_unregistered_target_or_fixture_is_refused_before_any_work(
     assert gateway.requests == [] and store.events == {}
 
 
+def test_react_inline_style_positioning_is_signalled() -> None:
+    """Regression from the real Cartwheel fixture: `style={{ position: "fixed", zIndex: 50 }}`."""
+    diff = parse_unified_diff(
+        "diff --git a/src/components/FloatingHelp.tsx b/src/components/FloatingHelp.tsx\n"
+        "--- a/src/components/FloatingHelp.tsx\n+++ b/src/components/FloatingHelp.tsx\n"
+        "@@ -0,0 +1 @@\n"
+        '+    <div style={{ position: "fixed", bottom: 16, right: 16, zIndex: 50 }}>\n'
+    )
+    signals = extract_signals(
+        "src/components/FloatingHelp.tsx", diff.files[0].hunks, "1" * 7, "2" * 7
+    )
+    assert [s.kind for s in signals] == ["layout_positioning"]
+
+
 ENCODED_ESCAPES = (
     "/checkout/%2e%2e/admin",
     "/checkout/%2E%2E/admin",

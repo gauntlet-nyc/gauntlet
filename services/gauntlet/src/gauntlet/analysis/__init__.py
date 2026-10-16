@@ -2,6 +2,7 @@
 
 from gauntlet.domain import is_path_allowed
 
+from .dependency_graph import ImportGraph, build_import_graph, routes_rendering
 from .diff_parser import FileChange, FileStatus, Hunk, ParsedDiff, parse_unified_diff
 from .errors import (
     GitCommandError,
@@ -21,14 +22,17 @@ __all__ = [
     "GitLimits",
     "GitRepositoryInspector",
     "Hunk",
+    "ImportGraph",
     "ParsedDiff",
     "PathNotAllowedError",
     "RepositoryNotRegisteredError",
     "SourceLimitExceededError",
     "SurfaceMapping",
     "SurfaceRule",
+    "build_import_graph",
     "extract_signals",
     "is_path_allowed",
     "map_surfaces",
     "parse_unified_diff",
+    "routes_rendering",
 ]
