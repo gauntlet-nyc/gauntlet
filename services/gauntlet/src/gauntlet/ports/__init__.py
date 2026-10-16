@@ -1,6 +1,7 @@
 """Async Protocol ports. Adapters (owner B) implement these; application code uses only these."""
 
 from .agent import AgentChannel, AgentExchange
+from .api import ApiClient
 from .approvals import ApprovalStore
 from .artifacts import ArtifactStore, StoredArtifact
 from .audit import AuditEvidenceProvider, AuditFacts
@@ -30,6 +31,7 @@ from .worker import TestWorker
 __all__ = [
     "AgentChannel",
     "AgentExchange",
+    "ApiClient",
     "ApprovalAlreadyConsumedError",
     "ApprovalStore",
     "ArtifactRejectedError",

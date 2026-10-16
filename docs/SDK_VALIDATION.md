@@ -1149,3 +1149,13 @@ Offline sequence with `--memory local` (file `artifacts/memory/facts.json`):
 Session 2, **live NOT RUN** (`RUN_LIVE_INTEGRATIONS=1 uv run python
 scripts/run_gate.py --memory surreal --learn`). The scripted planner's use of
 memory is a fixed rule (widen the viewport sweep), not model judgement.
+
+### Session 1: P9 workers (2026-10-16)
+
+| Worker | Oracle (hard) | Adapter | Status |
+|---|---|---|---|
+| `accessibility` (browser port, `UIWorker(kind="accessibility")`) | `a11y.primary_action_target`: primary action >= 24x24 px (WCAG 2.2 SC 2.5.8) and its centre is not covered | simulated layout / local Chromium / Anchor | offline + **local Chromium run**: `run_gate.py --a11y` -> head 2/2 fail (covered by `help-button`), base 0/2 |
+| `api` (`ApiClient` port, `HttpxApiClient`, origin-locked, no redirects) | `api.order_contract`: invalid order bodies refused with 4xx, valid ones 201 with fixed invariants | simulated orders transport (offline), real HTTP for local/Daytona | offline-tested only; live NOT RUN |
+| `workflow`, `concurrency` | — | — | **not built** (selector allows them; planner proposals are reported `not_tested` with "no registered executor") |
+
+Local Chromium command: `CARTWHEEL_BASE_ORIGIN=http://127.0.0.1:3101 CARTWHEEL_HEAD_ORIGIN=http://127.0.0.1:3102 uv run --group live-providers python scripts/run_gate.py --sandbox local --browser local --a11y`.
