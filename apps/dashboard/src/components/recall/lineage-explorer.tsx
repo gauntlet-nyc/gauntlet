@@ -1,15 +1,20 @@
 "use client";
 
-import { MousePointerClick } from "lucide-react";
 import { useCallback, useState } from "react";
 
-import { Reveal } from "@/components/motion/reveal";
 import { TONE_CLASSES } from "@/components/shared";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { AuditView } from "@/lib/gauntlet";
 import { cn } from "@/lib/utils";
 
-import { CaseCard, type CaseViewModel } from "./case-card";
+import { AuditPanel } from "./audit-panel";
+import { CaseRow, type CaseViewModel } from "./case-row";
+import { DecisionTimeline, type TimelineRow } from "./decision-timeline";
 import { LineageGraph } from "./lineage-graph";
 import { caseAnchor } from "./model";
+
+const TAB = { cases: "cases", audit: "audit", timeline: "timeline" } as const;
+type Tab = (typeof TAB)[keyof typeof TAB];
 
 const LEGEND = [
   { label: "tainted", dot: TONE_CLASSES.bad.dot },
@@ -17,51 +22,83 @@ const LEGEND = [
   { label: "not replayable", dot: TONE_CLASSES.unknown.dot },
 ] as const;
 
-/** The lineage graph and the counterfactual case cards share one selection. */
-export function LineageExplorer({ cases, trigger }: { cases: readonly CaseViewModel[]; trigger: string }) {
-  const [selected, setSelected] = useState<string | null>(null);
+/** The lineage graph is the hero; cases, audit and timeline sit one click away and share the graph's selection. */
+export function LineageExplorer({
+  cases,
+  trigger,
+  audit,
+  rows,
+  highlight,
+}: {
+  cases: readonly CaseViewModel[];
+  trigger: string;
+  audit: AuditView;
+  rows: readonly TimelineRow[];
+  highlight: readonly string[];
+}) {
+  const [tab, setTab] = useState<Tab>(TAB.cases);
+  const [open, setOpen] = useState<string | null>(null);
 
   const select = useCallback((decisionId: string) => {
-    setSelected(decisionId);
-    document.getElementById(caseAnchor(decisionId))?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTab(TAB.cases);
+    setOpen(decisionId);
+    requestAnimationFrame(() =>
+      document.getElementById(caseAnchor(decisionId))?.scrollIntoView({ behavior: "smooth", block: "center" }),
+    );
   }, []);
 
   return (
     <>
-      <div className="bg-card overflow-hidden rounded-xl border">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-2.5 text-xs">
-          <div className="text-muted-foreground flex flex-wrap items-center gap-4">
-            {LEGEND.map((l) => (
-              <span key={l.label} className="inline-flex items-center gap-1.5">
-                <span className={cn("size-1.5 rounded-full", l.dot)} aria-hidden />
-                {l.label}
-              </span>
-            ))}
-            <span className="inline-flex items-center gap-1.5">
-              <svg width="18" height="6" aria-hidden>
-                <line x1="0" y1="3" x2="18" y2="3" stroke="var(--regression)" strokeWidth="1.5" strokeDasharray="4 3" />
-              </svg>
-              tainted path
+      <div className="text-muted-foreground mb-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs">
+        <span>
+          How {trigger} reached each decision. <span className="hidden sm:inline">Click a decision to open its case.</span>
+          <span className="sm:hidden">Swipe to see every decision.</span>
+        </span>
+        <span className="flex items-center gap-4">
+          {LEGEND.map((l) => (
+            <span key={l.label} className="inline-flex items-center gap-1.5">
+              <span className={cn("size-1.5 rounded-full", l.dot)} aria-hidden />
+              {l.label}
             </span>
-          </div>
-          <span className="text-muted-foreground text-xs sm:hidden">Swipe sideways to see every decision</span>
-          <span className="text-muted-foreground hidden items-center gap-1.5 sm:inline-flex">
-            <MousePointerClick className="size-3.5" aria-hidden />
-            Click a decision to open its case
-          </span>
-        </div>
-        <div className="overflow-x-auto">
-          <LineageGraph cases={cases.map((v) => v.c)} trigger={trigger} selected={selected} onSelect={select} />
-        </div>
+          ))}
+        </span>
+      </div>
+      <div className="overflow-x-auto rounded-xl border">
+        <LineageGraph cases={cases.map((v) => v.c)} trigger={trigger} selected={open} onSelect={select} />
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        {cases.map((vm, i) => (
-          <Reveal key={vm.c.decision_id} index={i}>
-            <CaseCard vm={vm} trigger={trigger} selected={selected === vm.c.decision_id} />
-          </Reveal>
-        ))}
-      </div>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)} className="mt-8 gap-4">
+        <TabsList variant="line" className="h-9 gap-4 border-b w-full justify-start rounded-none p-0">
+          <TabsTrigger value={TAB.cases} className="flex-none px-0">
+            Cases <span className="text-muted-foreground tabular-nums">{cases.length}</span>
+          </TabsTrigger>
+          <TabsTrigger value={TAB.audit} className="flex-none px-0">
+            Audit <span className="text-muted-foreground tabular-nums">{audit.summary.audited}</span>
+          </TabsTrigger>
+          <TabsTrigger value={TAB.timeline} className="flex-none px-0">
+            Timeline <span className="text-muted-foreground tabular-nums">{rows.length}</span>
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value={TAB.cases}>
+          <ul className="divide-y rounded-xl border">
+            {cases.map((vm) => (
+              <CaseRow
+                key={vm.c.decision_id}
+                vm={vm}
+                trigger={trigger}
+                open={open === vm.c.decision_id}
+                onOpenChange={(o) => setOpen(o ? vm.c.decision_id : null)}
+              />
+            ))}
+          </ul>
+        </TabsContent>
+        <TabsContent value={TAB.audit}>
+          <AuditPanel audit={audit} />
+        </TabsContent>
+        <TabsContent value={TAB.timeline}>
+          <DecisionTimeline rows={rows} trigger={trigger} highlight={highlight} />
+        </TabsContent>
+      </Tabs>
     </>
   );
 }

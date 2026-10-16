@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 export interface FlowStep {
   icon: "run" | "fact" | "plan" | "oracle";
   eyebrow: string;
-  title: ReactNode;
+  title?: ReactNode;
   detail: ReactNode;
   status?: string;
   emphasis?: boolean;
@@ -56,7 +56,7 @@ export function MemoryFlow({ steps, links }: { steps: readonly FlowStep[]; links
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: i * STEP_DELAY_S, ease: [0.16, 1, 0.3, 1] }}
               className={cn(
-                "bg-card min-w-0 flex-1 rounded-lg border px-3.5 py-3",
+                "min-w-0 flex-1 rounded-lg border px-3 py-2.5",
                 s.emphasis && "border-info/35",
               )}
             >
@@ -66,13 +66,13 @@ export function MemoryFlow({ steps, links }: { steps: readonly FlowStep[]; links
                   {s.eyebrow}
                 </span>
               </div>
-              <div className="mt-1.5 truncate font-mono text-sm font-medium">{s.title}</div>
-              <div className="text-muted-foreground mt-0.5 text-xs">{s.detail}</div>
+              {s.title && <div className="mt-1.5 truncate font-mono text-sm font-medium">{s.title}</div>}
               {s.status && (
-                <div className="mt-2">
+                <div className="mt-1.5">
                   <StatusPill value={s.status} />
                 </div>
               )}
+              <div className="text-muted-foreground mt-0.5 text-xs">{s.detail}</div>
             </motion.div>
           </div>
         );

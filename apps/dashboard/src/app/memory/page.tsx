@@ -1,23 +1,16 @@
-import { Brain, GitCompareArrows, Library, ShieldCheck } from "lucide-react";
+import { Brain, GitCompareArrows } from "lucide-react";
 import Link from "next/link";
 
 import { FactChip, MemoryFlow, type FlowStep, type MemoryFact } from "@/components/memory";
-import { Reveal } from "@/components/motion/reveal";
-import { EmptyState, ErrorPanel, OfflineBadge, PageHeader, ProvenanceList, Section, StatusPill } from "@/components/shared";
+import { EmptyState, ErrorPanel, OfflineBadge, PageHeader, Section, StatusPill } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { api, shortSha, type MemoryView } from "@/lib/gauntlet";
+import { api, type MemoryView } from "@/lib/gauntlet";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 type MemoryRun = MemoryView["runs"][number];
-
-const PRINCIPLES = [
-  { title: "Proved, then remembered", body: "A fact is written only from a confirmed finding and cites the finding and oracle that proved it." },
-  { title: "Evidence, not a verdict", body: "Later plans receive facts known at planning time as untrusted evidence. They widen the attack set; oracles still decide." },
-  { title: "Append-only", body: "Corrections supersede older facts. Nothing is overwritten, so every plan can be audited as of its time." },
-] as const;
 
 /** Attacks a run planned that the previous run of the same change did not. */
 function newAttacks(run: MemoryRun, runs: readonly MemoryRun[]): Set<string> {
@@ -41,7 +34,6 @@ function flowFor(runs: readonly MemoryRun[], facts: ReadonlyMap<string, MemoryFa
       eyebrow: "Run without memory",
       title: writer.run_id,
       detail: `${writer.attack_ids.length} attack${writer.attack_ids.length === 1 ? "" : "s"} planned`,
-      status: writer.status,
     });
   }
   steps.push(
@@ -61,8 +53,7 @@ function flowFor(runs: readonly MemoryRun[], facts: ReadonlyMap<string, MemoryFa
     {
       icon: "oracle",
       eyebrow: "Oracle decides",
-      title: "Verdict",
-      detail: "Decided by the oracle, independent of memory",
+      detail: "Independent of memory",
       status: reader.status,
     },
   );
@@ -78,7 +69,6 @@ export default async function MemoryPage() {
     return <ErrorPanel what="Memory" error={err} />;
   }
   const facts = new Map(view.facts.map((f) => [f.fact_id, f]));
-  const superseded = new Set(view.facts.map((f) => f.supersedes).filter(Boolean));
   const flow = flowFor(view.runs, facts);
 
   return (
@@ -87,32 +77,19 @@ export default async function MemoryPage() {
         eyebrow="Memory"
         icon={Brain}
         title="Planning memory"
-        description="Confirmed findings become typed, cited facts that later attack plans can use. Memory is evidence for planning, never the oracle."
+        description="Confirmed findings become cited facts that later plans can use. Memory is evidence for planning, never the oracle."
+        actions={<OfflineBadge provenance={[view.provenance]} />}
       />
-      <OfflineBadge provenance={[view.provenance]} />
-
-      <div className="grid gap-4 md:grid-cols-3">
-        {PRINCIPLES.map((p, i) => (
-          <Reveal key={p.title} index={i}>
-            <div className="bg-card h-full rounded-xl border p-5">
-              <div className="text-muted-foreground mb-2 font-mono text-xs tabular-nums">0{i + 1}</div>
-              <p className="text-sm font-medium">{p.title}</p>
-              <p className="text-muted-foreground mt-1 text-sm leading-relaxed">{p.body}</p>
-            </div>
-          </Reveal>
-        ))}
-      </div>
 
       {flow && (
-        <Section title="How a fact reaches the next plan" icon={GitCompareArrows}>
+        <div className="mt-2">
           <MemoryFlow steps={flow.steps} links={flow.links} />
-        </Section>
+        </div>
       )}
 
       <Section
         title="Planning with vs without memory"
-        icon={ShieldCheck}
-        description="Each run, the facts its planner received, and the facts it wrote back. Hover a fact for its provenance."
+        description="Hover a fact for its provenance."
       >
         {view.runs.length === 0 ? (
           <EmptyState
@@ -125,7 +102,7 @@ export default async function MemoryPage() {
             </Button>
           </EmptyState>
         ) : (
-          <div className="bg-card overflow-hidden rounded-xl border">
+          <div className="overflow-hidden rounded-xl border">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
@@ -195,63 +172,6 @@ export default async function MemoryPage() {
         )}
       </Section>
 
-      <Section title={`Facts (${view.facts.length})`} icon={Library} description="Append-only. Superseded facts are kept for audit.">
-        {view.facts.length === 0 ? (
-          <EmptyState title="No facts yet" description="Facts appear once a run confirms a finding." icon={Library} />
-        ) : (
-          <div className="space-y-3">
-            {view.facts.map((f, i) => {
-              const old = superseded.has(f.fact_id);
-              return (
-                <Reveal key={f.fact_id} index={i}>
-                  <article className={cn("bg-card rounded-xl border p-5", old && "opacity-60")}>
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <code className="min-w-0 truncate font-mono text-xs font-medium" title={f.fact_id}>
-                        {f.fact_id}
-                      </code>
-                      <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                        <span className="text-muted-foreground rounded-full border px-2 py-0.5">{f.kind.replaceAll("_", " ")}</span>
-                        <span className="text-muted-foreground rounded-full border px-2 py-0.5">
-                          {f.verification} / {f.trust.replaceAll("_", " ")}
-                        </span>
-                        {old && <span className="rounded-full border px-2 py-0.5">superseded (kept for audit)</span>}
-                      </div>
-                    </div>
-                    <p className="mt-2 text-sm leading-relaxed">{f.summary}</p>
-                    <dl className="text-muted-foreground mt-3 grid gap-x-6 gap-y-1 border-t pt-3 text-xs sm:grid-cols-2 lg:grid-cols-4">
-                      <div>
-                        <dt>Proved by</dt>
-                        <dd className="text-foreground truncate font-mono">{f.source.finding_id ?? "n/a"}</dd>
-                      </div>
-                      <div>
-                        <dt>Oracle</dt>
-                        <dd className="text-foreground truncate font-mono">{f.source.oracle_id ?? "n/a"}</dd>
-                      </div>
-                      <div>
-                        <dt>Commit</dt>
-                        <dd className="text-foreground font-mono">{f.source.commit ? shortSha(f.source.commit) : "n/a"}</dd>
-                      </div>
-                      <div>
-                        <dt>Known at</dt>
-                        <dd className="text-foreground font-mono tabular-nums">{f.known_at.slice(0, 19).replace("T", " ")}Z</dd>
-                      </div>
-                    </dl>
-                    {f.supersedes && (
-                      <p className="text-muted-foreground mt-2 text-xs">
-                        Supersedes <code className="font-mono">{f.supersedes}</code>
-                      </p>
-                    )}
-                  </article>
-                </Reveal>
-              );
-            })}
-          </div>
-        )}
-      </Section>
-
-      <Section title="Provenance">
-        <ProvenanceList provenance={[view.provenance]} />
-      </Section>
     </main>
   );
 }
