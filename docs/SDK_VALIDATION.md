@@ -1229,3 +1229,65 @@ the real gateway code and synthetic Bedrock response confirmed reasoning blocks
 are skipped and no temperature is sent. Invalid settings stop before client
 construction. **Live Bedrock probe NOT RUN here:** the local AWS profile is not
 available (`ProfileNotFound`).
+
+### Independent provider and browser rerun (2026-10-16)
+
+AWS CLI 2.38.1 was installed in the project-local `.venv` area. A temporary
+`hacksprint` profile passed STS identity verification. Bedrock's read-only model
+inventory in `us-west-2` listed `us.openai.gpt-6-luna` as an inference profile.
+Exactly one paid synthetic Cartwheel planning request used boto3 1.43.114 and
+reasoning mode. Bedrock request ID `6a4cab66-dbaf-44c6-bf9a-b89a1137369b`
+returned a frozen plan hash
+`d874e0453b22fb91c7c44b8aa8cf2e20ece3f308db8d31eafc35e9e99c0f56b3`
+with two accepted candidates and zero rejected. **Gate status stayed
+`not_tested`.** Both accepted candidates clicked `help-button` while requesting
+the `ui.primary_action_reachable` oracle, which requires an action on
+`checkout-primary-action`. This is a planner validation gap, not proof of a
+working P1 test. No Gate execution followed the model call.
+
+```bash
+AWS_PROFILE=hacksprint RUN_LIVE_INTEGRATIONS=1 BEDROCK_REASONING_MODEL=1 \
+  .venv/bin/python scripts/probe_p1_model_plan.py --provider bedrock \
+  --repository /tmp/gauntlet-a-bedrock-probe.CvMdmU/cartwheel \
+  --change-request /tmp/gauntlet-a-bedrock-probe.CvMdmU/change.json \
+  --model-id us.openai.gpt-6-luna --region us-west-2 \
+  --output /tmp/gauntlet-a-bedrock-probe.CvMdmU/report.json \
+  --execute --authorize-spend
+```
+
+The request ID came from Bedrock Converse `ResponseMetadata.RequestId` and was
+forwarded to the `plan_frozen` event's `trace_id`.
+
+The existing private Cartwheel registration passed `load_registration` against
+the committed base/head revisions and fixture checksum. A read-only Daytona SDK
+0.224.1 list found both registered snapshots active and zero sandboxes; Anchor
+SDK 1.0.1 answered its session-status read. One explicitly authorized hosted
+Daytona/Anchor smoke using that registration returned `environment_error` with
+`EnvironmentUnavailableError`, zero captures, and Gate `not_tested`. Cleanup
+reported no errors and zero pending sandbox/browser/Anchor IDs; a later read
+still found zero Daytona sandboxes. No retry was made. Proxyless Anchor remains
+weaker egress isolation and does not establish a production-safe Gate run.
+
+```bash
+RUN_LIVE_INTEGRATIONS=1 .venv/bin/python -m dotenv \
+  -f "$HOME/.config/gauntlet/provider.env" run --no-override -- \
+  .venv/bin/python scripts/probe_b01_provider_smoke.py \
+  --registration /tmp/cartwheel-b01s-registration-current-domain-20261016.json \
+  --output /tmp/gauntlet-b01-anchor-one-shot-20261016-1 \
+  --execute --authorize-spend
+```
+
+Real local Chrome against built Cartwheel base/head fixtures on ports 3101/3102
+confirmed primary-action reachability: base 2/2 passes, head 2/2 failures, with
+matching build receipts. A separate full checkout workflow exposed a timing
+issue: the local browser adapter clicked after `domcontentloaded` but before
+Next.js attached the submit handler. The click receipt said `ok`, yet no
+`/api/orders` POST occurred and the completion-marker inspect timed out, so the
+workflow was `environment_error`/inconclusive. Waiting for page hydration in a
+direct Chrome check produced a base order POST 201 and visible receipt. The
+bounded navigation readiness fix in B commit `ae07406` then made the full local
+workflow replay conclusive: base navigation/click/receipt completed and the hard
+oracle returned `pass`; head navigation completed, the submit click was blocked,
+and the hard oracle returned `fail`. These are real local Chrome observations
+against synthetic fixture servers, not a hosted Anchor run. The fix still needs
+main integration and CI at the time of this entry.
