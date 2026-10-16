@@ -2,6 +2,7 @@
 
 * ``ScriptedRefundFixProposer`` (OFFLINE, labeled): restores the owner check the refund-tool
   change removed. A composition check of the repair loop, not evidence of model fix quality.
+* ``ScriptedUiFixProposer`` (OFFLINE, labeled): repairs only the registered Help CSS.
 * ``ModelFixProposer``: asks the model for a minimal unified diff limited to the files the
   confirmed attack cited. Its output is untrusted text validated by the repair use case.
 """
@@ -74,6 +75,70 @@ class ScriptedRefundFixProposer:
                 "Re-run the frozen cross-owner refund attack: no forbidden ledger entry",
                 "Variant: another customer's order via a different phrasing",
                 "Legitimate: the order owner refunds their own order through the assistant",
+            ),
+            created_at=self._clock,
+        )
+
+
+UI_HELP_PATH: Final = "src/components/FloatingHelp.module.css"
+_UI_HELP_HEAD: Final = (
+    ".floatingHelp {\n"
+    "  position: fixed;\n"
+    "  bottom: 16px;\n"
+    "  right: 16px;\n"
+    "  z-index: 50;\n"
+    "}\n\n"
+    "@media (min-width: 900px) {\n"
+    "  .floatingHelp {\n"
+    "    bottom: 96px;\n"
+    "  }\n"
+    "}\n"
+)
+
+
+class ScriptedUiFixProposer:
+    """Offline proposal for the registered fixture's exact Help positioning defect.
+
+    Unknown CSS fails closed. This is a reviewable composition fixture, not a
+    general CSS fixer or evidence that a model authored a repair.
+    """
+
+    label = "offline_scripted_fix"
+
+    def __init__(self, repository: Path, clock: datetime) -> None:
+        self._repo = repository
+        self._clock = clock
+
+    async def propose(
+        self, *, run_id: str, finding: Finding, attack: AttackSpec, head_sha: str
+    ) -> FixPlan:
+        if (
+            attack.target_id != "cartwheel-fixture"
+            or attack.fixture_id != "baseline-v1"
+            or not any(
+                ref.path == UI_HELP_PATH and ref.sha == head_sha and is_patch_path_allowed(ref.path)
+                for ref in attack.source_refs
+            )
+        ):
+            raise ValueError("scripted UI fix requires the registered fixture's cited head CSS")
+        before = _show(self._repo, head_sha, UI_HELP_PATH)
+        if before != _UI_HELP_HEAD:
+            raise ValueError("scripted UI fix does not apply to this revision")
+        after = before.split("\n@media", 1)[0].rstrip() + "\n"
+        after = after.replace("bottom: 16px;", "bottom: 96px;", 1)
+        return FixPlan(
+            fix_plan_id=f"fix-{finding.finding_id}",
+            run_id=run_id,
+            finding_id=finding.finding_id,
+            base_sha=head_sha,
+            allowed_paths=(UI_HELP_PATH,),
+            unified_diff=_diff(UI_HELP_PATH, before, after),
+            rationale="Keep Help above Checkout at narrow and desktop widths while preserving "
+            "the Help control and dialog.",
+            test_plan=(
+                "Replay the frozen attack: Checkout receives the click on patched head",
+                "Variant: Checkout remains reachable at another narrow viewport",
+                "Legitimate: Help opens its dialog and checkout completes at desktop width",
             ),
             created_at=self._clock,
         )
