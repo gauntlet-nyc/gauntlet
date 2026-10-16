@@ -88,7 +88,8 @@ attestation require `git rev-parse HEAD`. The optional paid path requires both C
 `RUN_LIVE_INTEGRATIONS=1`, the Cartwheel target allowlist and Daytona credentials.
 It creates one temporary image snapshot with a conditional Next startup
 entrypoint, seeds two private revision sandboxes,
-stops them, captures cold snapshots and checks their recorded entrypoint.
+stops them, captures cold snapshots and originally checked for an inherited
+entrypoint. The live finding below supersedes that assumption.
 Temporary sandboxes and image snapshot are deleted; failed runs also delete
 revision snapshots. Output is an untracked registration file and sanitized
 metadata, including the actual SDK version and lockfile hash. No paid path was
@@ -146,6 +147,28 @@ codes. Provider exception text, signed origins and credentials remain absent
 from the JSON error report. Offline tests exercise a head-stage failure and
 verify cleanup; no paid retry was made for B-01r.
 
+### B-01s explicit cold start (2026-10-16)
+
+A bounded Daytona run confirmed the runtime image snapshot retained the
+configured entrypoint, while the sandbox-created cold snapshot was `active`
+with `entrypoint=null`. Container cold snapshots capture filesystem state; the
+bootstrap now accepts exactly that observed metadata and registers the fixed
+`cartwheel_next_v1` startup profile. This profile names one SDK-owned command;
+registration cannot supply arbitrary shell. Existing registration files without
+`startup_profile` must be regenerated from the bootstrap or registration
+script. After a restored sandbox's Git SHA
+and fixture-state digest match the registered values, the provider starts the
+compiled Next build in the background on the validated preview port. It then
+obtains the signed preview and waits for `/checkout` readiness. The hosted
+`/api/build-info` receipt remains required before Anchor opens a browser.
+
+Daytona SDK 0.224.1 `AsyncProcess.exec(command, cwd, timeout)` documents a
+redirected background command for a long-running server. B-01s uses that
+method with a constant command template and the registered integer port.
+Offline fakes establish ordering and cleanup, but no B-01s live restore or
+preview was run by the coding agent. A real base/head restore and signed
+receipt smoke is still required before any P1 claim.
+
 Run the local preflight from the repository root with
 `uv run --frozen --no-sync --group live-providers python -m scripts.provision_cartwheel_snapshots
 --lockfile <reviewed-package-lock-outside-git> --image
@@ -161,12 +184,12 @@ startup smoke before a Gate claim.
 The generated fixture currently has no committed `package-lock.json`, so an
 operator must supply a reviewed lockfile matching its `package.json`. A
 successful snapshot creation would still be `not_tested` for P1: the installed
-SDK cannot by itself prove that the entrypoint survives a cold restore *and*
-serves the selected compiled build. The next authorized live check must create
-one sandbox from each output snapshot, verify checkout/state, fetch each signed
-preview's `/api/build-info` exact SHA, then delete both sandboxes before using
-Anchor. If Daytona omits the inherited entrypoint or rejects the blocked-network
-seed, report `environment_error` and keep P1 open.
+SDK cannot by itself prove that restored cold snapshots can start and serve the
+selected compiled build. The next authorized live check must create one sandbox
+from each output snapshot, verify checkout/state, invoke the fixed Cartwheel
+startup profile, fetch each signed preview's `/api/build-info` exact SHA, then
+delete both sandboxes before using Anchor. If restore/startup fails, report
+`environment_error` and keep P1 open.
 
 On the integrated tree, the rebuilt fixture passed `npm run build` on both
 revisions. Headless Chrome with one frozen, diff-cited scripted plan produced

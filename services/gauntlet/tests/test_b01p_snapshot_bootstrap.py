@@ -109,7 +109,8 @@ class FakeSnapshots:
         return SimpleNamespace(name=params.name)
 
     async def get(self, name: str) -> SimpleNamespace:
-        return SimpleNamespace(name=name, entrypoint=bootstrap.ENTRYPOINT, state="active")
+        entrypoint = bootstrap.ENTRYPOINT if name.endswith("-runtime") else None
+        return SimpleNamespace(name=name, entrypoint=entrypoint, state="active")
 
     async def delete(self, name: str) -> None:
         self.deleted.append(name)
@@ -312,6 +313,25 @@ def test_head_failure_reports_fixed_stage_and_cleans_both_revisions(tmp_path: Pa
     assert report["error_type"] == "BootstrapStageError"
     assert "secret" not in json.dumps(report)
     assert len(client.deleted) == 2
+    assert len(client.snapshot.deleted) == 2
+
+
+def test_cold_snapshot_with_unexpected_entrypoint_fails_closed(tmp_path: Path) -> None:
+    source = inputs(tmp_path)
+    client = FakeClient(source)
+
+    async def unexpected_get(name: str) -> SimpleNamespace:
+        return SimpleNamespace(name=name, entrypoint=bootstrap.ENTRYPOINT, state="active")
+
+    client.snapshot.get = unexpected_get  # type: ignore[method-assign]
+    with pytest.raises(bootstrap.BootstrapStageError) as error:
+        asyncio.run(
+            bootstrap.provision(
+                client, source, preview_domain_suffix=".proxy.daytona.work", preview_port=3000
+            )
+        )
+    assert error.value.stage == "base_snapshot_get"
+    assert len(client.deleted) == 1
     assert len(client.snapshot.deleted) == 2
 
 
