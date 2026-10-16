@@ -63,6 +63,9 @@ class SurrealTemporalMemory:
     def __init__(self, client: SurrealHttpClient) -> None:
         self._client = client
 
+    async def close(self) -> None:
+        await self._client.close()
+
     async def ensure_schema(self) -> None:
         await self._client.query(MEMORY_SCHEMA)
 

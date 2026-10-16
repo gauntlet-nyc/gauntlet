@@ -67,7 +67,10 @@ Approved 2026-10-16 (owner decision): `cryptography==50.0.2` in the `live-provid
 group, used only for GitHub App RS256 JWT signing and imported lazily; without it the
 GitHub App adapter raises "missing cryptography" and its tests skip.
 
-Not yet approved: `surrealdb`/`surrealdb[memory]` (the memory extra is a prerelease that needs a separately resolved lock), `arize`/`arize-otel`, ElevenLabs. Each needs its own owner proposal. New packages need A/B/C review per CONTRIBUTING.
+Approved 2026-10-16 (owner decision on #25), all in `live-providers` with exact pins:
+`surrealdb[memory]==3.0.0b10` + `surrealdb-memory==1.0.0b1` (prerelease Agent Memory SDK;
+the HTTP memory context stays as fallback) and `arize==8.59.1` (Experiments API; pulls
+numpy/pandas/pyarrow, `live-providers` only). ElevenLabs still uses plain httpx (no SDK). New packages need A/B/C review per CONTRIBUTING.
 
 Dashboard: `pnpm audit --prod` found four postcss advisories (two high, two moderate) bundled by Next 15.5.28, the latest 15.x. A root `pnpm.overrides` entry forces `postcss>=8.5.23`; typecheck, lint, tests and build pass and the audit is clean. Revisit when Next ships a patched dependency.
 

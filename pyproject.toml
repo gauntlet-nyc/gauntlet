@@ -17,10 +17,14 @@ dev = [
 ]
 live-providers = [
     "anchorbrowser==1.0.1",
+    "arize==8.59.1",
     "boto3==1.43.114",
     "cryptography==50.0.2",
     "daytona==0.224.1",
     "playwright==1.64.0",
+    # SurrealDB Agent Memory SDK (prerelease, owner-approved 2026-10-16); exact pins.
+    "surrealdb[memory]==3.0.0b10",
+    "surrealdb-memory==1.0.0b1",
 ]
 
 [tool.uv.workspace]

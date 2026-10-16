@@ -18,7 +18,7 @@ from gauntlet.contracts import (
     TemporalMemoryFact,
 )
 from gauntlet.memory.surreal_memory import SurrealTemporalMemory
-from gauntlet.persistence.factory import core_client, memory_client
+from gauntlet.persistence.factory import core_client, memory_store
 from gauntlet.persistence.surreal_store import (
     SurrealLineageStore,
     SurrealRunStore,
@@ -69,10 +69,11 @@ async def _core(report: dict[str, object]) -> None:
 
 
 async def _memory(report: dict[str, object]) -> None:
-    client = memory_client(load_settings())
+    memory = memory_store(load_settings())
+    report["memory_backend"] = getattr(memory, "backend", "surrealdb_http_memory_context")
     try:
-        memory = SurrealTemporalMemory(client)
-        await memory.ensure_schema()
+        if isinstance(memory, SurrealTemporalMemory):
+            await memory.ensure_schema()
         now = datetime.now(UTC)
         fact_id = f"smoke-{uuid4().hex[:12]}"
         await memory.remember(
@@ -102,7 +103,7 @@ async def _memory(report: dict[str, object]) -> None:
             "status": "passed" if any(f.fact_id == fact_id for f in found) else "failed",
         }
     finally:
-        await client.close()
+        await memory.close()
 
 
 def main() -> None:
