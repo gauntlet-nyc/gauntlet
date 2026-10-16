@@ -43,4 +43,4 @@ mypy_path = "services/gauntlet/src"
 
 [tool.pytest.ini_options]
 testpaths = ["services/gauntlet/tests"]
-pythonpath = ["services/gauntlet/src"]
+pythonpath = [".", "services/gauntlet/src"]

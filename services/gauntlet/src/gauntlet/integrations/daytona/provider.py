@@ -44,6 +44,7 @@ class RegisteredTarget:
     preview_port: int
     preview_domain_suffix: str
     ready_path: str
+    startup_profile: str
     snapshots: tuple[RegisteredSnapshot, ...]
 
     def __post_init__(self) -> None:
@@ -64,10 +65,12 @@ class RegisteredTarget:
                 or any(ord(char) < 0x20 for char in path)
             ):
                 raise ValueError("registered sandbox paths must be absolute and safe")
-        if not 1 <= self.preview_port <= 65535:
+        if type(self.preview_port) is not int or not 1 <= self.preview_port <= 65535:
             raise ValueError("preview port is invalid")
         if not re.fullmatch(r"\.[a-z0-9.-]+", self.preview_domain_suffix):
             raise ValueError("preview domain suffix is invalid")
+        if self.startup_profile != "cartwheel_next_v1" or self.target_id != "cartwheel-fixture":
+            raise ValueError("registered startup profile is unsupported")
         if (
             not self.ready_path.startswith("/")
             or self.ready_path.startswith("//")
@@ -83,6 +86,8 @@ class DaytonaSandbox(Protocol):
     async def checkout_sha(self, repo_path: str) -> str: ...
 
     async def read_file(self, path: str) -> bytes: ...
+
+    async def start_cartwheel(self, repo_path: str, port: int) -> None: ...
 
     async def signed_preview_origin(self, port: int, expires_in_seconds: int) -> str: ...
 
@@ -221,6 +226,7 @@ class DaytonaSandboxProvider:
         try:
             if not await self._matches_fixture(sandbox, target, source_sha):
                 raise EnvironmentUnavailableError("Daytona source or fixture state does not match")
+            await sandbox.start_cartwheel(target.repo_path, target.preview_port)
             origin = _preview_origin(
                 await sandbox.signed_preview_origin(target.preview_port, 900),
                 target.preview_domain_suffix,
