@@ -6,6 +6,7 @@ from pathlib import Path
 
 import test_b01p_snapshot_bootstrap as b01p
 from scripts.prepare_cartwheel_registration import CLEAN_SHA, prepare_registration
+from test_b01p_snapshot_bootstrap import fake_daytona_parameter_types  # noqa: F401 (autouse)
 
 from gauntlet.execution.provider_smoke_config import CARTWHEEL_CLEAN_SHA, load_registration
 
