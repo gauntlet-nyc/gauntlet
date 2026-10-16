@@ -460,3 +460,65 @@ def test_live_runs_need_a_reviewer_but_offline_runs_stay_open(
         live.post("/gate/runs", json={"change_id": "refund-tool"}, headers=wrong).status_code == 401
     )
     assert live.get("/gate/runs").json() == []
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/recall/audit",
+        "/recall/counterfactual",
+        "/recall/lineage/decision-009",
+        "/recall/review-queue",
+    ],
+)
+def test_live_recall_rejects_missing_or_invalid_auth_before_replay(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+    path: str,
+) -> None:
+    from fastapi import HTTPException
+
+    from gauntlet.application.recall import RunRecallUseCase
+
+    for name, value in {
+        "RUN_LIVE_INTEGRATIONS": "1",
+        "GAUNTLET_MODEL_PROVIDER": "azure",
+        "AZURE_OPENAI_ENDPOINT": "https://example.openai.azure.com",
+        "AZURE_OPENAI_DEPLOYMENT": "deployment",
+        "AZURE_OPENAI_API_KEY": "k" * 32,
+    }.items():
+        monkeypatch.setenv(name, value)
+    get_settings.cache_clear()
+    get_container.cache_clear()
+    calls = []
+
+    async def execution_boundary(self: RunRecallUseCase, *args: object, **kwargs: object) -> None:
+        calls.append(args)
+        raise HTTPException(status_code=418, detail="authorized replay reached")
+
+    monkeypatch.setattr(RunRecallUseCase, "execute", execution_boundary)
+    assert client.get(path).status_code == 401
+    assert (
+        client.get(path, headers={"Authorization": "Bearer invalid-token-0123456789"}).status_code
+        == 401
+    )
+    assert calls == []
+    # The service was composed with a live runtime. Later env changes must not open it.
+    monkeypatch.delenv("RUN_LIVE_INTEGRATIONS")
+    assert client.get(path).status_code == 401
+    assert calls == []
+    assert client.get(path, headers=AUTH).status_code == 418
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/recall/audit",
+        "/recall/counterfactual",
+        "/recall/lineage/decision-009",
+        "/recall/review-queue",
+    ],
+)
+def test_offline_recall_stays_public(client: TestClient, path: str) -> None:
+    assert client.get(path).status_code == 200

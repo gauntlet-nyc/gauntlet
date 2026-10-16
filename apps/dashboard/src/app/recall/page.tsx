@@ -1,7 +1,10 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { Card, ErrorPanel, OfflineBadge, ProvenanceList, Section, StatusPill } from "@/components/ui";
 import { api, type CounterfactualCase } from "@/lib/gauntlet";
+
+import { recallApi, ReviewerAuthRequired } from "@/lib/recall-api";
 
 export const dynamic = "force-dynamic";
 
@@ -25,8 +28,9 @@ function LineagePath({ c }: { c: CounterfactualCase }) {
 export default async function RecallPage() {
   let timeline, audit, cf;
   try {
-    [timeline, audit, cf] = await Promise.all([api.timeline(), api.audit(), api.counterfactual()]);
+    [timeline, audit, cf] = await Promise.all([api.timeline(), recallApi.audit(), recallApi.counterfactual()]);
   } catch (err) {
+    if (err instanceof ReviewerAuthRequired) redirect("/login?next=/recall");
     return <ErrorPanel what="Recall" error={err} />;
   }
   const flagged = new Set(audit.verdicts.filter((v) => v.classification !== "audit_clear").map((v) => v.decision_id));

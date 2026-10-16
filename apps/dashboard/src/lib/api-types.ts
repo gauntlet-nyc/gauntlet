@@ -2188,7 +2188,9 @@ export interface operations {
     recall_audit_recall_audit_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2203,6 +2205,15 @@ export interface operations {
                     "application/json": components["schemas"]["AuditView"];
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
     recall_counterfactual_recall_counterfactual_get: {
@@ -2210,7 +2221,9 @@ export interface operations {
             query?: {
                 trigger?: string;
             };
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2239,7 +2252,9 @@ export interface operations {
     recall_lineage_recall_lineage__decision_id__get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path: {
                 decision_id: string;
             };
@@ -2270,7 +2285,9 @@ export interface operations {
     recall_review_queue_recall_review_queue_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2283,6 +2300,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReviewItem"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
