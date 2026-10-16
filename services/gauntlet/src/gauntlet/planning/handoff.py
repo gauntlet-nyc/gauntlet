@@ -35,7 +35,7 @@ class _Handoff(BaseModel):
     change: ChangeRequest
     impact: ChangeImpactMap
     attacks: tuple[AttackSpec, ...] = Field(max_length=100)
-    rejected: tuple[_Rejected, ...] = Field(max_length=100)
+    rejected: tuple[_Rejected, ...]
     model_id: str | None = Field(max_length=2048)
     prompt_sha256: Sha256Hex
     not_tested_reason: ShortText | None

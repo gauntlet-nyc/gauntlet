@@ -132,7 +132,9 @@ def test_attack_binding_rejected_even_with_recomputed_hash(plan: FrozenPlan, fie
         serialize_frozen_plan(mutated, prompt_sha256=PROMPT_HASH)
 
 
+@pytest.mark.parametrize("rejected_count", [0, 101])
 def test_cli_publishes_loadable_envelope(
+    rejected_count: int,
     demo_repo: DemoRepo,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
@@ -158,7 +160,9 @@ def test_cli_publishes_loadable_envelope(
     monkeypatch.setattr(
         probe_p1_model_plan,
         "create_bedrock_gateway",
-        lambda **_: BedrockConverseGateway(Client(response('{"attacks": []}')), "test-model"),
+        lambda **_: BedrockConverseGateway(
+            Client(response(json.dumps({"attacks": [{}] * rejected_count}))), "test-model"
+        ),
     )
     change_path = tmp_path / "change.json"
     request = change(demo_repo)
@@ -195,5 +199,7 @@ def test_cli_publishes_loadable_envelope(
         expected_run_id=report["run_id"],
     )
     assert restored.attacks == ()
+    assert len(restored.rejected) == rejected_count
+    assert report["status"] == ("rejected" if rejected_count else "not_tested")
     assert report["gate_status"] == "not_tested"
     assert "frozen_plan" not in json.loads(capsys.readouterr().out)
