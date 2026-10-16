@@ -32,7 +32,16 @@ from gauntlet.security.webhooks import (
 from gauntlet.settings import MissingSettingError, load_settings
 
 OPENSSL = shutil.which("openssl")
-needs_openssl = pytest.mark.skipif(OPENSSL is None, reason="openssl not installed")
+try:
+    import cryptography  # noqa: F401
+
+    HAS_CRYPTOGRAPHY = True
+except ImportError:
+    HAS_CRYPTOGRAPHY = False
+needs_openssl = pytest.mark.skipif(
+    OPENSSL is None or not HAS_CRYPTOGRAPHY,
+    reason="openssl or cryptography (live-providers group) not installed",
+)
 SECRET = b"synthetic-webhook-secret-0123456789"
 SHA = "a" * 40
 REPORT = CheckRunReport("Gauntlet", "failure", "1 confirmed issue", "summary", None)
@@ -98,6 +107,7 @@ def test_pkcs8_key_also_parses(key_pem: Path, tmp_path: Path) -> None:
     assert parse_rsa_private_key(pkcs8.read_text()) == parse_rsa_private_key(key_pem.read_text())
 
 
+@needs_openssl
 def test_rejects_non_rsa_material() -> None:
     with pytest.raises(ValueError):
         parse_rsa_private_key("not a key")
@@ -196,6 +206,27 @@ def test_github_webhook_signature_replay_and_mapping() -> None:
     assert isinstance(
         verifier.handle(_gh_headers(ping, "55555555-6666", "ping"), ping), EventIgnored
     )
+
+
+def test_replay_guard_rejects_when_full_instead_of_evicting() -> None:
+    now = [0.0]
+    guard = ReplayGuard(ttl_seconds=10, max_entries=2, clock=lambda: now[0])
+    guard.accept_once("a")
+    guard.accept_once("b")
+    with pytest.raises(WebhookRejectedError, match="full"):
+        guard.accept_once("c")
+    with pytest.raises(WebhookRejectedError, match="duplicate"):
+        guard.accept_once("a")  # "a" was not evicted, so it still cannot be replayed
+    now[0] = 11
+    guard.accept_once("c")
+
+
+def test_missing_cryptography_is_a_clear_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    import sys
+
+    monkeypatch.setitem(sys.modules, "cryptography.hazmat.primitives", None)
+    with pytest.raises(EnvironmentUnavailableError, match="missing cryptography"):
+        parse_rsa_private_key("-----BEGIN RSA PRIVATE KEY-----")
 
 
 def test_replay_guard_expires() -> None:

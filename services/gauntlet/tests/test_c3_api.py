@@ -432,3 +432,31 @@ def test_memory_feeds_later_plans_append_only(client: TestClient) -> None:
     assert view["provenance"]["live"] is False
     rows = {r["run_id"]: r for r in view["runs"]}
     assert rows[second["run_id"]]["attack_ids"] == [a["attack_id"] for a in second["attacks"]]
+
+
+def test_start_run_rejects_unknown_fields(client: TestClient) -> None:
+    response = client.post("/gate/runs", json={"change_id": "help-button", "sandbox": "daytona"})
+    assert response.status_code == 422
+
+
+def test_live_runs_need_a_reviewer_but_offline_runs_stay_open(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    assert client.post("/gate/runs", json={"change_id": "clean"}).status_code == 201
+    for name, value in {
+        "RUN_LIVE_INTEGRATIONS": "1",
+        "GAUNTLET_MODEL_PROVIDER": "azure",
+        "AZURE_OPENAI_ENDPOINT": "https://example.openai.azure.com",
+        "AZURE_OPENAI_DEPLOYMENT": "deployment",
+        "AZURE_OPENAI_API_KEY": "k" * 32,
+    }.items():
+        monkeypatch.setenv(name, value)
+    get_settings.cache_clear()
+    get_container.cache_clear()
+    live = TestClient(app)
+    assert live.post("/gate/runs", json={"change_id": "refund-tool"}).status_code == 401
+    wrong = {"Authorization": "Bearer not-a-real-token-000000"}
+    assert (
+        live.post("/gate/runs", json={"change_id": "refund-tool"}, headers=wrong).status_code == 401
+    )
+    assert live.get("/gate/runs").json() == []

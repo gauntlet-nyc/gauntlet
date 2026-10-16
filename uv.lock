@@ -923,14 +923,12 @@ name = "gauntlet-control"
 version = "0.1.0"
 source = { editable = "services/gauntlet" }
 dependencies = [
-    { name = "cryptography" },
     { name = "fastapi" },
     { name = "pydantic" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "cryptography", specifier = ">=46" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "pydantic", specifier = ">=2.9" },
 ]
@@ -956,6 +954,7 @@ dev = [
 live-providers = [
     { name = "anchorbrowser" },
     { name = "boto3" },
+    { name = "cryptography" },
     { name = "daytona" },
     { name = "playwright" },
 ]
@@ -976,6 +975,7 @@ dev = [
 live-providers = [
     { name = "anchorbrowser", specifier = "==1.0.1" },
     { name = "boto3", specifier = "==1.43.114" },
+    { name = "cryptography", specifier = "==50.0.2" },
     { name = "daytona", specifier = "==0.224.1" },
     { name = "playwright", specifier = "==1.64.0" },
 ]

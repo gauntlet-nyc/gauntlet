@@ -66,7 +66,10 @@ export interface paths {
         /** List Gate Runs */
         get: operations["list_gate_runs_gate_runs_get"];
         put?: never;
-        /** Start Gate Run */
+        /**
+         * Start Gate Run
+         * @description Offline runs are open. A run that would call a live, paid provider needs a reviewer.
+         */
         post: operations["start_gate_run_gate_runs_post"];
         delete?: never;
         options?: never;
@@ -1931,7 +1934,9 @@ export interface operations {
     start_gate_run_gate_runs_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
