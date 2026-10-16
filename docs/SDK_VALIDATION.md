@@ -16,6 +16,24 @@
 
 **Record format:** `Date / owner / provider / pinned version / test SHA / command (no tokens) / raw sanitized result / failure / fallback / next verification`.
 
+## Session 2 adapter status (2026-10-16) — offline-tested, live NOT RUN
+
+Keys were not available. Every row below is **offline-tested, live NOT RUN** until an
+operator runs the listed command with real keys and records the result here. All settings
+come from `gauntlet.settings.load_settings()`; check readiness (names only, no values) with
+`uv run python scripts/check_settings.py`.
+
+| Adapter | Offline tests | Live status | Exact live command |
+|---|---|---|---|
+| Settings module | `tests/test_s2_settings.py` | n/a | `uv run python scripts/check_settings.py` |
+| Anchor without egress proxy (`GAUNTLET_ANCHOR_REQUIRE_PROXY=0`) | `tests/test_s2_settings.py` | live NOT RUN | `RUN_LIVE_INTEGRATIONS=1 GAUNTLET_ANCHOR_REQUIRE_PROXY=0 .venv/bin/python -m dotenv -f .env.local run --no-override -- .venv/bin/python scripts/probe_b01_provider_smoke.py --registration /tmp/cartwheel-registration.json --execute --authorize-spend` |
+
+Anchor without the proxy is **weaker isolation**: only the in-browser route guard limits
+navigation to the signed preview origin. The runtime logs a WARNING on construction and on
+every session, the smoke report records `egress_isolation`, and each capture records
+`browser_session` (`anchor_session_id`, `anchor_recording_id`, `egress_isolation`). Proxy
+support is unchanged and remains the default.
+
 ### Read-only credential checks (2026-10-15)
 
 Using the project `.venv` and values loaded from the gitignored `.env.local`,
@@ -1025,3 +1043,38 @@ attribution `introduced`, head 2/2 failures, base 0/2, plan frozen before
 `environments_ready`. `--clean`: `passed` (0/2 head, 0/2 base). These are
 **simulated-layout** results (box model transcribed from the fixture CSS), not
 browser results.
+
+#### Local real-browser Gate run (2026-10-16, Session 1)
+
+Built base `ad74b08` and head `fd32708` with `next build` from clean fixture
+checkouts and served them with `next start` on `127.0.0.1:3101` / `:3102`.
+Both build receipts named the expected SHA. Then:
+`CARTWHEEL_BASE_ORIGIN=http://127.0.0.1:3101 CARTWHEEL_HEAD_ORIGIN=http://127.0.0.1:3102 uv run --group live-providers python scripts/run_gate.py --sandbox local --browser local --run-id local-chromium-1`
+
+Result: `confirmed_regression`, attribution `introduced`, head 2/2 failures,
+base 0/2, scripted planner. Click measurements: on head the click at the
+Checkout centre was received by `help-button`; on base by
+`checkout-primary-action`. This is real headless Chromium (Playwright 1.64,
+`/opt/pw-browsers/chromium`) against real Next.js builds on loopback. It is
+**not** Daytona or Anchor and not a model-planned run.
+
+### Session 1: Recall pipeline (2026-10-16)
+
+`scripts/run_recall.py` runs `RunRecallUseCase` over `apps/cartwheel/history`
+(checksum verified against its manifest): lineage scope -> readiness ->
+3 pinned control replays -> 3 counterfactual replays -> materiality verdict,
+plus the ledger event audit of `request_refund`. Review output is drafts only.
+
+| Adapter | Flag | Status | Exact live command |
+|---|---|---|---|
+| Captured-input replay, synthetic agent policy | `--model scripted` (default) | offline only, by design | n/a |
+| Captured-input replay, model agent | `--model azure` | offline-tested with a fake gateway, **live NOT RUN** | `RUN_LIVE_INTEGRATIONS=1 uv run python scripts/run_recall.py --model azure` |
+| SurrealDB history / lineage | — | **not wired**; file adapter used | plugs in at `composition.build_recall` |
+
+Offline result for trigger `kb-117`: decisions 001, 015 tainted (direct),
+009 tainted (second order via `mem-083`), 004 and 012 cleared, 007
+not_replayable (tool result not recorded). Event audit: 36 audited, 3
+violations (ledger credit to a non-owner), 1 inconclusive, 32 clear. The
+offline agent policy is deterministic, so no control mismatch occurs offline;
+the control-mismatch path is covered by `test_s1_run_recall.py` with an
+unstable model.
