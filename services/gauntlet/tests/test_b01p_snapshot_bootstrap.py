@@ -2,11 +2,28 @@
 
 import asyncio
 import json
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 from scripts import provision_cartwheel_snapshots as bootstrap
+
+
+@pytest.fixture(autouse=True)
+def fake_daytona_parameter_types(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep lifecycle tests offline when the optional SDK group is absent."""
+    class FakeCreateParams(SimpleNamespace):
+        domain_allow_list: str | None = None
+
+    monkeypatch.setitem(
+        sys.modules,
+        "daytona",
+        SimpleNamespace(
+            CreateSandboxFromSnapshotParams=FakeCreateParams,
+            CreateSnapshotParams=SimpleNamespace,
+        ),
+    )
 
 
 def lockfile(tmp_path: Path) -> Path:
