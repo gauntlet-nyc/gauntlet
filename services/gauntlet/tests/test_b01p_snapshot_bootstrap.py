@@ -23,7 +23,11 @@ def lockfile(tmp_path: Path) -> Path:
                         "dependencies": package["dependencies"],
                         "devDependencies": package["devDependencies"],
                     },
-                    "node_modules/next": {"integrity": "sha512-test"},
+                    "node_modules/next": {"version": "15.5.28"},
+                    "node_modules/@next/swc-linux-x64-gnu": {
+                        "version": "15.5.28",
+                        "integrity": "sha512-linux-test",
+                    },
                 },
             }
         )
@@ -32,7 +36,16 @@ def lockfile(tmp_path: Path) -> Path:
 
 
 def inputs(tmp_path: Path) -> bootstrap.Inputs:
-    return bootstrap.prepare_inputs(lockfile(tmp_path), bootstrap.VERIFIED_IMAGE)
+    def fake_build(repo: Path, sha: str, image: str) -> None:
+        assert image == bootstrap.VERIFIED_IMAGE
+        assert len(sha) == 40
+        assert (repo / "package-lock.json").is_file()
+        (repo / ".next").mkdir(exist_ok=True)
+        (repo / ".next/BUILD_ID").write_text(sha)
+
+    return bootstrap.prepare_inputs(
+        lockfile(tmp_path), bootstrap.VERIFIED_IMAGE, build_revision=fake_build
+    )
 
 
 class FakeProcess:
@@ -56,6 +69,9 @@ class FakeFilesystem:
 
     async def upload_file(self, src: bytes, dst: str) -> None:
         self.owner.uploads.append((src, dst))
+
+    async def upload_file_stream(self, source: bytes, remote_path: str) -> None:
+        self.owner.uploads.append((source, remote_path))
 
     async def download_file(self, path: str) -> bytes:
         assert path == "/workspace/cartwheel/fixture-state.json"
@@ -152,18 +168,40 @@ def test_unpinned_image_and_wrong_lock_rejected_before_provider(tmp_path: Path) 
             tmp_path / "bench/private/package-lock.json", bootstrap.VERIFIED_IMAGE
         )
     with pytest.raises(ValueError, match="verified pinned"):
-        bootstrap.prepare_inputs(path, "node:22")
+        bootstrap.prepare_inputs(path, "node:22", build_revision=lambda *_: None)
     with pytest.raises(ValueError, match="verified pinned"):
         bootstrap.prepare_inputs(
             path,
             "node:22-bookworm-slim@sha256:"
             "c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392",
+            build_revision=lambda *_: None,
         )
     raw = json.loads(path.read_text())
     raw["packages"][""]["dependencies"]["next"] = "untrusted"
     path.write_text(json.dumps(raw))
     with pytest.raises(ValueError, match="package lock"):
-        bootstrap.prepare_inputs(path, bootstrap.VERIFIED_IMAGE)
+        bootstrap.prepare_inputs(path, bootstrap.VERIFIED_IMAGE, build_revision=lambda *_: None)
+
+
+def test_linux_swc_lock_entry_required_before_local_build(tmp_path: Path) -> None:
+    path = lockfile(tmp_path)
+    raw = json.loads(path.read_text())
+    del raw["packages"]["node_modules/@next/swc-linux-x64-gnu"]
+    path.write_text(json.dumps(raw))
+    with pytest.raises(ValueError, match="package lock"):
+        bootstrap.prepare_inputs(path, bootstrap.VERIFIED_IMAGE, build_revision=lambda *_: None)
+
+
+def test_local_build_must_preserve_reviewed_lock(tmp_path: Path) -> None:
+    def changes_lock(repo: Path, _sha: str, _image: str) -> None:
+        (repo / "package-lock.json").write_text("{}")
+        (repo / ".next").mkdir()
+        (repo / ".next/BUILD_ID").write_text("built")
+
+    with pytest.raises(ValueError, match="changed the reviewed package lock"):
+        bootstrap.prepare_inputs(
+            lockfile(tmp_path), bootstrap.VERIFIED_IMAGE, build_revision=changes_lock
+        )
 
 
 def test_output_must_be_ready_and_outside_any_checkout(tmp_path: Path) -> None:
@@ -214,10 +252,21 @@ def test_offline_lifecycle_stops_before_snapshot_and_cleans_temporary_resources(
     assert len(client.sandboxes) == 2
     assert all(sandbox.stopped and sandbox.snapshot_name for sandbox in client.sandboxes)
     assert all(
-        ("npm ci --ignore-scripts --no-audit --no-fund", bootstrap.REPO_PATH, 600) in sandbox.calls
+        ("test -s .next/BUILD_ID", bootstrap.REPO_PATH, 20) in sandbox.calls
         for sandbox in client.sandboxes
     )
-    assert all(param.domain_allow_list == "registry.npmjs.org" for param in client.params)
+    assert all(
+        all(
+            "npm ci" not in command and "npm run build" not in command
+            for command, _, _ in sandbox.calls
+        )
+        for sandbox in client.sandboxes
+    )
+    assert all(
+        param.network_block_all is True and param.domain_allow_list is None
+        for param in client.params
+    )
+    assert all(param.auto_delete_interval == 20 for param in client.params)
     assert all(param.public is False for param in client.params)
     assert len(client.deleted) == 2
     assert len(client.snapshot.deleted) == 1
@@ -231,7 +280,7 @@ def test_offline_lifecycle_stops_before_snapshot_and_cleans_temporary_resources(
 
 def test_seed_failure_deletes_created_resources_without_exposing_output(tmp_path: Path) -> None:
     source = inputs(tmp_path)
-    client = FakeClient(source, fail_command="npm run build")
+    client = FakeClient(source, fail_command="git status --porcelain")
     with pytest.raises(RuntimeError, match="seed command failed") as error:
         asyncio.run(
             bootstrap.provision(

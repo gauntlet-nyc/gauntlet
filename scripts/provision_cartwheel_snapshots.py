@@ -14,11 +14,12 @@ import io
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tarfile
 import tempfile
-from collections.abc import Awaitable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol, cast
@@ -73,6 +74,7 @@ class Process(Protocol):
 
 class Filesystem(Protocol):
     async def upload_file(self, src: bytes, dst: str) -> None: ...
+    async def upload_file_stream(self, source: bytes, remote_path: str) -> None: ...
     async def download_file(self, path: str) -> bytes: ...
 
 
@@ -120,13 +122,99 @@ def _bundle(repo: Path) -> bytes:
     with tarfile.open(fileobj=memory, mode="w:gz") as archive:
         for path in sorted(repo.rglob("*")):
             if path.is_symlink():
-                raise ValueError("generated fixture contains a symlink")
-            if path.is_file():
+                if not path.resolve().is_relative_to(repo.resolve()):
+                    raise ValueError("generated fixture contains an escaping symlink")
+                archive.add(path, arcname=path.relative_to(repo).as_posix(), recursive=False)
+            elif path.is_file():
                 archive.add(path, arcname=path.relative_to(repo).as_posix(), recursive=False)
     return memory.getvalue()
 
 
-def prepare_inputs(lockfile: Path, image: str) -> Inputs:
+_RECEIPT_CHECK = """
+const {spawn} = require('node:child_process');
+const child = spawn('npm', ['run', 'start'], {stdio: 'ignore'});
+const expected = process.env.EXPECTED_SHA;
+async function check() {
+  for (let attempt = 0; attempt < 80; attempt++) {
+    try {
+      const response = await fetch('http://127.0.0.1:3000/api/build-info');
+      if (response.ok) {
+        const receipt = await response.json();
+        return receipt.schema_version === '1.0' && receipt.source_sha === expected;
+      }
+    } catch (_) {}
+    await new Promise(resolve => setTimeout(resolve, 250));
+  }
+  return false;
+}
+check().then(ok => { child.kill(); process.exit(ok ? 0 : 1); });
+"""
+
+
+def _docker(
+    repo: Path, image: str, command: list[str], *, network: str, env: tuple[str, ...] = ()
+) -> None:
+    arguments = [
+        "docker",
+        "run",
+        "--rm",
+        "--pull=never",
+        "--platform",
+        "linux/amd64",
+        "--network",
+        network,
+        "--mount",
+        f"type=bind,source={repo},target={REPO_PATH}",
+        "--workdir",
+        REPO_PATH,
+    ]
+    for value in env:
+        arguments.extend(("--env", value))
+    arguments.extend(("--entrypoint", command[0], image, *command[1:]))
+    try:
+        result = subprocess.run(arguments, capture_output=True, timeout=900, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        raise RuntimeError("local container build or receipt check failed") from None
+    if result.returncode != 0:
+        raise RuntimeError("local container build or receipt check failed")
+
+
+def _local_build(repo: Path, sha: str, image: str) -> None:
+    """Install and compile in a disposable project-local Linux container."""
+    for directory in (repo / "node_modules", repo / ".next"):
+        if directory.exists():
+            shutil.rmtree(directory)
+    _docker(
+        repo,
+        image,
+        ["npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund"],
+        network="bridge",
+        env=("NEXT_TELEMETRY_DISABLED=1",),
+    )
+    _docker(
+        repo,
+        image,
+        ["npm", "run", "build"],
+        network="none",
+        env=("NEXT_TELEMETRY_DISABLED=1",),
+    )
+    if not (repo / ".next/BUILD_ID").is_file():
+        raise RuntimeError("local Cartwheel build output is missing")
+    _docker(
+        repo,
+        image,
+        ["node", "-e", _RECEIPT_CHECK],
+        network="none",
+        env=(f"EXPECTED_SHA={sha}", "NEXT_TELEMETRY_DISABLED=1"),
+    )
+
+
+def prepare_inputs(
+    lockfile: Path,
+    image: str,
+    *,
+    build_revision: Callable[[Path, str, str], None] = _local_build,
+) -> Inputs:
     """Check committed synthetic revisions and trusted npm lock before spend."""
     resolved_lock = lockfile.resolve()
     if any(
@@ -166,6 +254,9 @@ def prepare_inputs(lockfile: Path, image: str) -> Inputs:
     packages = lock.get("packages") if isinstance(lock, dict) else None
     root_package = packages.get("") if isinstance(packages, dict) else None
     next_package = packages.get("node_modules/next") if isinstance(packages, dict) else None
+    linux_swc = (
+        packages.get("node_modules/@next/swc-linux-x64-gnu") if isinstance(packages, dict) else None
+    )
     if (
         not isinstance(root_package, dict)
         or lock.get("lockfileVersion") not in {2, 3}
@@ -173,8 +264,11 @@ def prepare_inputs(lockfile: Path, image: str) -> Inputs:
         or root_package.get("devDependencies") != package.get("devDependencies")
         or root_package.get("name") != package.get("name")
         or not isinstance(next_package, dict)
-        or not isinstance(next_package.get("integrity"), str)
-        or not next_package["integrity"].startswith("sha512-")
+        or next_package.get("version") != "15.5.28"
+        or not isinstance(linux_swc, dict)
+        or linux_swc.get("version") != "15.5.28"
+        or not isinstance(linux_swc.get("integrity"), str)
+        or not linux_swc["integrity"].startswith("sha512-")
     ):
         raise ValueError("package lock does not match committed Cartwheel dependencies")
     with tempfile.TemporaryDirectory(prefix="gauntlet-cartwheel-build-") as directory:
@@ -203,6 +297,32 @@ def prepare_inputs(lockfile: Path, image: str) -> Inputs:
             )
             if (repo / "fixture-state.json").read_bytes() != state:
                 raise ValueError("fixture state differs across revisions")
+            (repo / "package-lock.json").write_bytes(lock_bytes)
+            with (repo / ".git/info/exclude").open("a", encoding="utf-8") as excluded:
+                excluded.write("\n/package-lock.json\n")
+            status = subprocess.run(
+                ["git", "status", "--porcelain"],
+                cwd=repo,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            if status.stdout:
+                raise ValueError("generated Cartwheel checkout is dirty")
+            build_revision(repo, sha, image)
+            if not (repo / ".next/BUILD_ID").is_file():
+                raise RuntimeError("local Cartwheel build output is missing")
+            if (repo / "package-lock.json").read_bytes() != lock_bytes:
+                raise ValueError("local Cartwheel build changed the reviewed package lock")
+            status = subprocess.run(
+                ["git", "status", "--porcelain"],
+                cwd=repo,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            if status.stdout:
+                raise ValueError("local Cartwheel build changed source files")
             bundles.append(_bundle(repo))
     return Inputs(
         base,
@@ -282,8 +402,8 @@ async def provision(
                     CreateSandboxFromSnapshotParams(
                         snapshot=names[0],
                         public=False,
-                        domain_allow_list="registry.npmjs.org",
-                        auto_delete_interval=120,
+                        network_block_all=True,
+                        auto_delete_interval=20,
                     ),
                     timeout=120,
                 )
@@ -292,11 +412,12 @@ async def provision(
             if cancelled:
                 raise asyncio.CancelledError()
             await _command(sandbox, "mkdir -p /workspace/cartwheel", 20, cwd=None)
-            await sandbox.fs.upload_file(inputs.bundles[index], "/tmp/cartwheel-source.tar.gz")
-            await _command(
-                sandbox, "tar -xzf /tmp/cartwheel-source.tar.gz -C /workspace/cartwheel", 60
+            await sandbox.fs.upload_file_stream(
+                inputs.bundles[index], "/tmp/cartwheel-source.tar.gz"
             )
-            await sandbox.fs.upload_file(inputs.lock_bytes, f"{REPO_PATH}/package-lock.json")
+            await _command(
+                sandbox, "tar -xzf /tmp/cartwheel-source.tar.gz -C /workspace/cartwheel", 300
+            )
             if await _command(sandbox, "git rev-parse HEAD", 20) != sha:
                 raise RuntimeError("Daytona checkout revision differs")
             if (
@@ -304,8 +425,8 @@ async def provision(
                 != STATE.read_bytes()
             ):
                 raise RuntimeError("Daytona fixture state differs")
-            await _command(sandbox, "npm ci --ignore-scripts --no-audit --no-fund", 600)
-            await _command(sandbox, "npm run build", 600)
+            if await _command(sandbox, "git status --porcelain", 20):
+                raise RuntimeError("Daytona checkout is dirty")
             await _command(sandbox, "test -s .next/BUILD_ID", 20)
             await sandbox.stop(timeout=60)
             finals.append(names[index + 1])
@@ -447,6 +568,7 @@ def main() -> int:
                         "base_sha": inputs.base_sha,
                         "head_sha": inputs.head_sha,
                         "lock_sha256": inputs.lock_sha256,
+                        "bundle_bytes": [len(bundle) for bundle in inputs.bundles],
                     }
                 )
             )
@@ -463,6 +585,7 @@ def main() -> int:
                     "base_sha": inputs.base_sha,
                     "head_sha": inputs.head_sha,
                     "lock_sha256": inputs.lock_sha256,
+                    "bundle_bytes": [len(bundle) for bundle in inputs.bundles],
                 }
             )
         )

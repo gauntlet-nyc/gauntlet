@@ -87,12 +87,48 @@ was rejected because it has no `git`; both the bootstrap and later Daytona
 attestation require `git rev-parse HEAD`. The optional paid path requires both CLI flags,
 `RUN_LIVE_INTEGRATIONS=1`, the Cartwheel target allowlist and Daytona credentials.
 It creates one temporary image snapshot with a conditional Next startup
-entrypoint, seeds two private revision sandboxes with npm-registry-only egress,
+entrypoint, seeds two private revision sandboxes,
 stops them, captures cold snapshots and checks their recorded entrypoint.
 Temporary sandboxes and image snapshot are deleted; failed runs also delete
 revision snapshots. Output is an untracked registration file and sanitized
 metadata, including the actual SDK version and lockfile hash. No paid path was
 run for B-01p; offline fakes establish call order and cleanup only.
+
+### B-01q local build and blocked-network seed (2026-10-16)
+
+A bounded live Daytona diagnostic using SDK 0.224.1 created, fetched and
+deleted the pinned image snapshot, but sandbox creation returned HTTP 400:
+`Network access is restricted and cannot be overridden at the sandbox level.
+Remove domainAllowList from the request.` No sandbox was created. The B-01q
+bootstrap installs dependencies locally in the pinned linux/amd64 Node image
+with Docker bridge networking, then runs `npm run build` with Docker networking
+disabled and `NEXT_TELEMETRY_DISABLED=1`. For each committed revision it checks
+the exact checkout SHA, clean source tree, compiled output and served
+`/api/build-info` SHA in a no-network local container. It uploads the built
+source tree, `node_modules` and `.next` as compressed tar to a private Daytona
+sandbox created with `network_block_all=True` and no `domain_allow_list`.
+Remote commands unpack and attest the uploaded tree before stop and snapshot.
+The installed SDK defines `auto_delete_interval` in minutes; these temporary
+sandboxes use 20 minutes as a fallback while explicit cleanup handles normal
+and failed runs. Daytona restore/startup behavior remains unverified.
+
+The external lockfile is operator reviewed, SHA-256 recorded, and must match
+the fixture's root dependencies plus approved Next 15.5.28 and Linux x64 GNU
+SWC 15.5.28 entries. The SWC entry must carry sha512 integrity. An older
+macOS-generated lock lacked this optional Linux dependency and failed local
+Docker build when Next attempted to fetch it without network access. Neither
+the lockfile check nor its hash is supply-chain verification. No B-01q paid
+provider call was made by the coding agent.
+
+The real no-spend local preflight used the reviewed Linux lock at SHA-256
+`c0cfffa2614271ec288c3ef7379316f1bbad8b678dcd302ab151e9d23dbff738`.
+With the pinned linux/amd64 image it rebuilt base
+`ad74b08a77ceb1d9452d4335261c99c1db7376e9` and head
+`fd32708bcd615e072327c0771f49c69329e123e3`, including network-disabled
+Next builds and both loopback build receipt checks. The command exited 0 and
+reported `status=not_tested`, SDK 0.224.1 and missing spend/provider opt-ins;
+no Daytona call occurred. The compressed base/head upload bundles measured
+138,661,350 and 138,685,600 bytes. The lockfile remains outside Git.
 
 Run the local preflight from the repository root with
 `uv run --frozen --no-sync --group live-providers python -m scripts.provision_cartwheel_snapshots
@@ -113,8 +149,8 @@ SDK cannot by itself prove that the entrypoint survives a cold restore *and*
 serves the selected compiled build. The next authorized live check must create
 one sandbox from each output snapshot, verify checkout/state, fetch each signed
 preview's `/api/build-info` exact SHA, then delete both sandboxes before using
-Anchor. If Daytona omits the inherited entrypoint or blocks npm registry
-access, report `environment_error` and keep P1 open.
+Anchor. If Daytona omits the inherited entrypoint or rejects the blocked-network
+seed, report `environment_error` and keep P1 open.
 
 On the integrated tree, the rebuilt fixture passed `npm run build` on both
 revisions. Headless Chrome with one frozen, diff-cited scripted plan produced
