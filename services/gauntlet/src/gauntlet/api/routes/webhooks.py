@@ -18,7 +18,7 @@ from pydantic import BaseModel
 
 from gauntlet.application.voice import build_briefing, open_replay_request
 from gauntlet.contracts import VoiceReplayRequest
-from gauntlet.intake.github import EventIgnored, RepositoryBinding, render_check_run
+from gauntlet.intake.github import EventIgnored, RepositoryBinding, RunRequested, render_check_run
 from gauntlet.security.webhooks import (
     ElevenLabsWebhookVerifier,
     GitHubWebhookVerifier,
@@ -47,6 +47,7 @@ class VoiceAnswer(BaseModel):
 @dataclass
 class _WebhookState:
     github: GitHubWebhookVerifier | None = None
+    github_runs: set[str] = field(default_factory=set)
     voice: ElevenLabsWebhookVerifier | None = None
     replay_requests: dict[str, VoiceReplayRequest] = field(default_factory=dict)
 
@@ -74,19 +75,9 @@ def _github_verifier() -> GitHubWebhookVerifier:
     return _STATE.github
 
 
-def _change_for(base_sha: str, head_sha: str) -> str | None:
-    for change_id, refs in get_container().gate.manifests.items():
-        if (refs["base_sha"], refs["head_sha"]) == (base_sha, head_sha):
-            return change_id
-    return None
-
-
-async def _run_and_publish(repo: str, head_sha: str, change_id: str | None, delivery: str) -> None:
+async def _run_and_publish(request: RunRequested, delivery: str) -> None:
     container = get_container()
-    if change_id is None:
-        log.info("webhook %s: PR revisions are not registered fixture revisions", delivery)
-        return
-    view = await container.gate.start(change_id)
+    view = await container.gate.start_requested(request)
     core = Settings.from_env()
     if not core.run_live_integrations or container.settings.missing_env("github_app"):
         log.info(
@@ -97,7 +88,9 @@ async def _run_and_publish(repo: str, head_sha: str, change_id: str | None, deli
 
     report = render_check_run(view.run_id, view.findings, [], view.not_tested_reason)
     publisher = GitHubAppCheckRunPublisher.from_settings(core.integrations())
-    check_id = await publisher.publish(repo, head_sha, view.run_id, report)
+    check_id = await publisher.publish(
+        request.repository_full_name, view.head_sha, view.run_id, report
+    )
     container.gate.append_event(view.run_id, "check_run_published", {"check_run_id": check_id})
 
 
@@ -111,17 +104,18 @@ async def github_webhook(request: Request, background: BackgroundTasks) -> Webho
         raise HTTPException(status_code=401, detail=exc.reason) from None
     if isinstance(result, EventIgnored):
         return WebhookAccepted(status="ignored", detail=result.reason)
-    change_id = _change_for(result.change.base_sha, result.change.head_sha)
-    delivery = request.headers.get("X-GitHub-Delivery", "")
-    background.add_task(
-        _run_and_publish, result.repository_full_name, result.head_sha, change_id, delivery
-    )
+    change_id = get_container().gate.registered_change(result)
     if change_id is None:
         return WebhookAccepted(
             status="ignored",
-            detail="PR base/head are not registered fixture revisions; not tested",
+            detail="PR repository/base/head/target/fixture are not registered; not tested",
         )
-    return WebhookAccepted(status="accepted", detail=f"Gate run started for {change_id}")
+    if result.run_id not in _STATE.github_runs:
+        _STATE.github_runs.add(result.run_id)
+        background.add_task(_run_and_publish, result, request.headers.get("X-GitHub-Delivery", ""))
+    return WebhookAccepted(
+        status="accepted", detail=f"Gate run started for {change_id}", run_id=result.run_id
+    )
 
 
 def _voice_verifier() -> ElevenLabsWebhookVerifier:

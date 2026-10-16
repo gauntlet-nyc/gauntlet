@@ -8,6 +8,7 @@ verdict. The refund-tool change runs the AI-agent route: the fixture's own tool 
 revision in the local tool world, judged by the ledger oracle.
 """
 
+import asyncio
 import difflib
 import importlib.util
 import sys
@@ -32,8 +33,16 @@ from gauntlet.composition import (
     readiness,
     refund_verification_suite,
 )
-from gauntlet.contracts import ApprovalDecision, ApprovalRecord, AttackSpec, FixPlan, RunEvent
+from gauntlet.contracts import (
+    ApprovalDecision,
+    ApprovalRecord,
+    AttackSpec,
+    ChangeRequest,
+    FixPlan,
+    RunEvent,
+)
 from gauntlet.domain import CONFIRMED_GATE_STATUSES, Attribution, GateStatus
+from gauntlet.intake.github import RunRequested
 from gauntlet.integrations.fake.memory import InMemoryTemporalMemory
 from gauntlet.ports.errors import PortError
 from gauntlet.settings import MissingSettingError, Settings
@@ -264,6 +273,7 @@ class GateRunRecord:
     created_at: datetime
     artifacts: dict[str, tuple[str, bytes]] = field(default_factory=dict)
     repair: RepairContext | None = None
+    requested_change: ChangeRequest | None = None
 
 
 @dataclass
@@ -276,6 +286,7 @@ class GateService:
     memory_label: str = InMemoryTemporalMemory.label
     _ids: "count[int]" = field(default_factory=lambda: count(1))
     _fixture: dict[str, Any] | None = None
+    _requested_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
     def changes(self) -> list[ChangeOption]:
         return [
@@ -367,10 +378,46 @@ class GateService:
             }
         )
 
+    def registered_change(self, request: RunRequested) -> str | None:
+        """Only a bound repository and the complete trusted fixture identity may execute."""
+        change = request.change
+        if (
+            request.repository_full_name not in self.settings.github_repositories
+            or change.repository_id != "cartwheel"
+            or request.head_sha != change.head_sha
+        ):
+            return None
+        for change_id, refs in self.manifests.items():
+            if all(
+                getattr(change, key) == refs[key]
+                for key in ("base_sha", "head_sha", "target_id", "fixture_id")
+            ):
+                return change_id
+        return None
+
+    async def start_requested(self, request: RunRequested) -> GateRunView:
+        change_id = self.registered_change(request)
+        if change_id is None:
+            raise ValueError("request does not match a registered repository and fixture revision")
+        # The API is process-local today. Serialize reservation/execution so a second
+        # delivery cannot return an unfinished view or start a second paid run.
+        async with self._requested_lock:
+            if request.run_id in self.runs:
+                return self.runs[request.run_id].view
+            return await self._start(change_id, request.run_id, request.change)
+
     async def start(self, change_id: str) -> GateRunView:
+        return await self._start(change_id, f"run-{change_id}-{next(self._ids):03d}")
+
+    async def _start(
+        self, change_id: str, run_id: str, requested_change: ChangeRequest | None = None
+    ) -> GateRunView:
         change = CHANGES[change_id]
-        run_id = f"run-{change_id}-{next(self._ids):03d}"
-        record = GateRunRecord(self._base_view(run_id, change), datetime.now(UTC))
+        if requested_change is not None:
+            change = replace(change, feature_intent=requested_change.feature_intent or "")
+        record = GateRunRecord(
+            self._base_view(run_id, change), datetime.now(UTC), requested_change=requested_change
+        )
         self.runs[run_id] = record
         if not change.runnable:
             record.view = self._not_tested(
@@ -402,6 +449,12 @@ class GateService:
             target = GateTarget.cartwheel(repo)
             if change.change_id == "clean":
                 target = replace(target, clean_head_sha=refs["clean_sha"])
+        execution_change = record.requested_change or target.change(intent=change.feature_intent)
+        if any(
+            getattr(execution_change, key) != getattr(target.change(), key)
+            for key in ("repository_id", "base_sha", "head_sha", "fixture_id", "target_id")
+        ):
+            raise ValueError("rebuilt target differs from requested registered revision")
         runtime = await build_gate(
             core,
             target,
@@ -414,7 +467,7 @@ class GateService:
         keep_open = False
         try:
             report = await runtime.use_case.execute(
-                run_id, target.change(intent=change.feature_intent), target.fixture_checksum
+                run_id, execution_change, target.fixture_checksum
             )
             keep_open = await self._prepare_repair(record, runtime, target, report, core, model)
         finally:
