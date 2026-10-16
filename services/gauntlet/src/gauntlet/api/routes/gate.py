@@ -7,7 +7,9 @@ from fastapi import APIRouter, Header, HTTPException, Response
 from gauntlet.application.errors import ApprovalDeniedError
 from gauntlet.application.voice import build_briefing
 from gauntlet.intake.github import render_check_run
-from gauntlet.settings import Settings
+from gauntlet.integrations.elevenlabs import ElevenLabsVoice
+from gauntlet.ports.errors import EnvironmentUnavailableError
+from gauntlet.settings import Settings, load_settings
 
 from ..auth import Reviewer, authenticated_reviewer
 from ..container import get_container
@@ -29,6 +31,20 @@ TEMPLATED_BRIEFING = Provenance(
     live=False,
     label="Briefing text is templated from persisted findings; ElevenLabs voice live NOT RUN",
 )
+ELEVENLABS_BRIEFING = Provenance(
+    provider="elevenlabs",
+    mode="live",
+    live=True,
+    label="Briefing text is templated from persisted findings; voiced live by ElevenLabs",
+)
+# One synthesis per (run, event sequence): replays reuse the audio instead of paying again.
+_AUDIO_CACHE: dict[tuple[str, int], bytes] = {}
+
+
+def _voice_ready() -> bool:
+    settings = load_settings()
+    voice = settings.elevenlabs
+    return settings.core.run_live_integrations and voice is not None and voice.voice_id is not None
 
 
 @router.get("/changes")
@@ -70,7 +86,37 @@ async def get_gate_briefing(run_id: str) -> BriefingView:
     gaps = 1 if view.status == "not_tested" else 0
     sequence = view.events[-1].sequence if view.events else 0
     briefing = build_briefing(view.run_id, view.findings, gaps, sequence)
+    if _voice_ready():
+        return BriefingView(briefing=briefing, audio_available=True, provenance=ELEVENLABS_BRIEFING)
     return BriefingView(briefing=briefing, audio_available=False, provenance=TEMPLATED_BRIEFING)
+
+
+@router.get(
+    "/runs/{run_id}/briefing/audio",
+    response_class=Response,
+    responses={200: {"content": {"audio/mpeg": {}}}},
+)
+async def get_gate_briefing_audio(run_id: str) -> Response:
+    """MP3 of the templated briefing voiced by ElevenLabs (live mode only)."""
+    view = _run(run_id)
+    if not _voice_ready():
+        raise HTTPException(status_code=503, detail="ElevenLabs voice is not configured")
+    gaps = 1 if view.status == "not_tested" else 0
+    sequence = view.events[-1].sequence if view.events else 0
+    key = (view.run_id, sequence)
+    audio = _AUDIO_CACHE.get(key)
+    if audio is None:
+        briefing = build_briefing(view.run_id, view.findings, gaps, sequence)
+        try:
+            audio = await ElevenLabsVoice.from_settings(load_settings()).speak_briefing(briefing)
+        except EnvironmentUnavailableError as exc:
+            raise HTTPException(status_code=502, detail=str(exc)) from None
+        _AUDIO_CACHE[key] = audio
+    return Response(
+        content=audio,
+        media_type="audio/mpeg",
+        headers={"X-Content-Type-Options": "nosniff", "Cache-Control": "private, max-age=300"},
+    )
 
 
 @router.get(

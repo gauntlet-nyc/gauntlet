@@ -129,3 +129,7 @@ export const api = {
 export function artifactUrl(runId: string, artifactId: string): string {
   return `${API_URL}/gate/runs/${encodeURIComponent(runId)}/artifacts/${encodeURIComponent(artifactId)}`;
 }
+
+export function briefingAudioUrl(runId: string): string {
+  return `${API_URL}/gate/runs/${encodeURIComponent(runId)}/briefing/audio`;
+}

@@ -2,7 +2,7 @@
 
 import { Square, Volume2 } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -42,27 +42,35 @@ function Waveform() {
   );
 }
 
-// Reads the templated briefing aloud with the browser's own speech engine. This is NOT
-// ElevenLabs; the ElevenLabs voice is offline-tested only until its key is set and run live.
-export function VoiceBriefingButton({ text, providerLabel }: { text: string; providerLabel: string }) {
+// Plays the templated briefing. With `audioUrl` the voice is ElevenLabs (synthesized by the API);
+// otherwise it falls back to the browser's own speech engine and says so.
+export function VoiceBriefingButton({
+  text,
+  providerLabel,
+  audioUrl,
+}: {
+  text: string;
+  providerLabel: string;
+  audioUrl?: string;
+}) {
   const [speaking, setSpeaking] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [supported, setSupported] = useState(true);
+  const [useBrowser, setUseBrowser] = useState(!audioUrl);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    const available = typeof window !== "undefined" && "speechSynthesis" in window;
+    const available = Boolean(audioUrl) || (typeof window !== "undefined" && "speechSynthesis" in window);
     setSupported(available);
     return () => {
-      if (available) window.speechSynthesis.cancel();
+      audioRef.current?.pause();
+      if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
     };
-  }, []);
+  }, [audioUrl]);
 
-  const toggle = () => {
+  const speakWithBrowser = () => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
-    if (speaking) {
-      setSpeaking(false);
-      return;
-    }
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.onend = () => setSpeaking(false);
     utterance.onerror = () => setSpeaking(false);
@@ -70,12 +78,43 @@ export function VoiceBriefingButton({ text, providerLabel }: { text: string; pro
     window.speechSynthesis.speak(utterance);
   };
 
+  const toggle = () => {
+    if (speaking) {
+      audioRef.current?.pause();
+      if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
+      setSpeaking(false);
+      return;
+    }
+    if (!audioUrl || useBrowser) {
+      speakWithBrowser();
+      return;
+    }
+    const audio = audioRef.current ?? new Audio(audioUrl);
+    audioRef.current = audio;
+    audio.onended = () => setSpeaking(false);
+    audio.onerror = () => {
+      // ElevenLabs unavailable: say it with the browser instead, and label it honestly.
+      setLoading(false);
+      setUseBrowser(true);
+      speakWithBrowser();
+    };
+    audio.onplaying = () => {
+      setLoading(false);
+      setSpeaking(true);
+    };
+    setLoading(true);
+    audio.currentTime = 0;
+    void audio.play().catch(() => audio.onerror?.(new Event("error")));
+  };
+
+  const voiceLabel = audioUrl && !useBrowser ? "Voiced by ElevenLabs." : "Browser speech, not ElevenLabs.";
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button type="button" variant="outline" size="sm" onClick={toggle} disabled={!supported} className="h-7 gap-2 rounded-full px-3 text-xs">
+        <Button type="button" variant="outline" size="sm" onClick={toggle} disabled={!supported || loading} className="h-7 gap-2 rounded-full px-3 text-xs">
           {speaking ? <Square className="size-3 fill-current" aria-hidden /> : <Volume2 className="size-3.5" aria-hidden />}
-          {speaking ? "Stop" : "Listen"}
+          {loading ? "Generating…" : speaking ? "Stop" : "Listen"}
           <AnimatePresence initial={false}>
             {speaking && (
               <motion.span initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: "auto" }} exit={{ opacity: 0, width: 0 }} className="overflow-hidden">
@@ -87,7 +126,9 @@ export function VoiceBriefingButton({ text, providerLabel }: { text: string; pro
       </TooltipTrigger>
       <TooltipContent side="bottom" align="end" className="max-w-xs text-xs leading-relaxed">
         <p>&ldquo;{text}&rdquo;</p>
-        <p className="mt-1.5 opacity-70">Browser speech, not ElevenLabs. {providerLabel}</p>
+        <p className="mt-1.5 opacity-70">
+          {voiceLabel} {providerLabel}
+        </p>
       </TooltipContent>
     </Tooltip>
   );
