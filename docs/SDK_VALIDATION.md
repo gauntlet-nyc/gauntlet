@@ -29,6 +29,11 @@ come from `gauntlet.settings.load_settings()`; check readiness (names only, no v
 | Anchor without egress proxy (`GAUNTLET_ANCHOR_REQUIRE_PROXY=0`) | `tests/test_s2_settings.py` | live NOT RUN | `RUN_LIVE_INTEGRATIONS=1 GAUNTLET_ANCHOR_REQUIRE_PROXY=0 .venv/bin/python -m dotenv -f .env.local run --no-override -- .venv/bin/python scripts/probe_b01_provider_smoke.py --registration /tmp/cartwheel-registration.json --execute --authorize-spend` |
 | SurrealDB core run store + lineage/history (`persistence/surreal_store.py`, HTTP `/rpc`, httpx) | `tests/test_s2_surreal_core.py` (offline transport) | **local SurrealDB v2.3.7 RUN 2026-10-16** (pinned compose image, in-memory): append-only, sequence/idempotency conflicts, concurrent append, lineage edges, decision/tool-event window all passed; hosted live NOT RUN | `RUN_LIVE_INTEGRATIONS=1 .venv/bin/python -m dotenv -f .env.local run --no-override -- .venv/bin/python scripts/smoke_surreal.py` |
 | Temporal memory on a separate SurrealDB memory context (`memory/surreal_memory.py`) | `tests/test_s2_memory.py` | **local SurrealDB RUN 2026-10-16**: provenance, as-of (no hindsight), supersession history, lens filtering passed. SurrealDB **Agent Memory product SDK not used** (`surrealdb[memory]` not approved); Agent Memory live NOT RUN | `RUN_LIVE_INTEGRATIONS=1 .venv/bin/python -m dotenv -f .env.local run --no-override -- .venv/bin/python scripts/smoke_surreal.py --memory` |
+| Arize OTLP tracing (`integrations/arize/`: planner LLM, worker, oracle, replay wrappers; hand-encoded OTLP protobuf over httpx) | `tests/test_s2_arize.py` (protobuf decoded and checked) | live NOT RUN; no-op when ARIZE_* unset or live disabled | `RUN_LIVE_INTEGRATIONS=1 .venv/bin/python -m dotenv -f .env.local run --no-override -- .venv/bin/python scripts/smoke_adapters.py arize` |
+| Arize experiments (Recall control vs counterfactual) | `tests/test_s2_arize.py` | live NOT RUN. Recorded as tagged traces (`experiment.id`, `experiment.variant`, eval spans); the Arize Experiments API needs the `arize` SDK, not approved | `RUN_LIVE_INTEGRATIONS=1 .venv/bin/python -m dotenv -f .env.local run --no-override -- .venv/bin/python scripts/smoke_adapters.py arize` |
+| GitHub App check runs (`integrations/github_app.py`: RS256 App JWT → installation token with `checks: write` → create/update check run) | `tests/test_s2_github_voice.py` (JWT signature verified by `openssl dgst -verify`; request sequence asserted) | live NOT RUN (App not created) | `RUN_LIVE_INTEGRATIONS=1 .venv/bin/python -m dotenv -f .env.local run --no-override -- .venv/bin/python scripts/smoke_adapters.py github --repo <owner/name> --sha <40-char head SHA>` |
+| GitHub webhook verification (`security/webhooks.py`: HMAC, delivery replay guard, PR → run) | `tests/test_s2_github_voice.py` | live NOT RUN; forward with smee: `npx smee-client --url $GITHUB_WEBHOOK_PROXY_URL --target http://127.0.0.1:8000/<webhook route>` | API route wiring is owned by the API session |
+| ElevenLabs (`integrations/elevenlabs.py` signed URL + TTS briefing; `security/webhooks.py` signed tool webhook) | `tests/test_s2_github_voice.py` | live NOT RUN | `RUN_LIVE_INTEGRATIONS=1 .venv/bin/python -m dotenv -f .env.local run --no-override -- .venv/bin/python scripts/smoke_adapters.py elevenlabs` |
 
 Local SurrealDB tests: `docker compose --env-file .env.local -f infra/local/docker-compose.yml up surrealdb`, then
 `SURREAL_TEST_URL=ws://127.0.0.1:8001 SURREAL_TEST_PASS=<local pass> uv run pytest -q services/gauntlet/tests/test_s2_surreal_core.py services/gauntlet/tests/test_s2_memory.py`
@@ -1102,3 +1107,20 @@ passes. Adapters: `offline_scripted` planner + `offline_synthetic_agent` +
 `local_tool_world` (host subprocess, empty env, 15 s timeout — weaker than a
 Daytona sandbox). Live model agent and Daytona-hosted tool world: **NOT RUN /
 not built**.
+
+### Session 1: P3 repair loop (2026-10-16)
+
+`scripts/run_repair.py` (two steps): Gate on the refund-tool change -> scripted
+fix proposal (restores the owner check) -> prints plan SHA-256 -> a reviewer
+approves that exact hash with a dev-grade server-side token
+(`GAUNTLET_REVIEWER_TOKENS`, presented via `GAUNTLET_REVIEWER_TOKEN`, never
+argv) -> patch applied with `git apply` in a fresh detached worktree, path
+allowlist checked before and after -> local commit -> original attack, a
+variant (other victim, different wording) and the owner's own refund each run
+twice on the patched revision.
+
+Offline/local result: patched commit verified, all checks pass, verdict
+`fix_verified_review_required` (review only; nothing merged or pushed). A
+stale hash and an unknown token are refused; a reused approval is refused; a
+fix that blocks every refund is `fix_rejected` (legitimate workflow broke).
+Model fix proposer (`--model azure`): offline-tested shape only, **live NOT RUN**.
