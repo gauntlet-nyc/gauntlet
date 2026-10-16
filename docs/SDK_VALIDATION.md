@@ -130,6 +130,22 @@ reported `status=not_tested`, SDK 0.224.1 and missing spend/provider opt-ins;
 no Daytona call occurred. The compressed base/head upload bundles measured
 138,661,350 and 138,685,600 bytes. The lockfile remains outside Git.
 
+### B-01r seed stage diagnostics (2026-10-16)
+
+An authorized bounded B-01q Daytona run built both revisions locally, created
+the runtime snapshot and reached a base snapshot, then returned a sanitized
+`RuntimeError` without identifying the failed seed operation. Subsequent
+read-only Daytona listing found no Cartwheel snapshots or sandboxes; cleanup
+completed. That run did not establish cold restore or preview startup.
+
+The bootstrap now reports fixed stage codes such as `base_upload`,
+`base_extract`, `base_source`, `base_state`, `base_clean`, `base_build`,
+`base_stop`, `base_snapshot`, and corresponding `head_*` codes. Runtime create
+and fetch, sandbox create, output writing and client close also have fixed
+codes. Provider exception text, signed origins and credentials remain absent
+from the JSON error report. Offline tests exercise a head-stage failure and
+verify cleanup; no paid retry was made for B-01r.
+
 Run the local preflight from the repository root with
 `uv run --frozen --no-sync --group live-providers python -m scripts.provision_cartwheel_snapshots
 --lockfile <reviewed-package-lock-outside-git> --image
