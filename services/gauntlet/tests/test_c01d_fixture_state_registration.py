@@ -63,7 +63,8 @@ def test_registration_is_accepted_by_existing_loader(tmp_path: Path) -> None:
     assert change.base_sha == manifest["git_refs"]["base_sha"]
     assert change.head_sha == manifest["git_refs"]["head_sha"]
     assert {entry.image_digest for entry in target.snapshots} == {"a" * 64}
-    assert len(raw) == 10
+    assert raw["startup_profile"] == "cartwheel_next_v1"
+    assert len(raw) == 11
     assert all(
         set(entry) == {"source_sha", "snapshot", "image_digest"} for entry in raw["snapshots"]
     )
