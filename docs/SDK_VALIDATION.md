@@ -16,6 +16,56 @@
 
 **Record format:** `Date / owner / provider / pinned version / test SHA / command (no tokens) / raw sanitized result / failure / fallback / next verification`.
 
+### Read-only credential checks (2026-10-15)
+
+Using the project `.venv` and values loaded from the gitignored `.env.local`,
+an inline Python check constructed the pinned `AsyncDaytona` client and called
+`list(ListSandboxesQuery(limit=1), request_timeout=6)`. Daytona 0.224.1
+returned an authenticated response with no sandbox in the first page. The
+client was closed. This verifies the configured key, API endpoint and target
+can make a read request; snapshot creation, execution, preview and deletion
+remain untested.
+
+The same read-only check constructed `AsyncAnchorbrowser` with the configured
+key. In Anchor 1.0.1, `sessions.list_sessions(limit=1, timeout=8)` returned
+`InternalServerError`, while `sessions.get_all_sessions_status(timeout=8)`
+returned successfully. The client was closed. This is evidence of API access
+through the status endpoint, not of session creation, browser connectivity or
+proxy enforcement. No paid resource was created by either check. Credential
+values and provider response bodies were not logged.
+
+### P1 paired adjudication, fixture state, and hosted receipt (2026-10-16)
+
+A-01e added pure paired UI adjudication. It requires two complete, distinct
+hard-oracle attempts on each revision, matching trusted identities and stored
+artifact bindings, before classifying an introduced or pre-existing failure.
+No live Gate result is claimed until the execution consumer supplies trusted
+paired records and verifies environment provenance.
+
+C-01d added a committed static `fixture-state.json` to both generated Cartwheel
+revisions and a local registration-preparation CLI. The current generated base
+is `ad74b08a77ceb1d9452d4335261c99c1db7376e9`, head is
+`fd32708bcd615e072327c0771f49c69329e123e3`, and template checksum is
+`85bb0ff1af85aa76d3cb76bd6c64932237694f90253b96a6f2af68cbc8c9fb19`.
+The CLI derives the fixture-state digest and registration identity from these
+committed bytes, but cannot prove that operator-supplied snapshots exist.
+
+B-01o made the narrow provider smoke require a registered target and verify
+each selected revision's synthetic `/api/build-info` receipt over its signed
+preview before opening Anchor. A mismatched receipt stops that browser action
+and the environment pair is cleaned. This verifies an app-served SHA claim;
+the sandbox image and custom proxy egress policy still need separate proof.
+
+On the integrated tree, the rebuilt fixture passed `npm run build` on both
+revisions. Headless Chrome with one frozen, diff-cited scripted plan produced
+two `pass` observations on base and two `fail` observations on head. Reports:
+`/tmp/gauntlet-c01d-base-probe/report.json` and
+`/tmp/gauntlet-c01d-head-probe/report.json`; shared plan hash
+`b4e27820046f163f71b45924708aa9359db519d7c53f4d9d4efebec469d7bca0`.
+Both probes verified the checkout SHA and local compiled build receipt. The
+running server source is still operator asserted, and the plan was scripted;
+this is a local diagnostic, not a confirmed P1 regression or provider smoke.
+
 ## Current checkpoint (2026-10-15)
 
 P0's joint offline gate is integrated on main: dashboard #3 (`d5255f3`)

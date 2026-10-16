@@ -2,7 +2,8 @@
 
 Preflight makes no paid calls. --execute requires explicit spend opt-in and
 operator snapshot registration. A successful screenshot smoke is not a Gate
-regression verdict: running server revision and proxy policy remain unverified.
+regression verdict: the synthetic build receipt does not attest the sandbox
+image, and proxy policy remains unverified.
 """
 
 import argparse
@@ -73,6 +74,7 @@ async def _live_capture(registration: Path, output: Path) -> dict[str, object]:
             change,
             target.fixture_checksum,
             ready_path=target.ready_path,
+            registered_target=target,
         )
         captures = [vars(result) for result in results]
     except (Exception, asyncio.CancelledError) as exc:
@@ -89,7 +91,8 @@ async def _live_capture(registration: Path, output: Path) -> dict[str, object]:
         "mode": "live_provider_smoke_only",
         "status": status,
         "gate_status": "not_tested",
-        "server_source_verified": False,
+        "synthetic_build_receipt_verified": status == "passed",
+        "sandbox_image_attested": False,
         "egress_proxy_policy_verified": False,
         "sdk_versions": _sdk_versions(),
         "target_id": target.target_id,
@@ -123,7 +126,9 @@ def main() -> None:
     versions = _sdk_versions()
     report["sdk_versions"] = versions
     if versions != PINNED_SDKS:
-        report["missing"].append("pinned_provider_sdks")
+        missing = report["missing"]
+        assert isinstance(missing, list)
+        missing.append("pinned_provider_sdks")
     if not args.execute or report["missing"]:
         print(json.dumps(report, indent=2))
         raise SystemExit(2 if args.execute and report["missing"] else 0)

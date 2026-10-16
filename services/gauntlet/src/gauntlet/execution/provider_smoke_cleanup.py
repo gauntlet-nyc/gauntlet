@@ -6,13 +6,15 @@ from typing import Protocol
 
 
 class BrowserCleanup(Protocol):
-    pending_cleanup_ids: tuple[str, ...]
+    @property
+    def pending_cleanup_ids(self) -> tuple[str, ...]: ...
 
     async def retry_pending_cleanup(self) -> None: ...
 
 
 class SandboxCleanup(Protocol):
-    pending_cleanup_ids: tuple[str, ...]
+    @property
+    def pending_cleanup_ids(self) -> tuple[str, ...]: ...
 
     async def destroy(self, environment_id: str) -> None: ...
 
