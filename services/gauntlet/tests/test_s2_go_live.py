@@ -131,3 +131,120 @@ def test_daytona_probe_is_read_only(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "daytona", fake)
     detail = asyncio.run(go_live_probes.probe_daytona(load_settings(ENV)))
     assert calls == ["list:1:1", "close"] and detail == "3 snapshots visible"
+
+
+def test_partial_provider_does_not_hide_other_readiness() -> None:
+    from gauntlet.execution.go_live import run_environment_check
+
+    env = {**ENV, "GAUNTLET_ANCHOR_REQUIRE_PROXY": "1", "ARIZE_SPACE_ID": ""}
+    results = asyncio.run(run_environment_check(env, probe=False, probes={}))
+    by = {r.sponsor: r for r in results}
+    assert by["daytona"].status == "ready"
+    assert by["anchor"].status == "missing"
+    assert "ANCHOR_PROXY_SERVER" in by["anchor"].detail
+    assert by["arize"].status == "missing"
+    assert "ARIZE_SPACE_ID" in by["arize"].detail
+    assert SECRET not in render(results, probed=False)
+
+
+def test_invalid_provider_is_not_probed_and_does_not_hide_other_probes() -> None:
+    from gauntlet.execution.go_live import run_environment_check
+
+    called: list[str] = []
+
+    async def daytona(settings: object) -> str:
+        called.append("daytona")
+        return "ok"
+
+    async def anchor(settings: object) -> str:
+        called.append("anchor")
+        return "must not run"
+
+    env = {**ENV, "ANCHOR_PROXY_SERVER": "not-a-url"}
+    results = asyncio.run(
+        run_environment_check(env, probe=True, probes={"daytona": daytona, "anchor": anchor})
+    )
+    by = {r.sponsor: r for r in results}
+    assert by["anchor"].status == "invalid"
+    assert by["daytona"].status == "probe_ok"
+    assert called == ["daytona"]
+    assert exit_code(results) == 2
+
+
+@pytest.mark.parametrize("slow_stage", ["create", "delete"])
+def test_anchor_outer_timeout_settles_creation_and_cleanup(
+    monkeypatch: pytest.MonkeyPatch, slow_stage: str
+) -> None:
+    class Slow(_FakeAnchor):
+        async def create_session(self, **kwargs: object) -> SimpleNamespace:
+            if slow_stage == "create":
+                await asyncio.sleep(0.03)
+            return await super().create_session(**kwargs)
+
+        async def delete_session(self, session_id: str, *, timeout: float) -> None:
+            if slow_stage == "delete":
+                await asyncio.sleep(0.03)
+            await super().delete_session(session_id, timeout=timeout)
+
+    monkeypatch.setitem(sys.modules, "anchorbrowser", SimpleNamespace(AsyncAnchorbrowser=Slow))
+    results = asyncio.run(
+        run_check(
+            ENV,
+            load_settings(ENV),
+            probe=True,
+            probes={"anchor": go_live_probes.probe_anchor},
+            timeout_seconds=0.01,
+        )
+    )
+    client = _FakeAnchor.instances[-1]
+    assert client.deleted == ["anchor-probe-1"]
+    assert client.closed
+    assert next(r for r in results if r.sponsor == "anchor").status == "probe_failed"
+
+
+def test_anchor_cleanup_deadline_reports_id_and_closes_client(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class Stuck(_FakeAnchor):
+        async def delete_session(self, session_id: str, *, timeout: float) -> None:
+            await asyncio.sleep(10)
+
+    monkeypatch.setitem(sys.modules, "anchorbrowser", SimpleNamespace(AsyncAnchorbrowser=Stuck))
+    monkeypatch.setattr(go_live_probes, "ANCHOR_DELETE_TIMEOUT_SECONDS", 0.02)
+    results = asyncio.run(
+        run_check(
+            ENV,
+            load_settings(ENV),
+            probe=True,
+            probes={"anchor": go_live_probes.probe_anchor},
+            timeout_seconds=0.01,
+        )
+    )
+    row = next(r for r in results if r.sponsor == "anchor")
+    assert row.status == "probe_failed"
+    assert "anchor-probe-1 was created but NOT deleted" in row.detail
+    assert _FakeAnchor.instances[-1].closed
+
+
+def test_anchor_repeated_cancellation_still_cleans_and_propagates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class Slow(_FakeAnchor):
+        async def create_session(self, **kwargs: object) -> SimpleNamespace:
+            await asyncio.sleep(0.03)
+            return await super().create_session(**kwargs)
+
+    monkeypatch.setitem(sys.modules, "anchorbrowser", SimpleNamespace(AsyncAnchorbrowser=Slow))
+
+    async def exercise() -> None:
+        task = asyncio.create_task(go_live_probes.probe_anchor(load_settings(ENV)))
+        await asyncio.sleep(0.005)
+        task.cancel()
+        await asyncio.sleep(0.005)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+    asyncio.run(exercise())
+    assert _FakeAnchor.instances[-1].deleted == ["anchor-probe-1"]
+    assert _FakeAnchor.instances[-1].closed

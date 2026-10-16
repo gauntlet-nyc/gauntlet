@@ -6,6 +6,8 @@ browser session); it is deleted in `finally`, and a failed delete is reported wi
 session ID so it can be cleaned up by hand.
 """
 
+import asyncio
+from collections.abc import Coroutine
 from typing import Any, Final
 
 from gauntlet.integrations.arize.tracing import OtlpTracer
@@ -52,6 +54,33 @@ async def probe_daytona(settings: IntegrationSettings) -> str:
     return f"{total} snapshots visible" if isinstance(total, int) else "snapshots listed"
 
 
+ANCHOR_CREATE_TIMEOUT_SECONDS = 35.0
+ANCHOR_DELETE_TIMEOUT_SECONDS = 20.0
+ANCHOR_CLOSE_TIMEOUT_SECONDS = 5.0
+
+
+async def _settle[T](operation: Coroutine[Any, Any, T], timeout: float) -> tuple[T, bool]:
+    """Keep cancellation from abandoning a resource operation; never extend its deadline."""
+    task = asyncio.create_task(operation)
+    deadline = asyncio.get_running_loop().time() + timeout
+    cancelled = False
+    try:
+        while True:
+            remaining = max(0.0, deadline - asyncio.get_running_loop().time())
+            try:
+                return await asyncio.wait_for(asyncio.shield(task), remaining), cancelled
+            except asyncio.CancelledError:
+                if task.cancelled():
+                    raise
+                cancelled = True
+    finally:
+        if not task.done():
+            task.cancel()
+            # SDK calls are bounded and cancellation-cooperative. Observe the terminal
+            # exception so no abandoned request task outlives the probe.
+            await asyncio.gather(task, return_exceptions=True)
+
+
 async def probe_anchor(settings: IntegrationSettings) -> str:
     config = require("anchor", settings.anchor)
     try:
@@ -71,25 +100,51 @@ async def probe_anchor(settings: IntegrationSettings) -> str:
         }
     client = AsyncAnchorbrowser(api_key=config.api_key.reveal(), max_retries=0, timeout=30)
     session_id: str | None = None
+    cancelled = False
+    cleanup_error: EnvironmentUnavailableError | None = None
     try:
-        created = await client.sessions.create_session(
-            session=session,  # type: ignore[arg-type]  # SDK TypedDict, same keys as sdk.py
-            browser={"headless": {"active": True}},
-            timeout=30,
-        )
+        try:
+            created, interrupted = await _settle(
+                client.sessions.create_session(
+                    session=session,  # type: ignore[arg-type]
+                    browser={"headless": {"active": True}},
+                    timeout=30,
+                ),
+                ANCHOR_CREATE_TIMEOUT_SECONDS,
+            )
+            cancelled |= interrupted
+        except TimeoutError:
+            raise EnvironmentUnavailableError(
+                "Anchor creation timed out; session outcome unknown; check provider resources"
+            ) from None
         session_id = getattr(getattr(created, "data", None), "id", None)
         if not isinstance(session_id, str) or not session_id:
             raise EnvironmentUnavailableError("Anchor returned no session ID")
     finally:
-        if isinstance(session_id, str) and session_id:
+        try:
+            if isinstance(session_id, str) and session_id:
+                try:
+                    _, interrupted = await _settle(
+                        client.sessions.delete_session(session_id, timeout=15),
+                        ANCHOR_DELETE_TIMEOUT_SECONDS,
+                    )
+                    cancelled |= interrupted
+                except Exception:
+                    cleanup_error = EnvironmentUnavailableError(
+                        f"Anchor session {session_id} was created but NOT deleted; "
+                        "delete it by hand"
+                    )
+        finally:
             try:
-                await client.sessions.delete_session(session_id, timeout=15)
+                _, interrupted = await _settle(client.close(), ANCHOR_CLOSE_TIMEOUT_SECONDS)
+                cancelled |= interrupted
             except Exception:
-                await client.close()
-                raise EnvironmentUnavailableError(
-                    f"Anchor session {session_id} was created but NOT deleted; delete it by hand"
-                ) from None
-        await client.close()
+                if cleanup_error is None:
+                    cleanup_error = EnvironmentUnavailableError("Anchor client close failed")
+        if cleanup_error is not None:
+            raise cleanup_error from None
+    if cancelled:
+        raise asyncio.CancelledError
     isolation = "with egress proxy" if config.proxy else "WITHOUT egress proxy"
     return f"session created and deleted ({isolation})"
 
