@@ -215,6 +215,12 @@ pnpm --filter @gauntlet/dashboard build && (cd apps/dashboard && npx next start 
 - Runs, artifacts and approvals live in API process memory; restarting clears them.
 - After changing API routes: `uv run python scripts/export_openapi.py` then
   `pnpm --filter @gauntlet/dashboard generate:api`.
+- Rehearsal: `uv run --frozen --group live-providers python scripts/demo_rehearsal.py
+  [--backup-dir artifacts/demo-backup]` drives the DEMO.md click-path offline in Chromium and
+  asserts every step; with `--backup-dir` it saves screenshots, JSON and an `index.html`
+  playback page. CI job `demo-rehearsal` runs it and uploads the backup.
+- The dashboard reads `GAUNTLET_API_URL` at runtime (server side); `NEXT_PUBLIC_GAUNTLET_API_URL`
+  is fixed at build time.
 - Demo click-path, go-live checklist and fallback: `docs/DEMO.md`.
 
 ## Core engine commands (Session 1)

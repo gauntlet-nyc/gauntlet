@@ -2,7 +2,9 @@ import { z } from "zod";
 
 import type { components } from "./api-types";
 
-export const API_URL = process.env.NEXT_PUBLIC_GAUNTLET_API_URL ?? "http://localhost:8000";
+// GAUNTLET_API_URL is read at runtime on the server; NEXT_PUBLIC_* is fixed at build time.
+export const API_URL =
+  process.env.GAUNTLET_API_URL ?? process.env.NEXT_PUBLIC_GAUNTLET_API_URL ?? "http://localhost:8000";
 
 export type FakeRun = components["schemas"]["FakeRunResponse"];
 

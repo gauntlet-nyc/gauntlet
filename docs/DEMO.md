@@ -119,6 +119,24 @@ planner/Daytona/Anchor; the provenance list on the run page names every adapter 
 4. **Recorded run from the morning:** if a live run succeeded earlier, show its saved report
    (`artifacts/gate-runs/<run_id>/`) and provider console screenshots, and say they are
    recordings with their timestamp.
+5. **Recorded backup of the whole demo (if the laptop's API or dashboard won't start):** open
+   `artifacts/demo-backup/index.html` in any browser. It shows every demo page in click order
+   with captions and a "RECORDED offline rehearsal from <time> — not a live run" banner; the
+   JSON behind each page is in `artifacts/demo-backup/api/`. Make it before 3:30 (below) and
+   copy the folder to a USB stick. Say out loud that it is a recording.
+
+## Rehearse and record the backup (do this after the morning checklist)
+
+```bash
+pnpm --filter @gauntlet/dashboard build
+uv run --frozen --group live-providers python scripts/demo_rehearsal.py --backup-dir artifacts/demo-backup
+```
+
+It starts the API and dashboard on free ports with every provider variable removed (nothing
+live can run), drives Chromium through this exact click-path (Acts A, B and C, memory, review
+queue, sponsors, onboarding), asserts each step and saves screenshots plus JSON. About 10–20 s.
+Exit code 0 means the click-path works. CI runs the same job (`demo-rehearsal`) on every push
+and uploads the backup as a build artifact. Pass `--chromium <path>` if Chrome isn't found.
 
 ## Q&A notes
 
