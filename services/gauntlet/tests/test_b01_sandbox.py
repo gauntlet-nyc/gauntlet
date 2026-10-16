@@ -356,8 +356,8 @@ def test_sdk_wrapper_uses_pinned_snapshot_and_waiting_delete(
                 assert (cwd, timeout) == ("/workspace/cartwheel", 15)
                 return SimpleNamespace(exit_code=0, result=BASE)
 
-            async def download_file(path: str, *, timeout: int) -> bytes:
-                assert path == "/workspace/cartwheel/fixture-state.json" and timeout == 30
+            async def download_file(path: str) -> bytes:
+                assert path == "/workspace/cartwheel/fixture-state.json"
                 return FIXTURE_BYTES
 
             async def preview(

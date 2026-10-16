@@ -26,7 +26,7 @@ class SdkSandbox:
         return str(result.result).strip()
 
     async def read_file(self, path: str) -> bytes:
-        content = await self._sandbox.fs.download_file(path, timeout=30)
+        content = await self._sandbox.fs.download_file(path)
         if not isinstance(content, bytes):
             raise EnvironmentUnavailableError("Daytona fixture state was not returned as bytes")
         return content
