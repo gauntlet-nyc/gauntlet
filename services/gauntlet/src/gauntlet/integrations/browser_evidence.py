@@ -56,7 +56,7 @@ class BrowserPage(Protocol):
 
     async def evaluate(self, expression: str, arg: object = None) -> object: ...
 
-    async def screenshot(self) -> bytes: ...
+    async def screenshot(self, *, type: Literal["png"]) -> bytes: ...
 
 
 def _number(value: object) -> float | None:
@@ -121,7 +121,9 @@ class BrowserEvidenceCollector:
     ) -> ActionRecord:
         step_subject = _step_subject(subject, step_index)
         try:
-            screenshot = await page.screenshot()
+            screenshot = await page.screenshot(type="png")
+            if not screenshot.startswith(b"\x89PNG\r\n\x1a\n"):
+                raise EnvironmentUnavailableError("browser did not return a PNG screenshot")
             binding = await self._artifacts.put(screenshot, "image/png", step_subject)
         except Exception as exc:
             raise EnvironmentUnavailableError("browser screenshot capture failed") from exc
@@ -190,7 +192,9 @@ class BrowserEvidenceCollector:
                 step_subject,
             )
             evidence_ids.append(binding.evidence.artifact_id)
-            screenshot = await page.screenshot()
+            screenshot = await page.screenshot(type="png")
+            if not screenshot.startswith(b"\x89PNG\r\n\x1a\n"):
+                raise EnvironmentUnavailableError("browser did not return a PNG screenshot")
             image = await self._artifacts.put(screenshot, "image/png", step_subject)
             evidence_ids.append(image.evidence.artifact_id)
         except Exception as exc:

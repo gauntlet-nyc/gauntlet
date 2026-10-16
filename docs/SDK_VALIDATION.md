@@ -1291,3 +1291,33 @@ oracle returned `pass`; head navigation completed, the submit click was blocked,
 and the hard oracle returned `fail`. These are real local Chrome observations
 against synthetic fixture servers, not a hosted Anchor run. The fix still needs
 main integration and CI at the time of this entry.
+
+### B/C provider setup and evidence validation (2026-10-16)
+
+GitHub App `gauntlet-nyc-gate` (5347794), installation 172145330, is scoped to
+`gauntlet-nyc/gauntlet`: checks write, pull requests/metadata read. App JWT
+authentication and one neutral connectivity check succeeded (check 117083989739).
+The authorized Smee development relay forwarded a genuinely signed GitHub ping to
+`/webhooks/github` with HTTP 202; the initial unsigned ping was rejected with 401.
+Pull-request events are subscribed. A real PR opened event reached the relay and
+local API, but arbitrary PR revisions remain not tested because execution accepts
+registered synthetic fixture revisions only. The API and relay must keep running.
+
+Two bounded Daytona/Anchor pair smokes used the preexisting synthetic registration
+and updated proxyless Anchor key. SDK versions: Daytona 0.224.1, Anchor 1.0.1,
+Playwright 1.64.0. Both reports remain environment_error / Gate not_tested:
+`/tmp/gauntlet-hosted-check-now/report.json` and
+`/tmp/gauntlet-hosted-check-fixed/report.json`. Restore, receipt verification, CDP
+connection and navigation succeeded. The first capture was JPEG bytes mislabeled
+as PNG. The collector now explicitly requests PNG and refuses a mismatched byte
+signature before image storage. The repeat still returned non-PNG despite the
+explicit request, so hosted screenshot interoperability remains unresolved. No
+oracle acceptance was relaxed. Four sandboxes and two Anchor sessions were created
+across both attempts; final read-only inventory confirmed zero remaining resources
+and no pending cleanup. Billing amounts were not available. No further paid retry
+was made. Proxyless operation remains weaker isolation.
+
+A live configured memory-view smoke after PR85 exposed HTTP 404: application
+composition bypassed the existing SDK-aware memory factory and sent SQL to the
+Agent Memory endpoint. SDK authentication itself had succeeded earlier. This is a
+composition defect, not evidence that new credentials are needed.

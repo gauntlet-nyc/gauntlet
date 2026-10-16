@@ -70,7 +70,7 @@ class FakePage:
         assert target == "customer-email"
         return self.locator
 
-    async def screenshot(self) -> bytes:
+    async def screenshot(self, *, type: str = "png") -> bytes:
         return b"\x89PNG\r\n\x1a\nlocal-browser"
 
     async def close(self) -> None:
