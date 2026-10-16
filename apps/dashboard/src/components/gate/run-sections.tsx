@@ -13,13 +13,11 @@ import {
 import { humanize } from "@/components/gate/copy";
 import { MonoId } from "@/components/gate/mono-id";
 import { StatusPill, TONE_CLASSES, toneOf } from "@/components/shared";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { AttemptView, GateRunView } from "@/lib/gauntlet";
 import { cn } from "@/lib/utils";
 
 type RunEvent = GateRunView["events"][number];
-type Finding = GateRunView["findings"][number];
 
 export function AttemptsTable({ attempts }: { attempts: AttemptView[] }) {
   return (
@@ -71,66 +69,22 @@ export function OracleRecords({ attempts }: { attempts: AttemptView[] }) {
     });
   });
   return (
-    <div className="grid gap-3 md:grid-cols-2">
+    <div className="grid gap-6 md:grid-cols-2">
       {groups.map((g) => {
         const tone = TONE_CLASSES[toneOf(g.outcome)];
         return (
-          <div key={`${g.revision}-${g.observed}`} className={cn("bg-card rounded-xl border p-4", tone.border)}>
+          <div key={`${g.revision}-${g.observed}`} className={cn("border-l-2 py-1 pl-4", tone.border)}>
             <div className="flex items-center justify-between gap-2 text-xs">
               <span className="font-medium capitalize">{g.revision}</span>
               <span className="text-muted-foreground tabular-nums">
                 {g.count}/{g.total} attempts
               </span>
             </div>
-            <p className={cn("mt-2 font-mono text-[13px] leading-relaxed", tone.text)}>{g.observed}</p>
+            <p className={cn("mt-1 text-sm leading-relaxed", tone.text)}>{g.observed}</p>
           </div>
         );
       })}
     </div>
-  );
-}
-
-function ReproBar({ label, hits, total }: { label: string; hits: number; total: number }) {
-  const pct = total > 0 ? (hits / total) * 100 : 0;
-  return (
-    <div className="flex items-center gap-3 text-xs">
-      <span className="text-muted-foreground w-10">{label}</span>
-      <div className="bg-muted h-1.5 flex-1 overflow-hidden rounded-full">
-        <div className="bg-regression h-full rounded-full" style={{ width: `${pct}%` }} />
-      </div>
-      <span className="w-14 text-right font-mono tabular-nums">
-        {hits}/{total}
-      </span>
-    </div>
-  );
-}
-
-export function FindingCard({ finding }: { finding: Finding }) {
-  const tone = TONE_CLASSES[toneOf(finding.status)];
-  return (
-    <article className={cn("bg-card rounded-xl border p-5", tone.border)}>
-      <div className="flex flex-wrap items-center gap-2">
-        <StatusPill value={finding.status} />
-        <Badge variant="outline" className="h-5 px-1.5 text-[10px] tracking-wide uppercase">
-          {finding.severity}
-        </Badge>
-        {finding.attribution !== "unknown" && <span className="text-muted-foreground text-xs">{humanize(finding.attribution)}</span>}
-      </div>
-      <code className="mt-3 block truncate font-mono text-sm" title={finding.attack_id}>
-        {finding.attack_id}
-      </code>
-      <div className="mt-4 space-y-2">
-        <ReproBar label="Head" hits={finding.head_reproductions} total={finding.head_attempts} />
-        <ReproBar label="Base" hits={finding.base_reproductions} total={finding.base_attempts} />
-      </div>
-      {(finding.limitations ?? []).length > 0 && (
-        <ul className="text-muted-foreground mt-4 list-disc space-y-1 border-t pt-3 pl-4 text-xs">
-          {(finding.limitations ?? []).map((l) => (
-            <li key={l}>{l}</li>
-          ))}
-        </ul>
-      )}
-    </article>
   );
 }
 
@@ -164,7 +118,7 @@ function elapsed(fromIso: string, toIso: string): string {
 export function EventTimeline({ events }: { events: RunEvent[] }) {
   const first = events[0]?.created_at ?? "";
   return (
-    <ol className="bg-card rounded-xl border px-5 py-4">
+    <ol className="py-1">
       {events.map((e, i) => {
         const Icon = EVENT_ICON[e.event_type] ?? PlayCircle;
         const status = typeof e.payload?.status === "string" ? e.payload.status : typeof e.payload?.overall_status === "string" ? e.payload.overall_status : null;

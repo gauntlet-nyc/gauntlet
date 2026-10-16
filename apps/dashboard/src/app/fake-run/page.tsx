@@ -25,8 +25,8 @@ export default async function FakeRunPage() {
             {run.label} · <code className="font-mono text-sm">{run.run_id}</code>
           </>
         }
+        actions={<OfflineBadge provenance={[]} />}
       />
-      <OfflineBadge provenance={[]} />
       <Section title="Planned attack" icon={Lock}>
         <AttackCard attack={run.plan} />
       </Section>
