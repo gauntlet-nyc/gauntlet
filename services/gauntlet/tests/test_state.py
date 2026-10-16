@@ -1,6 +1,7 @@
 """Run lifecycles: only planned transitions, abort from any active state, nothing after terminal."""
 
 import pytest
+
 from gauntlet.domain import (
     GATE_LIFECYCLE,
     RECALL_LIFECYCLE,

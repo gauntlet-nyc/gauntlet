@@ -27,3 +27,7 @@ class DuplicateApprovalError(PortError):
 
 class ApprovalAlreadyConsumedError(PortError):
     """A single-use approval was already spent on an execution."""
+
+
+class ArtifactRejectedError(PortError):
+    """Evidence bytes were empty, oversized or of a disallowed media type; nothing was stored."""

@@ -1,0 +1,16 @@
+# Local synthetic services only. Never point tooling at a non-local database.
+# Bind to loopback; credentials come from .env.local (see .env.example).
+services:
+  surrealdb:
+    image: surrealdb/surrealdb:v2.3.7@sha256:b0ec5126620f29d8d9e3288315c0862e83f6d2b22f2489d60748aec1908f1275
+    command: start --user ${SURREAL_USER:-root} --pass ${SURREAL_PASS:?set in .env.local} memory
+    ports:
+      - "127.0.0.1:8001:8000"
+  postgres:
+    image: postgres:16.9-alpine@sha256:7c688148e5e156d0e86df7ba8ae5a05a2386aaec1e2ad8e6d11bdf10504b1fb7
+    environment:
+      POSTGRES_USER: gauntlet
+      POSTGRES_PASSWORD: ${CARTWHEEL_DB_PASSWORD:?set in .env.local}
+      POSTGRES_DB: cartwheel
+    ports:
+      - "127.0.0.1:5432:5432"

@@ -6,6 +6,8 @@ from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from pydantic import ValidationError
+
 from gauntlet.application.recall import AuditReport, EventAuditUseCase, InvalidAuditRequestError
 from gauntlet.contracts import (
     AuditSummary,
@@ -16,7 +18,6 @@ from gauntlet.contracts import (
 )
 from gauntlet.domain import RecallClassification
 from gauntlet.ports import AuditFacts
-from pydantic import ValidationError
 
 T = datetime(2026, 10, 5, 10, 0, tzinfo=UTC)
 NOW = datetime(2026, 10, 14, 16, 0, tzinfo=UTC)

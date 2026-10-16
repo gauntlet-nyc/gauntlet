@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
+
 from gauntlet.contracts import (
     ApprovalDecision,
     ApprovalRecord,
@@ -11,6 +12,7 @@ from gauntlet.contracts import (
     AuditSummary,
     ChangeImpactMap,
     ChangeRequest,
+    EvidenceBinding,
     ExposureRecord,
     Finding,
     FixPlan,
@@ -41,6 +43,7 @@ GOLDENS: dict[str, type[StrictDTO]] = {
     "audit-summary.v1.json": AuditSummary,
     "change-impact-map.v1.json": ChangeImpactMap,
     "change-request.v1.json": ChangeRequest,
+    "evidence-binding.v1.json": EvidenceBinding,
     "exposure-record.v1.json": ExposureRecord,
     "finding.v1.json": Finding,
     "fix-plan.v1.json": FixPlan,

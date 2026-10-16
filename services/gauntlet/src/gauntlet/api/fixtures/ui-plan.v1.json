@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "attack_id": "attack-ui-001",
+  "hypothesis": "A fixed-position Help control might obstruct the primary CTA at narrow viewport width",
+  "why_this_change": "Changed component introduces fixed positioning near the bottom right",
+  "expected_observation": "checkout-primary-action receives the click at every tested viewport",
+  "source_refs": [
+    {
+      "schema_version": "1.0",
+      "path": "web/src/components/FloatingHelp.tsx",
+      "sha": "aaaaaaaa",
+      "start_line": 12,
+      "end_line": 20,
+      "content_hash": null
+    }
+  ],
+  "worker_kind": "ui",
+  "target_id": "cartwheel-fixture",
+  "fixture_id": "baseline-v1",
+  "steps": [
+    {
+      "schema_version": "1.0",
+      "action": "navigate",
+      "path": "/checkout"
+    },
+    {
+      "schema_version": "1.0",
+      "action": "resize",
+      "width": 375,
+      "height": 812
+    },
+    {
+      "schema_version": "1.0",
+      "action": "inspect",
+      "target": "checkout-primary-action"
+    },
+    {
+      "schema_version": "1.0",
+      "action": "click",
+      "target": "checkout-primary-action"
+    },
+    {
+      "schema_version": "1.0",
+      "action": "capture",
+      "label": "after-click"
+    }
+  ],
+  "oracle_ids": [
+    "ui.primary_action_reachable"
+  ],
+  "max_actions": 10,
+  "max_runtime_seconds": 90
+}

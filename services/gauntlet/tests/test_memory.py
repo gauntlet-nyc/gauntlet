@@ -16,12 +16,13 @@ from fakes import (
     ScriptedModelGateway,
     StaticTargetCatalog,
 )
+from pydantic import ValidationError
+
 from gauntlet.analysis import GitRepositoryInspector
 from gauntlet.application.gate import PlanChangeDependencies, PlanChangeUseCase
 from gauntlet.contracts import ChangeRequest, SurfaceKind, TemporalMemoryFact
 from gauntlet.planning import AttackPlanner, PlanningLimits, select_memory
 from gauntlet.ports import MemoryQuery
-from pydantic import ValidationError
 
 DISCOVERED = datetime(2026, 10, 14, 14, 0, tzinfo=UTC)
 LATER = DISCOVERED + timedelta(days=7)

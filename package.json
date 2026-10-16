@@ -3,6 +3,12 @@
   "private": true,
   "packageManager": "pnpm@9.12.2",
   "scripts": {
-    "setup:notice": "echo 'Initialize apps/dashboard and apps/cartwheel before running frontend checks; see docs/PHASES.md'"
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test"
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss": ">=8.5.23"
+    }
   }
 }

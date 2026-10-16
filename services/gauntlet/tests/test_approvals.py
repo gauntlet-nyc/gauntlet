@@ -9,6 +9,8 @@ from pathlib import Path
 
 import pytest
 from fakes import InMemoryApprovalStore
+from pydantic import ValidationError
+
 from gauntlet.application import ApprovalDeniedError, StaleApprovalError
 from gauntlet.application.gate import (
     ApprovalScope,
@@ -20,7 +22,6 @@ from gauntlet.application.gate import (
 from gauntlet.contracts import ApprovalDecision, ApprovalRecord, FixPlan
 from gauntlet.domain import is_patch_path_allowed
 from gauntlet.ports import ApprovalAlreadyConsumedError
-from pydantic import ValidationError
 
 EXAMPLES = Path(__file__).resolve().parents[3] / "docs" / "contracts" / "examples"
 T0 = datetime(2026, 10, 14, 15, 0, tzinfo=UTC)
