@@ -1154,6 +1154,8 @@ export interface components {
         };
         /** MemoryRunRow */
         MemoryRunRow: {
+            /** Attack Ids */
+            attack_ids: string[];
             /** Change Id */
             change_id: string;
             /** Memory Fact Ids Used */

@@ -417,23 +417,18 @@ def test_elevenlabs_webhook_reads_findings_and_never_approves(
     assert unsigned.status_code == 401
 
 
-def test_memory_feeds_later_plans_and_supersedes_append_only(client: TestClient) -> None:
+def test_memory_feeds_later_plans_append_only(client: TestClient) -> None:
     first = _start(client)
     assert first["memory_fact_ids_used"] == []
-    assert first["memory_facts_written"] == ["fact-attack-ui-primary-action-375"]
+    (fact_id,) = first["memory_facts_written"]
     second = _start(client)
-    assert second["memory_fact_ids_used"] == ["fact-attack-ui-primary-action-375"]
-    third = _start(client)
-    assert third["memory_fact_ids_used"] == second["memory_facts_written"]
+    assert second["memory_fact_ids_used"] == [fact_id]
+    assert second["memory_facts_written"] == []  # same finding on the same commit: kept once
+    assert len(second["attacks"]) > len(first["attacks"])
     view = client.get("/memory").json()
-    chain = [(f["fact_id"], f["supersedes"]) for f in view["facts"]]
-    assert chain[1][1] == chain[0][0] and chain[2][1] == chain[1][0]
-    assert all(
-        f["source"]["finding_id"] and f["verification"] == "confirmed" for f in view["facts"]
-    )
+    (fact,) = view["facts"]
+    assert fact["fact_id"] == fact_id and fact["verification"] == "confirmed"
+    assert fact["source"]["finding_id"] and fact["source"]["oracle_id"]
     assert view["provenance"]["live"] is False
-    assert [r["run_id"] for r in view["runs"]] == [
-        first["run_id"],
-        second["run_id"],
-        third["run_id"],
-    ]
+    rows = {r["run_id"]: r for r in view["runs"]}
+    assert rows[second["run_id"]]["attack_ids"] == [a["attack_id"] for a in second["attacks"]]

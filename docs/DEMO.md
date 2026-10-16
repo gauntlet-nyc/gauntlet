@@ -70,7 +70,7 @@ the scripted planner unless Azure is live.
 ## 3. Close (≈30 s) — **Sponsor proof**
 
 Read each row honestly: which artifact each sponsor produces and whether it ran live today.
-Optional (≈20 s) **Memory**: start the Help-button run a second time, open **Memory**: run 1 planned with no facts and wrote one; run 2 received that fact and wrote a superseding one. "Memory is evidence for planning, never the oracle; only confirmed facts with finding + oracle provenance are shown to the planner."
+Optional (≈20 s) **Memory**: start the Help-button run a second time, open **Memory**: run 1 planned one attack with no facts and wrote a verified fact; run 2 received that fact and planned an extra viewport attack citing it. "Memory is evidence for planning, never the oracle; only confirmed facts with finding + oracle provenance are shown to the planner."
 
 Also show **Onboarding**: registered synthetic targets and the open operator steps.
 Pitch: "CI passed because no one wrote the test. Gauntlet read what changed, invented the test,

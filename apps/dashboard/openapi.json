@@ -2058,6 +2058,13 @@
       },
       "MemoryRunRow": {
         "properties": {
+          "attack_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Attack Ids",
+            "type": "array"
+          },
           "change_id": {
             "title": "Change Id",
             "type": "string"
@@ -2094,6 +2101,7 @@
           "change_id",
           "status",
           "planned_at",
+          "attack_ids",
           "memory_fact_ids_used",
           "memory_facts_written"
         ],

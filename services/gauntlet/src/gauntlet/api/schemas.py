@@ -253,6 +253,7 @@ class MemoryRunRow(BaseModel):
     change_id: str
     status: str
     planned_at: str
+    attack_ids: list[str]
     memory_fact_ids_used: list[str]
     memory_facts_written: list[str]
 

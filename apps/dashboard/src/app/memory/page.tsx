@@ -20,7 +20,7 @@ export default async function MemoryPage() {
       <p>
         Each confirmed finding becomes a typed fact that cites the finding and oracle that proved it. Later plans
         receive only facts known at planning time, as untrusted evidence; they never replace the oracle. Corrections
-        supersede older facts; nothing is overwritten.
+        supersede older facts; nothing is overwritten. With a verified fact, the planner widens its attack set and cites the fact.
       </p>
       <Section title="Planning with vs without memory">
         {view.runs.length === 0 ? (
@@ -30,7 +30,7 @@ export default async function MemoryPage() {
         ) : (
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
-              <tr><th align="left">Run</th><th align="left">Change</th><th align="left">Verdict</th><th align="left">Facts given to the planner</th><th align="left">Facts written</th></tr>
+              <tr><th align="left">Run</th><th align="left">Change</th><th align="left">Verdict</th><th align="left">Attacks planned</th><th align="left">Facts given to the planner</th><th align="left">Facts written</th></tr>
             </thead>
             <tbody>
               {view.runs.map((r) => (
@@ -38,6 +38,7 @@ export default async function MemoryPage() {
                   <td><Link href={`/gate/runs/${encodeURIComponent(r.run_id)}`}>{r.run_id}</Link></td>
                   <td>{r.change_id}</td>
                   <td><StatusPill value={r.status} /></td>
+                  <td>{r.attack_ids.map((a) => <code key={a} style={{ display: "block" }}>{a}</code>)}</td>
                   <td>{r.memory_fact_ids_used.length ? r.memory_fact_ids_used.map((f) => <code key={f}>{f} </code>) : <em>none (no memory yet)</em>}</td>
                   <td>{r.memory_facts_written.map((f) => <code key={f}>{f} </code>)}</td>
                 </tr>
