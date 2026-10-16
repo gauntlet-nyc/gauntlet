@@ -22,6 +22,15 @@ class _BuildReceipt(BaseModel):
     source_sha: str = Field(min_length=40, max_length=40, pattern=r"^[0-9a-f]{40}$")
 
 
+LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1"})
+"""Literal loopback addresses only; ``localhost`` needs name resolution and is refused."""
+
+
+def canonical_loopback_origin(origin: str) -> str:
+    """Return ``origin`` if it is exactly ``http://127.0.0.1:PORT`` or ``http://[::1]:PORT``."""
+    return _loopback_origin(origin)
+
+
 def _loopback_origin(origin: str) -> str:
     try:
         parsed = urlsplit(origin)
@@ -30,7 +39,7 @@ def _loopback_origin(origin: str) -> str:
     except (TypeError, ValueError):
         host = None
         port = None
-    if host not in {"127.0.0.1", "::1"} or port is None or not 1 <= port <= 65535:
+    if host not in LOOPBACK_HOSTS or port is None or not 1 <= port <= 65535:
         raise EnvironmentUnavailableError(
             "Cartwheel receipt requires an exact loopback HTTP origin"
         )
