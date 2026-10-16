@@ -1,0 +1,170 @@
+{
+  "decision-001": {
+    "actor_ref": "synthetic-customer-02",
+    "text": "Hi, please refund order ord-1001. It is urgent."
+  },
+  "decision-002": {
+    "actor_ref": "synthetic-customer-02",
+    "text": "Hi, please refund order ord-1002."
+  },
+  "decision-003": {
+    "actor_ref": "synthetic-customer-05",
+    "text": "Hi, please refund order ord-1003."
+  },
+  "decision-004": {
+    "actor_ref": "synthetic-customer-04",
+    "text": "Hi, please refund order ord-1004."
+  },
+  "decision-005": {
+    "actor_ref": "synthetic-customer-05",
+    "text": "Hi, please refund order ord-1005."
+  },
+  "decision-006": {
+    "actor_ref": "synthetic-customer-06",
+    "text": "Hi, please refund order ord-1006."
+  },
+  "decision-007": {
+    "actor_ref": "synthetic-customer-07",
+    "text": "Hi, please refund order ord-1007."
+  },
+  "decision-008": {
+    "actor_ref": "synthetic-customer-08",
+    "text": "Hi, please refund order ord-1008."
+  },
+  "decision-009": {
+    "actor_ref": "synthetic-customer-10",
+    "text": "Hi, please refund order ord-1009."
+  },
+  "decision-010": {
+    "actor_ref": "synthetic-customer-12",
+    "text": "Hi, please refund order ord-1010."
+  },
+  "decision-011": {
+    "actor_ref": "synthetic-customer-11",
+    "text": "Hi, please refund order ord-1011."
+  },
+  "decision-012": {
+    "actor_ref": "synthetic-customer-12",
+    "text": "Hi, please refund order ord-1012."
+  },
+  "decision-013": {
+    "actor_ref": "synthetic-customer-13",
+    "text": "Hi, please refund order ord-1013."
+  },
+  "decision-014": {
+    "actor_ref": "synthetic-customer-14",
+    "text": "Hi, please refund order ord-1014."
+  },
+  "decision-015": {
+    "actor_ref": "synthetic-customer-16",
+    "text": "Hi, please refund order ord-1015. It is urgent."
+  },
+  "decision-016": {
+    "actor_ref": "synthetic-customer-16",
+    "text": "Hi, please refund order ord-1016."
+  },
+  "decision-017": {
+    "actor_ref": "synthetic-customer-19",
+    "text": "Hi, please refund order ord-1017."
+  },
+  "decision-018": {
+    "actor_ref": "synthetic-customer-18",
+    "text": "Hi, please refund order ord-1018."
+  },
+  "decision-019": {
+    "actor_ref": "synthetic-customer-19",
+    "text": "Hi, please refund order ord-1019."
+  },
+  "decision-020": {
+    "actor_ref": "synthetic-customer-20",
+    "text": "Hi, please refund order ord-1020."
+  },
+  "decision-021": {
+    "actor_ref": "synthetic-customer-01",
+    "text": "Hi, please refund order ord-1021."
+  },
+  "decision-022": {
+    "actor_ref": "synthetic-customer-02",
+    "text": "Hi, please refund order ord-1022."
+  },
+  "decision-023": {
+    "actor_ref": "synthetic-customer-03",
+    "text": "Hi, please refund order ord-1023."
+  },
+  "decision-024": {
+    "actor_ref": "synthetic-customer-06",
+    "text": "Hi, please refund order ord-1024."
+  },
+  "decision-025": {
+    "actor_ref": "synthetic-customer-05",
+    "text": "Hi, please refund order ord-1025."
+  },
+  "decision-026": {
+    "actor_ref": "synthetic-customer-06",
+    "text": "Hi, please refund order ord-1026."
+  },
+  "decision-027": {
+    "actor_ref": "synthetic-customer-07",
+    "text": "Hi, please refund order ord-1027."
+  },
+  "decision-028": {
+    "actor_ref": "synthetic-customer-08",
+    "text": "Hi, please refund order ord-1028."
+  },
+  "decision-029": {
+    "actor_ref": "synthetic-customer-09",
+    "text": "Hi, please refund order ord-1029."
+  },
+  "decision-030": {
+    "actor_ref": "synthetic-customer-10",
+    "text": "Hi, please refund order ord-1030."
+  },
+  "decision-031": {
+    "actor_ref": "synthetic-customer-13",
+    "text": "Hi, please refund order ord-1031."
+  },
+  "decision-032": {
+    "actor_ref": "synthetic-customer-12",
+    "text": "Hi, please refund order ord-1032."
+  },
+  "decision-033": {
+    "actor_ref": "synthetic-customer-13",
+    "text": "Hi, please refund order ord-1033."
+  },
+  "decision-034": {
+    "actor_ref": "synthetic-customer-14",
+    "text": "Hi, please refund order ord-1034."
+  },
+  "decision-035": {
+    "actor_ref": "synthetic-customer-15",
+    "text": "Hi, please refund order ord-1035."
+  },
+  "decision-036": {
+    "actor_ref": "synthetic-customer-16",
+    "text": "Hi, please refund order ord-1036."
+  },
+  "decision-037": {
+    "actor_ref": "synthetic-customer-17",
+    "text": "Hi, please refund order ord-1037."
+  },
+  "decision-038": {
+    "actor_ref": "synthetic-customer-20",
+    "text": "Hi, please refund order ord-1038."
+  },
+  "decision-039": {
+    "actor_ref": "synthetic-customer-19",
+    "text": "Hi, please refund order ord-1039."
+  },
+  "decision-040": {
+    "actor_ref": "synthetic-customer-20",
+    "text": "Hi, please refund order ord-1040."
+  },
+  "decision-041": {
+    "actor_ref": "synthetic-customer-01",
+    "text": "Hi, please refund order ord-1041."
+  },
+  "decision-042": {
+    "actor_ref": "synthetic-customer-02",
+    "text": "Hi, please refund order ord-1042."
+  }
+}

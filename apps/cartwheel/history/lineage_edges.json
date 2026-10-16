@@ -1,0 +1,4320 @@
+[
+  {
+    "edge_id": "edge-0001",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T09:40:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-120",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-001",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0002",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T09:40:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-122",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-001",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0003",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T09:40:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-117",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-001",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0004",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T09:40:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-001",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0005",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T09:40:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-001",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0006",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T09:40:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-001",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0007",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T09:40:02Z",
+    "relation": "wrote",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-001",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "memory",
+      "node_id": "mem-083",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0008",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T09:40:02Z",
+    "relation": "derived_into",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-117",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "memory",
+      "node_id": "mem-083",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0009",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T09:40:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-001",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-001",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0010",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T11:25:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-111",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-002",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0011",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T11:25:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-127",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-002",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0012",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T11:25:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-002",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0013",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T11:25:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-002",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0014",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T11:25:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-002",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0015",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T11:25:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-002",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-002",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0016",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T13:16:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-126",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-003",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0017",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T13:16:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-114",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-003",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0018",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T13:16:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-003",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0019",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T13:16:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-003",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0020",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T13:16:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-003",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0021",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T15:36:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-107",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-004",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0022",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T15:36:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-103",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-004",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0023",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T15:36:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-117",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-004",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0024",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T15:36:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-004",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0025",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T15:36:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-004",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0026",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T15:36:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-004",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0027",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T15:36:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-004",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-004",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0028",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T17:44:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-111",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-005",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0029",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T17:44:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-107",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-005",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0030",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T17:44:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-005",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0031",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T17:44:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-005",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0032",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T17:44:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-005",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0033",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T17:44:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-005",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-005",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0034",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T19:07:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-113",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-006",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0035",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T19:07:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-104",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-006",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0036",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T19:07:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-006",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0037",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T19:07:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-006",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0038",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T19:07:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-006",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0039",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-07T19:07:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-006",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-006",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0040",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T09:00:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-129",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-007",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0041",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T09:00:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-125",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-007",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0042",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T09:00:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-007",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0043",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T09:00:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-007",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0044",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T09:00:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-007",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0045",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T09:00:01Z",
+    "relation": "read_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "memory",
+      "node_id": "mem-083",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-007",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0046",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T09:00:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-007",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-007",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0047",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T11:03:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-112",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-008",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0048",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T11:03:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-109",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-008",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0049",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T11:03:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-008",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0050",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T11:03:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-008",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0051",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T11:03:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-008",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0052",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T11:03:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-008",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-008",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0053",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T13:25:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-104",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-009",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0054",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T13:25:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-130",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-009",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0055",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T13:25:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-009",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0056",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T13:25:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-009",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0057",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T13:25:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-009",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0058",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T13:25:01Z",
+    "relation": "read_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "memory",
+      "node_id": "mem-083",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-009",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0059",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T13:25:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-009",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-009",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0060",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T15:27:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-113",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-010",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0061",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T15:27:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-103",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-010",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0062",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T15:27:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-010",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0063",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T15:27:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-010",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0064",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T15:27:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-010",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0065",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T17:08:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-130",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-011",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0066",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T17:08:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-105",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-011",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0067",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T17:08:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-011",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0068",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T17:08:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-011",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0069",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T17:08:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-011",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0070",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T17:08:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-011",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-011",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0071",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T19:46:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-126",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-012",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0072",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T19:46:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-128",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-012",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0073",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T19:46:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-012",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0074",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T19:46:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-012",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0075",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T19:46:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-012",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0076",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T19:46:01Z",
+    "relation": "read_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "memory",
+      "node_id": "mem-083",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-012",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0077",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-08T19:46:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-012",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-012",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0078",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T09:17:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-112",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-013",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0079",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T09:17:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-102",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-013",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0080",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T09:17:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-013",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0081",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T09:17:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-013",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0082",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T09:17:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-013",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0083",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T09:17:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-013",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-013",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0084",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T11:23:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-129",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-014",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0085",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T11:23:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-124",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-014",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0086",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T11:23:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-014",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0087",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T11:23:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-014",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0088",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T11:23:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-014",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0089",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T11:23:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-014",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-014",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0090",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T13:08:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-102",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-015",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0091",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T13:08:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-107",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-015",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0092",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T13:08:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-117",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-015",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0093",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T13:08:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-015",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0094",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T13:08:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-015",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0095",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T13:08:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-015",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0096",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T13:08:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-015",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-015",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0097",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T15:00:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-110",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-016",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0098",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T15:00:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-118",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-016",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0099",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T15:00:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-016",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0100",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T15:00:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-016",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0101",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T15:00:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-016",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0102",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T15:00:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-016",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-016",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0103",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T17:35:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-101",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-017",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0104",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T17:35:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-128",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-017",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0105",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T17:35:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-017",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0106",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T17:35:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-017",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0107",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T17:35:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-017",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0108",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T19:17:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-129",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-018",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0109",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T19:17:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-103",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-018",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0110",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T19:17:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-018",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0111",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T19:17:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-018",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0112",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T19:17:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-018",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0113",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-09T19:17:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-018",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-018",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0114",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T09:23:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-119",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-019",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0115",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T09:23:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-124",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-019",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0116",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T09:23:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-019",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0117",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T09:23:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-019",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0118",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T09:23:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-019",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0119",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T09:23:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-019",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-019",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0120",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T11:49:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-125",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-020",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0121",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T11:49:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-116",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-020",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0122",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T11:49:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-020",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0123",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T11:49:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-020",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0124",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T11:49:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-020",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0125",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T11:49:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-020",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-020",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0126",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T13:47:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-104",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-021",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0127",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T13:47:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-127",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-021",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0128",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T13:47:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-021",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0129",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T13:47:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-021",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0130",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T13:47:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-021",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0131",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T13:47:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-021",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-021",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0132",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T15:22:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-101",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-022",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0133",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T15:22:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-109",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-022",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0134",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T15:22:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-022",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0135",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T15:22:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-022",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0136",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T15:22:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-022",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0137",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T15:22:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-022",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-022",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0138",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T17:00:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-104",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-023",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0139",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T17:00:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-126",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-023",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0140",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T17:00:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-023",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0141",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T17:00:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-023",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0142",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T17:00:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-023",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0143",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T17:00:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-023",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-023",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0144",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T19:36:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-116",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-024",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0145",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T19:36:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-124",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-024",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0146",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T19:36:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-024",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0147",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T19:36:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-024",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0148",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-10T19:36:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-024",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0149",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T09:01:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-107",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-025",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0150",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T09:01:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-101",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-025",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0151",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T09:01:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-025",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0152",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T09:01:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-025",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0153",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T09:01:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-025",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0154",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T09:01:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-025",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-025",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0155",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T11:47:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-106",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-026",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0156",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T11:47:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-107",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-026",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0157",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T11:47:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-026",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0158",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T11:47:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-026",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0159",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T11:47:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-026",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0160",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T11:47:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-026",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-026",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0161",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T13:35:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-111",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-027",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0162",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T13:35:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-124",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-027",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0163",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T13:35:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-027",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0164",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T13:35:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-027",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0165",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T13:35:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-027",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0166",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T13:35:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-027",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-027",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0167",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T15:14:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-128",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-028",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0168",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T15:14:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-112",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-028",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0169",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T15:14:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-028",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0170",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T15:14:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-028",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0171",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T15:14:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-028",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0172",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T15:14:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-028",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-028",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0173",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T17:18:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-101",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-029",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0174",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T17:18:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-107",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-029",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0175",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T17:18:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-029",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0176",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T17:18:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-029",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0177",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T17:18:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-029",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0178",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T17:18:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-029",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-029",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0179",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T19:09:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-104",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-030",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0180",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T19:09:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-125",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-030",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0181",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T19:09:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-030",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0182",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T19:09:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-030",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0183",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T19:09:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-030",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0184",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-11T19:09:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-030",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-030",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0185",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T09:37:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-120",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-031",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0186",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T09:37:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-107",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-031",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0187",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T09:37:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-031",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0188",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T09:37:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-031",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0189",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T09:37:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-031",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0190",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T11:15:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-104",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-032",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0191",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T11:15:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-124",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-032",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0192",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T11:15:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-032",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0193",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T11:15:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-032",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0194",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T11:15:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-032",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0195",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T11:15:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-032",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-032",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0196",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T13:13:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-112",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-033",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0197",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T13:13:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-119",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-033",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0198",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T13:13:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-033",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0199",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T13:13:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-033",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0200",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T13:13:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-033",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0201",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T13:13:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-033",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-033",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0202",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T15:16:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-118",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-034",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0203",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T15:16:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-105",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-034",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0204",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T15:16:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-034",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0205",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T15:16:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-034",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0206",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T15:16:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-034",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0207",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T15:16:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-034",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-034",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0208",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T17:38:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-107",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-035",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0209",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T17:38:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-105",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-035",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0210",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T17:38:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-035",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0211",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T17:38:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-035",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0212",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T17:38:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-035",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0213",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T17:38:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-035",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-035",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0214",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T19:01:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-101",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-036",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0215",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T19:01:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-115",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-036",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0216",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T19:01:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-036",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0217",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T19:01:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-036",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0218",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T19:01:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-036",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0219",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-12T19:01:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-036",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-036",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0220",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T09:37:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-118",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-037",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0221",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T09:37:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-116",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-037",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0222",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T09:37:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-037",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0223",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T09:37:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-037",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0224",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T09:37:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-037",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0225",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T09:37:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-037",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-037",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0226",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T11:30:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-121",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-038",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0227",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T11:30:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-115",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-038",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0228",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T11:30:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-038",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0229",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T11:30:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-038",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0230",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T11:30:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-038",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0231",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T13:42:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-127",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-039",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0232",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T13:42:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-124",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-039",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0233",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T13:42:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-039",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0234",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T13:42:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-039",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0235",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T13:42:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-039",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0236",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T13:42:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-039",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-039",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0237",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T15:00:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-116",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-040",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0238",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T15:00:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-129",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-040",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0239",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T15:00:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-040",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0240",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T15:00:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-040",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0241",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T15:00:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-040",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0242",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T15:00:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-040",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-040",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0243",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T17:46:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-115",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-041",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0244",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T17:46:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-127",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-041",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0245",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T17:46:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-041",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0246",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T17:46:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-041",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0247",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T17:46:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-041",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0248",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T17:46:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-041",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-041",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0249",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T19:19:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-109",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-042",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0250",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T19:19:01Z",
+    "relation": "retrieved_by",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "document_chunk",
+      "node_id": "kb-108",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-042",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0251",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T19:19:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "model_version",
+      "node_id": "synthetic-model-v1",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-042",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0252",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T19:19:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "prompt_version",
+      "node_id": "support-v3",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-042",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0253",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T19:19:01Z",
+    "relation": "configured",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "policy_version",
+      "node_id": "refund-policy-7",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "decision",
+      "node_id": "decision-042",
+      "schema_version": "1.0"
+    }
+  },
+  {
+    "edge_id": "edge-0254",
+    "evidence_ids": [],
+    "recorded_at": "2026-10-13T19:19:03Z",
+    "relation": "produced",
+    "schema_version": "1.0",
+    "source": {
+      "kind": "decision",
+      "node_id": "decision-042",
+      "schema_version": "1.0"
+    },
+    "target": {
+      "kind": "tool_event",
+      "node_id": "tool-event-042",
+      "schema_version": "1.0"
+    }
+  }
+]
