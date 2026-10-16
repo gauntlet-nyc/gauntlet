@@ -1,4 +1,8 @@
-import { ErrorPanel } from "@/components/shared";
+import { Activity } from "lucide-react";
+
+import { Reveal } from "@/components/motion/reveal";
+import { ErrorPanel, PageHeader } from "@/components/shared";
+import { SponsorCard, SponsorSummary } from "@/components/sponsors";
 import { api } from "@/lib/gauntlet";
 
 export const dynamic = "force-dynamic";
@@ -12,38 +16,28 @@ export default async function SponsorsPage() {
   }
   return (
     <main>
-      <h1>Sponsor proof</h1>
-      <p>
-        Which provider produces each artifact, and whether it has run live. Status changes to &ldquo;live verified&rdquo;
-        only after a recorded live run in <code>docs/SDK_VALIDATION.md</code>; setting keys alone never changes it.
-      </p>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-        <thead>
-          <tr><th align="left">Sponsor</th><th align="left">Produces</th><th align="left">Keys</th><th align="left">Status</th></tr>
-        </thead>
-        <tbody>
-          {sponsors.map((s) => (
-            <tr key={s.sponsor} style={{ borderTop: "1px solid #eee", verticalAlign: "top" }}>
-              <td>
-                <strong>{s.sponsor}</strong>
-                <br />
-                <code style={{ fontSize: 11 }}>{s.adapter}</code>
-              </td>
-              <td>{s.produces.join(", ")}</td>
-              <td>{s.configured ? "set" : `missing: ${s.missing_env.join(", ")}`}</td>
-              <td>
-                <strong style={{ color: s.status === "live verified" ? "#03543f" : "#9b1c1c" }}>{s.status}</strong>
-                <br />
-                <small>{s.notes}</small>
-                <br />
-                <small>
-                  Prove live: <code>{s.live_command}</code>
-                </small>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <PageHeader
+        eyebrow="Providers"
+        icon={Activity}
+        title="Sponsor proof"
+        description={
+          <>
+            Which provider produces each artifact, and whether it has run live. A sponsor counts as live only after a
+            recorded live run in <code className="font-mono text-[13px]">docs/SDK_VALIDATION.md</code>; setting keys alone
+            never changes it.
+          </>
+        }
+      />
+      <Reveal>
+        <SponsorSummary sponsors={sponsors} />
+      </Reveal>
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        {sponsors.map((s, i) => (
+          <Reveal key={s.sponsor} index={i + 1} className="flex">
+            <SponsorCard sponsor={s} />
+          </Reveal>
+        ))}
+      </div>
     </main>
   );
 }
