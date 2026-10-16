@@ -1,0 +1,62 @@
+{
+  "additionalProperties": false,
+  "description": "What an authenticated reviewer submits. Reviewer identity comes from auth, not the body.",
+  "properties": {
+    "decision": {
+      "enum": [
+        "approved",
+        "rejected"
+      ],
+      "title": "Decision",
+      "type": "string"
+    },
+    "plan_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Plan Sha256",
+      "type": "string"
+    },
+    "reason": {
+      "anyOf": [
+        {
+          "maxLength": 5000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reason"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "subject": {
+      "enum": [
+        "scope",
+        "fix_plan",
+        "remediation"
+      ],
+      "title": "Subject",
+      "type": "string"
+    },
+    "subject_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "title": "Subject Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "subject",
+    "subject_id",
+    "plan_sha256",
+    "decision"
+  ],
+  "title": "ApprovalDecision",
+  "type": "object"
+}

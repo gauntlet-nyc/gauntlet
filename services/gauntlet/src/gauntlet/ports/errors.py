@@ -21,5 +21,13 @@ class DuplicateIdempotencyKeyError(PortError):
     """A RunEvent reused an idempotency key already recorded for its run."""
 
 
+class DuplicateApprovalError(PortError):
+    """An approval with this ID was already recorded; approvals are append-only."""
+
+
+class ApprovalAlreadyConsumedError(PortError):
+    """A single-use approval was already spent on an execution."""
+
+
 class ArtifactRejectedError(PortError):
     """Evidence bytes were empty, oversized or of a disallowed media type; nothing was stored."""
