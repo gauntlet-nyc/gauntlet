@@ -1220,3 +1220,12 @@ Headless local Chrome tests executed a successful synthetic checkout flow, an
 overlaid/blocked submit, and a delayed order receipt. The combined demo rehearsal
 passed offline. These tests do not establish a full live Cartwheel base/head
 workflow or an Anchor browser run on this branch.
+
+### Bedrock reasoning-model probe handoff (2026-10-16)
+
+The P1 opt-in planner probe now forwards the validated `BEDROCK_REASONING_MODEL`
+setting to `create_bedrock_gateway`, matching Gate composition. A local test using
+the real gateway code and synthetic Bedrock response confirmed reasoning blocks
+are skipped and no temperature is sent. Invalid settings stop before client
+construction. **Live Bedrock probe NOT RUN here:** the local AWS profile is not
+available (`ProfileNotFound`).
