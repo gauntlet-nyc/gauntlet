@@ -4,6 +4,7 @@ from .approvals import ApprovalStore
 from .artifacts import ArtifactStore, StoredArtifact
 from .audit import AuditEvidenceProvider, AuditFacts
 from .browser import BrowserProvider
+from .code_host import CheckConclusion, CheckRunPublisher, CheckRunReport
 from .errors import (
     ApprovalAlreadyConsumedError,
     ArtifactRejectedError,
@@ -33,6 +34,9 @@ __all__ = [
     "AuditEvidenceProvider",
     "AuditFacts",
     "BrowserProvider",
+    "CheckConclusion",
+    "CheckRunPublisher",
+    "CheckRunReport",
     "DuplicateApprovalError",
     "DuplicateIdempotencyKeyError",
     "EnvironmentHandle",
