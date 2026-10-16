@@ -736,10 +736,11 @@ def build_memory(kind: MemoryKindSetting, settings: Settings) -> tuple[Any, str]
     settings.require_live("SurrealDB Agent Memory")
     from gauntlet.persistence.factory import memory_store
 
-    # The hosted Agent Memory service speaks its own API, not raw SurrealQL, so prefer the SDK
-    # adapter; GAUNTLET_MEMORY_BACKEND=http keeps the plain SurrealDB context.
-    store = memory_store(settings.integrations())
+    store = memory_store(
+        settings.integrations(), backend=settings.optional("GAUNTLET_MEMORY_BACKEND") or "auto"
+    )
     if hasattr(store, "attach_ledger"):
+        # The hosted index only returns text chunks; verified facts live in a local ledger.
         from gauntlet.integrations.fake.memory import JsonFileTemporalMemory
 
         store.attach_ledger(JsonFileTemporalMemory(AGENT_MEMORY_LEDGER_FILE))

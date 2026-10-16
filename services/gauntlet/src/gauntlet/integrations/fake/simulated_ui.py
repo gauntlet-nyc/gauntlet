@@ -120,7 +120,7 @@ class _SimulatedPage:
             return receipt
         raise EnvironmentUnavailableError("simulated page accepts only the collector's scripts")
 
-    async def screenshot(self) -> bytes:
+    async def screenshot(self, *, type: str = "png") -> bytes:
         shade = 200 if self.route else 255
         return _png(4, 4, (shade, shade, shade))
 

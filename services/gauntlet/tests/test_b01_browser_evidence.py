@@ -4,10 +4,13 @@ import asyncio
 import json
 from pathlib import Path
 
+import pytest
+
 from gauntlet.application.evidence import check_evidence
 from gauntlet.contracts import EvidenceSubject
 from gauntlet.integrations.browser_evidence import BrowserEvidenceCollector
 from gauntlet.integrations.local_artifacts import LocalArtifactStore
+from gauntlet.ports.errors import EnvironmentUnavailableError
 
 SUBJECT = EvidenceSubject(
     run_id="run-browser-1",
@@ -44,8 +47,8 @@ class FakePage:
         assert expression
         return self.evaluations.pop(0)
 
-    async def screenshot(self) -> bytes:
-        return PNG
+    async def screenshot(self, *, type: str | None = None) -> bytes:
+        return PNG if type == "png" else b"\xff\xd8\xff\xe0synthetic-jpeg"
 
 
 def test_inspection_writes_step_bound_json(tmp_path: Path) -> None:
@@ -89,6 +92,14 @@ def test_click_writes_actual_recipient_and_png_for_same_step(tmp_path: Path) -> 
             "image/png",
         }
         assert all(item.binding.subject.step_index == 3 for item in stored if item)
+        assert (
+            next(
+                item.content
+                for item in stored
+                if item and item.binding.evidence.media_type == "image/png"
+            )
+            == PNG
+        )
         receipt = next(
             item
             for item in stored
@@ -140,5 +151,28 @@ def test_capture_writes_final_state_png_at_its_own_step(tmp_path: Path) -> None:
         assert stored is not None
         assert stored.content == PNG
         assert stored.binding.subject.step_index == 4
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("action", ["capture", "click"])
+def test_non_png_screenshot_is_never_stored_as_png(tmp_path: Path, action: str) -> None:
+    class InvalidImagePage(FakePage):
+        async def screenshot(self, *, type: str | None = None) -> bytes:
+            return b"\xff\xd8\xff\xe0synthetic-jpeg"
+
+    async def scenario() -> None:
+        store = LocalArtifactStore(tmp_path / "artifacts")
+        collector = BrowserEvidenceCollector(store)
+        page = InvalidImagePage(GEOMETRY, None, {"received_target": "help-button", "trusted": True})
+        with pytest.raises(EnvironmentUnavailableError):
+            if action == "capture":
+                await collector.capture(page, SUBJECT, 0)
+            else:
+                await collector.click(page, "checkout-primary-action", SUBJECT, 0)
+        for path in (tmp_path / "artifacts").glob("*.artifact"):
+            artifact = await store.get(path.stem)
+            assert artifact is not None
+            assert artifact.binding.evidence.media_type != "image/png"
 
     asyncio.run(scenario())
