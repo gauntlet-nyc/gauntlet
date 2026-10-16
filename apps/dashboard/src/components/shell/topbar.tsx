@@ -52,7 +52,7 @@ export function Topbar() {
       </nav>
       <div className="ml-auto flex items-center gap-2">
         <span className="text-muted-foreground hidden items-center gap-2 rounded-full border px-2.5 py-1 text-xs sm:inline-flex">
-          <span className="bg-inconclusive relative flex size-1.5">
+          <span className="bg-inconclusive relative flex size-1.5 rounded-full">
             <span className="bg-inconclusive absolute inline-flex size-full animate-ping rounded-full opacity-60" />
           </span>
           cartwheel-fixture
