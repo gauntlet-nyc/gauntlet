@@ -104,3 +104,34 @@ arguments for its safe missing-input report.
 Full source mypy validation currently requires the optional provider SDKs installed
 via `uv sync --frozen --group live-providers`. The default CI environment runs
 API-only mypy and the full offline test suite without those SDKs.
+
+## Execute a frozen plan locally
+
+The Bedrock probe writes a report containing `frozen_plan`. The local execution
+probe accepts that nested object as a **bare receipt file**, not the whole report.
+Extract it without altering its fields, for example:
+
+```python
+import json
+from pathlib import Path
+report = json.loads(Path("model-report.json").read_text())
+with Path("plan-receipt.json").open("x") as receipt:
+    json.dump(report["frozen_plan"], receipt)
+```
+
+Use `scripts/probe_p1_frozen_gate.py --help` for arguments. Select `base` or `head`,
+provide the receipt, existing Chrome executable, generated fixture repo, loopback
+origin and a new output directory. Supply `--expected-change` (trusted
+ChangeRequest JSON), `--expected-plan-hash`, `--expected-model-id`,
+`--expected-prompt-sha256`, and `--expected-run-id` from the independently reviewed
+planning record. Do not infer the expected values from an untrusted receipt; its
+hash is not a signature. The prompt hash is SHA-256 of the exact instruction text
+passed to the planner, encoded as UTF-8.
+
+Build and start each selected fixture revision separately. The consumer verifies
+both checkout SHA and compiled receipt before Chrome starts, enforces supported
+UI/oracle and execution budgets, then runs each unchanged attack twice. Repeat
+with the same receipt/expected identity on the other revision. Reports include
+actual observations and oracle outcomes, without asserting which revision should
+fail. A single-revision report is not a paired Gate finding: `gate_status` remains
+`not_tested` pending independent attribution. Empty or rejected plans do not run.
