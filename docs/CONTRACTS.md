@@ -46,3 +46,18 @@ The classifiers in `domain/verdicts.py` produce these outcomes: `classify_gate` 
 **API contract:** consult Section 5.2 of master plan. C owns thin FastAPI routes and generated OpenAPI export. A owns DTO changes. B assures adapter/verifier payloads satisfy them. All three review examples before Phase 1.
 
 **Golden policy:** every file in `docs/contracts/examples/` is mapped to a model in `tests/test_goldens.py` and must round-trip exactly; an unmapped file fails the suite. Every schema change updates exact JSON fixtures and failing/passing contract tests; consumers test the new fixture before merge. Private benchmark truth is NEVER part of any public golden.
+
+## Browser evidence identity
+
+The trusted caller allocates an `EvidenceSubject` before a UI attempt starts.
+It supplies the same subject to `UIWorker.run` and
+`BrowserProvider.open_session`; page content and planner output never choose its
+IDs. The subject has a browser collector, no step index, and exact environment
+ID, source SHA and fixture checksum. The worker refuses a mismatch before
+opening a browser and returns an `Observation` with the preallocated
+`observation_id`. The local diagnostic collector derives a step-specific
+subject for each inspection, click and final screenshot, then writes bytes
+through `ArtifactStore`; the verifier checks the stored binding. A production
+browser adapter must enforce preview/network scope and independently establish
+the actual environment revision before this can support a hard-oracle claim.
+The offline fake's recorded evidence IDs remain synthetic.

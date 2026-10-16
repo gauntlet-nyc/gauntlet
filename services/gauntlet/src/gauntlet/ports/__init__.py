@@ -1,10 +1,12 @@
 """Async Protocol ports. Adapters (owner B) implement these; application code uses only these."""
 
 from .approvals import ApprovalStore
+from .artifacts import ArtifactStore, StoredArtifact
 from .audit import AuditEvidenceProvider, AuditFacts
 from .browser import BrowserProvider
 from .errors import (
     ApprovalAlreadyConsumedError,
+    ArtifactRejectedError,
     DuplicateApprovalError,
     DuplicateIdempotencyKeyError,
     EnvironmentUnavailableError,
@@ -25,6 +27,8 @@ from .worker import TestWorker
 __all__ = [
     "ApprovalAlreadyConsumedError",
     "ApprovalStore",
+    "ArtifactRejectedError",
+    "ArtifactStore",
     "AuditEvidenceProvider",
     "AuditFacts",
     "BrowserProvider",
@@ -46,6 +50,7 @@ __all__ = [
     "RepositoryInspector",
     "RunStore",
     "SandboxProvider",
+    "StoredArtifact",
     "TargetCatalog",
     "TargetProfile",
     "TestWorker",
