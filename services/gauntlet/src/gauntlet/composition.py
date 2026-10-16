@@ -9,7 +9,7 @@ Live adapters need RUN_LIVE_INTEGRATIONS=1 plus their keys; a missing key raises
 import json
 from collections.abc import Mapping
 from contextlib import AsyncExitStack
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final, Literal, cast
@@ -58,6 +58,8 @@ from gauntlet.verification.ledger_oracle import DESCRIPTOR as LEDGER_DESCRIPTOR
 from gauntlet.verification.ledger_oracle import REFUND_ORACLE_ID, LedgerRefundOracle
 from gauntlet.verification.registry import RegisteredOracleRegistry
 from gauntlet.verification.stored_browser import StoredBrowserOracle
+from gauntlet.verification.workflow import DESCRIPTOR as WORKFLOW_DESCRIPTOR
+from gauntlet.verification.workflow import WorkflowCompletionOracle
 from gauntlet.workers.api import ApiWorker
 from gauntlet.workers.ui import UIWorker
 
@@ -76,6 +78,7 @@ CARTWHEEL_MANIFEST: Final = REPO_ROOT / "apps/cartwheel/fixture-manifest.v1.json
 REFUND_MANIFEST: Final = REPO_ROOT / "apps/cartwheel/refund-fixture-manifest.v1.json"
 PLANNER_PROMPT: Final = REPO_ROOT / "docs/prompts/p1-ui-planner.md"
 CHROMIUM: Final = Path("/opt/pw-browsers/chromium")
+_CARTWHEEL_WORKFLOW: Final = ("checkout-primary-action", "order-receipt")
 
 _COMPATIBLE: Final[Mapping[GateBrowser, GateSandbox]] = {
     "fake": "fake",
@@ -267,8 +270,33 @@ async def build_gate(
         artifacts = LocalArtifactStore(artifact_root)
         collector = BrowserEvidenceCollector(artifacts)
         store = FakeRunStore(initial_sequence=0)
+        cartwheel_workflow = (
+            target.target_id == "cartwheel-fixture"
+            and not target.has_agent_tool
+            and browser != "fake"
+        )
+        workflow_descriptors = (
+            (
+                replace(
+                    WORKFLOW_DESCRIPTOR,
+                    description=(
+                        "For the registered Cartwheel checkout: navigate to /checkout, "
+                        "click data-testid=checkout-primary-action, then inspect "
+                        "data-testid=order-receipt. Include at least two pre-click "
+                        "steps and a navigate. The hard oracle checks the bound click "
+                        "and completion marker evidence."
+                    ),
+                ),
+            )
+            if cartwheel_workflow
+            else ()
+        )
         registry = OracleCatalog(
-            [_planner_registry(target)], LEDGER_DESCRIPTOR, A11Y_DESCRIPTOR, API_DESCRIPTOR
+            [_planner_registry(target)],
+            LEDGER_DESCRIPTOR,
+            A11Y_DESCRIPTOR,
+            API_DESCRIPTOR,
+            *workflow_descriptors,
         )
         routes: dict[WorkerKind, WorkerRoute] = {}
         if target.has_agent_tool:
@@ -328,6 +356,17 @@ async def build_gate(
                     artifacts,
                 )
             )
+            if cartwheel_workflow:
+                routes["workflow"] = WorkerRoute(
+                    OracleAttemptExecutor(
+                        UIWorker(browser_port, registry, kind="workflow"),
+                        WorkflowCompletionOracle(
+                            artifacts, targets={target.target_id: _CARTWHEEL_WORKFLOW}
+                        ),
+                        artifacts,
+                    ),
+                    adjudicator_for("workflow", WORKFLOW_DESCRIPTOR.oracle_id, "browser_collector"),
+                )
             routes["accessibility"] = WorkerRoute(
                 OracleAttemptExecutor(
                     UIWorker(browser_port, registry, kind="accessibility"),
