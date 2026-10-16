@@ -24,6 +24,7 @@ _AUDIT_CLASSES = frozenset({RecallClassification.AUDIT_VIOLATION, RecallClassifi
 
 class HistoricalDecision(StrictDTO):
     decision_id: Identifier
+    target_id: Identifier
     occurred_at: UtcDatetime
     agent_id: Identifier
     actor_ref: Identifier
@@ -34,6 +35,7 @@ class HistoricalDecision(StrictDTO):
     tool_results_hash: Sha256Hex | None = None
     kb_snapshot_hash: Sha256Hex | None = None
     memory_snapshot_hash: Sha256Hex | None = None
+    input_messages_hash: Sha256Hex | None = None
     structured_action: Identifier
     amount_minor: int | None = Field(default=None, ge=0)
     source_ids: tuple[Identifier, ...] = Field(default=(), max_length=MAX_ITEMS)

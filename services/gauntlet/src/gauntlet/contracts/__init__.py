@@ -41,6 +41,14 @@ from .gate import (
     TypeStep,
     WorkerKind,
 )
+from .lineage import (
+    ExposureRecord,
+    LineageEdge,
+    NodeKind,
+    NodeRef,
+    Relation,
+    ToolEvent,
+)
 from .recall import HistoricalDecision, RecallMode, RecallTrigger, RecallVerdict
 from .replay import ReplayMode, ReplayResult, ReplaySpec
 
@@ -65,18 +73,23 @@ __all__ = [
     "EvidenceCollector",
     "EvidenceRef",
     "EvidenceSubject",
+    "ExposureRecord",
     "Finding",
     "FixPlan",
     "HistoricalDecision",
     "InspectStep",
+    "LineageEdge",
     "MissingInput",
     "NavigateStep",
+    "NodeKind",
+    "NodeRef",
     "Observation",
     "OracleVerdict",
     "PressStep",
     "RecallMode",
     "RecallTrigger",
     "RecallVerdict",
+    "Relation",
     "ReplayMode",
     "ReplayResult",
     "ReplaySpec",
@@ -88,6 +101,7 @@ __all__ = [
     "StrictDTO",
     "SurfaceKind",
     "ToolCallRecord",
+    "ToolEvent",
     "TypeStep",
     "WorkerKind",
 ]

@@ -12,9 +12,11 @@ from gauntlet.contracts import (
     ChangeImpactMap,
     ChangeRequest,
     EvidenceBinding,
+    ExposureRecord,
     Finding,
     FixPlan,
     HistoricalDecision,
+    LineageEdge,
     Observation,
     OracleVerdict,
     RecallTrigger,
@@ -23,6 +25,7 @@ from gauntlet.contracts import (
     ReplaySpec,
     RunEvent,
     StrictDTO,
+    ToolEvent,
 )
 
 EXAMPLES_DIR = Path(__file__).resolve().parents[3] / "docs" / "contracts" / "examples"
@@ -34,9 +37,11 @@ GOLDENS: dict[str, type[StrictDTO]] = {
     "change-impact-map.v1.json": ChangeImpactMap,
     "change-request.v1.json": ChangeRequest,
     "evidence-binding.v1.json": EvidenceBinding,
+    "exposure-record.v1.json": ExposureRecord,
     "finding.v1.json": Finding,
     "fix-plan.v1.json": FixPlan,
     "historical-decision.v1.json": HistoricalDecision,
+    "lineage-edge.v1.json": LineageEdge,
     "observation.v1.json": Observation,
     "oracle-verdict.v1.json": OracleVerdict,
     "recall-trigger.v1.json": RecallTrigger,
@@ -46,6 +51,7 @@ GOLDENS: dict[str, type[StrictDTO]] = {
     "replay-spec-control.v1.json": ReplaySpec,
     "replay-spec-counterfactual.v1.json": ReplaySpec,
     "run-event.v1.json": RunEvent,
+    "tool-event.v1.json": ToolEvent,
     "ui-plan.v1.json": AttackSpec,
 }
 

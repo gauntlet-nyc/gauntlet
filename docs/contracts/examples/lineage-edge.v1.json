@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "edge_id": "edge-001",
+  "source": {
+    "schema_version": "1.0",
+    "kind": "document_chunk",
+    "node_id": "kb-117"
+  },
+  "relation": "retrieved_by",
+  "target": {
+    "schema_version": "1.0",
+    "kind": "decision",
+    "node_id": "decision-001"
+  },
+  "recorded_at": "2026-10-05T10:15:01Z",
+  "evidence_ids": [
+    "trace-hist-001"
+  ]
+}

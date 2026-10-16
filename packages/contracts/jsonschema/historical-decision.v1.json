@@ -73,6 +73,19 @@
       "title": "Decision Id",
       "type": "string"
     },
+    "input_messages_hash": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Input Messages Hash"
+    },
     "kb_snapshot_hash": {
       "anyOf": [
         {
@@ -158,6 +171,13 @@
       "title": "Structured Action",
       "type": "string"
     },
+    "target_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "title": "Target Id",
+      "type": "string"
+    },
     "tool_names": {
       "default": [],
       "items": {
@@ -185,6 +205,7 @@
   },
   "required": [
     "decision_id",
+    "target_id",
     "occurred_at",
     "agent_id",
     "actor_ref",
