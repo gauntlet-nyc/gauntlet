@@ -31,6 +31,8 @@ class ProviderSmokeCapture:
     source_sha: str
     artifact_id: str
     sha256: str
+    # Provider session facts (Anchor recording ID, egress isolation) when the adapter has them.
+    browser_session: dict[str, str | bool | None] | None = None
 
 
 async def _close_session(browser: BrowserProvider, session_id: str) -> None:
@@ -92,11 +94,14 @@ async def _capture_one(
             or hashlib.sha256(stored.content).hexdigest() != stored.binding.evidence.sha256
         ):
             raise EnvironmentUnavailableError("provider smoke evidence is missing or invalid")
+        describe = getattr(browser, "session_evidence", None)
+        session_facts = describe(session_id).as_payload() if callable(describe) else None
         return ProviderSmokeCapture(
             environment_id=environment.environment_id,
             source_sha=environment.source_sha,
             artifact_id=artifact_id,
             sha256=stored.binding.evidence.sha256,
+            browser_session=session_facts,
         )
     finally:
         await _close_session(browser, session_id)
