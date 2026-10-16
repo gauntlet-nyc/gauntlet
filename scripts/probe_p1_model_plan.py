@@ -1,4 +1,4 @@
-"""Opt-in Bedrock planning probe; freezes a plan but executes no attacks."""
+"""Opt-in planning probe (Bedrock, or Azure OpenAI as a dev stand-in); executes no attacks."""
 
 import argparse
 import asyncio
@@ -19,6 +19,7 @@ from gauntlet.application.gate import (
     profile_from_manifest,
 )
 from gauntlet.contracts import ChangeRequest, RunEvent
+from gauntlet.integrations.azure_openai import create_azure_openai_gateway
 from gauntlet.integrations.bedrock import create_bedrock_gateway
 from gauntlet.integrations.fake.storage import FakeRunStore
 from gauntlet.planning import AttackPlanner, FrozenPlan, PlanningLimits, serialize_frozen_plan
@@ -30,6 +31,7 @@ from gauntlet.verification.registry import RegisteredOracleRegistry
 ROOT = Path(__file__).resolve().parents[1]
 INSTRUCTIONS = ROOT / "docs/prompts/p1-ui-planner.md"
 MANIFEST = ROOT / "apps/cartwheel/fixture-manifest.v1.json"
+AZURE_SETTINGS = ("AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_DEPLOYMENT", "AZURE_OPENAI_API_KEY")
 PINNED_BOTO3 = "1.43.114"
 
 
@@ -87,6 +89,7 @@ def _cartwheel_catalog() -> StaticTargetCatalog:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--provider", choices=("bedrock", "azure"), default="bedrock")
     parser.add_argument("--repository", type=Path)
     parser.add_argument("--change-request", type=Path)
     parser.add_argument("--model-id")
@@ -105,15 +108,30 @@ def main(argv: list[str] | None = None) -> int:
         "RUN_LIVE_INTEGRATIONS=1": os.environ.get("RUN_LIVE_INTEGRATIONS") == "1",
         "--repository": args.repository is not None,
         "--change-request": args.change_request is not None,
-        "--model-id": bool(args.model_id),
-        "--region": bool(args.region),
         "--output": args.output is not None,
         "unused --output": args.output is None or not os.path.lexists(args.output),
-        f"boto3=={PINNED_BOTO3}": sdk_version == PINNED_BOTO3,
     }
+    if args.provider == "bedrock":
+        required.update(
+            {
+                "--model-id": bool(args.model_id),
+                "--region": bool(args.region),
+                f"boto3=={PINNED_BOTO3}": sdk_version == PINNED_BOTO3,
+            }
+        )
+    else:
+        required.update(
+            {
+                key: bool(os.environ.get(key, "").strip())
+                and "REPLACE_" not in os.environ.get(key, "")
+                for key in AZURE_SETTINGS
+            }
+        )
     missing = [name for name, ready in required.items() if not ready]
     report: dict[str, object] = {
-        "mode": "bedrock_plan_freeze_only",
+        "mode": f"{args.provider}_plan_freeze_only",
+        "provider": args.provider,
+        "sponsor_evidence": args.provider == "bedrock",
         "status": "not_tested",
         "gate_status": "not_tested",
         "plan_hash": None,
@@ -146,7 +164,11 @@ def main(argv: list[str] | None = None) -> int:
     gateway = None
     error_type: str | None = None
     try:
-        gateway = create_bedrock_gateway(model_id=args.model_id, region=args.region)
+        gateway = (
+            create_bedrock_gateway(model_id=args.model_id, region=args.region)
+            if args.provider == "bedrock"
+            else create_azure_openai_gateway(os.environ)
+        )
         instructions = INSTRUCTIONS.read_text()
         frozen, events = asyncio.run(
             freeze_live_plan(
