@@ -1333,3 +1333,44 @@ creation, not a dashboard conversational client or evidence Q&A session.
 ```bash
 RUN_LIVE_INTEGRATIONS=1 .venv/bin/python -m dotenv -f .env.local run --no-override -- .venv/bin/python scripts/smoke_adapters.py elevenlabs
 ```
+
+### Registered GitHub PR → hosted Gate (2026-10-16)
+
+Supersedes the earlier unresolved PNG-only capture result: verified PNG/JPEG
+container handling now stores Anchor's actual JPEG with matching media type.
+GitHub PR #87, on dedicated `demo/cartwheel-base` / `demo/cartwheel-help`
+fixture branches, delivered a signed webhook and executed run
+`gh-2c202ade18efc1e4af86`. Actual Daytona and proxyless Anchor execution reproduced
+the blocked action on head 2/2, base 0/2; the independent oracle classified it
+`confirmed_regression`, attribution `introduced`. The planner was explicitly
+scripted, not a live model; the UI labels this mixed evidence. Check run
+117095925152 completed with expected `failure` on the exact executed head.
+
+Headless Chrome loaded all four hosted screenshots on the run page. Evidence:
+`/tmp/gauntlet-pr87-run.json`, `/tmp/gauntlet-pr87-dashboard.png`, and ignored
+`artifacts/pr87-hosted-demo`. Read-only cleanup inventory confirmed zero Daytona
+sandboxes and zero Anchor sessions. Anchor `list_sessions` returned HTTP 500;
+`get_all_sessions_status` succeeded with count 0. No additional hosted retry.
+The run reported zero memory facts written, so this is not evidence of a successful
+live memory write. The UI repair plan is a labeled sample, not a hosted repair.
+
+MAIN validation: 918 Python tests passed, 4 skipped; Ruff and mypy (168 files)
+passed; wheel/sdist and dashboard production build/typecheck passed; dashboard
+21 tests passed; headless rehearsal 12/12 passed in 8 seconds. Commands:
+
+```bash
+uv run --frozen --group live-providers pytest -q
+uv run --frozen --group live-providers ruff check services/gauntlet scripts
+uv run --frozen --group live-providers mypy services/gauntlet/src
+uv build --package gauntlet-control --out-dir /tmp/gauntlet-combined-build
+npm run test --prefix apps/dashboard
+npm run build --prefix apps/dashboard
+npm run typecheck --prefix apps/dashboard
+.venv/bin/python scripts/demo_rehearsal.py --chromium '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --backup-dir /tmp/gauntlet-combined-rehearsal
+```
+
+The local API on port 8002 was launched for this bounded test with live providers,
+scripted planning, and the existing registration file. Dashboard is port 3000.
+Persistent `.env.local` still defaults live integration off. Restarting this
+process loses its in-memory run views and dedup reservations; saved evidence
+remains on disk. Arbitrary project PRs are still ignored by the fixture guard.
