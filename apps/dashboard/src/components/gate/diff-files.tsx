@@ -14,8 +14,8 @@ export interface DiffFile {
   removed: number;
 }
 
-function FileRow({ file, defaultOpen }: { file: DiffFile; defaultOpen: boolean }) {
-  const [open, setOpen] = useState(defaultOpen);
+function FileRow({ file }: { file: DiffFile }) {
+  const [open, setOpen] = useState(false);
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger className="hover:bg-muted/40 flex w-full items-center gap-2 px-4 py-2.5 text-left transition-colors">
@@ -33,12 +33,12 @@ function FileRow({ file, defaultOpen }: { file: DiffFile; defaultOpen: boolean }
   );
 }
 
-/** Changed files as a compact list; each expands to its diff. */
+/** Changed files as a compact list, collapsed by default; each expands to its diff. */
 export function DiffFiles({ files }: { files: DiffFile[] }) {
   return (
     <div className="divide-y rounded-xl border">
       {files.map((f) => (
-        <FileRow key={f.path} file={f} defaultOpen={files.length === 1} />
+        <FileRow key={f.path} file={f} />
       ))}
     </div>
   );

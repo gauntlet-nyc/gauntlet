@@ -11,10 +11,10 @@ export function PatchDisclosure({ summary, children }: { summary: ReactNode; chi
   const [open, setOpen] = useState(false);
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-sm transition-colors">
+      <CollapsibleTrigger className="text-muted-foreground hover:text-foreground flex max-w-full min-w-0 items-center gap-1.5 text-sm transition-colors">
         <ChevronRight className={cn("size-4 transition-transform", open && "rotate-90")} aria-hidden />
-        {open ? "Hide patch" : "View patch"}
-        <span className="text-muted-foreground/70">{summary}</span>
+        <span className="whitespace-nowrap">{open ? "Hide patch" : "View patch"}</span>
+        <span className="text-muted-foreground/70 hidden min-w-0 truncate sm:inline">{summary}</span>
       </CollapsibleTrigger>
       <CollapsibleContent className="mt-3">{children}</CollapsibleContent>
     </Collapsible>

@@ -66,9 +66,6 @@ export default async function GateRunPage({
       viewport: viewportOf.get(a.attack_id) ?? null,
       shots: a.screenshot_artifact_ids.map((artifactId) => ({ artifactId, src: artifactUrl(run.run_id, artifactId) })),
     }));
-  const totals = run.diff
-    .map((d) => diffStats(d.unified_diff))
-    .reduce((acc, s) => ({ added: acc.added + s.added, removed: acc.removed + s.removed }), { added: 0, removed: 0 });
   const provenance = [...run.provenance, ...(run.repair?.provenance ?? [])];
 
   return (
@@ -147,10 +144,6 @@ export default async function GateRunPage({
         </TabsList>
 
         <TabsContent value="changes" className="space-y-3">
-          <p className="text-muted-foreground text-sm">
-            {run.diff.length} {run.diff.length === 1 ? "file" : "files"} changed · <span className="text-passed">+{totals.added}</span>{" "}
-            <span className="text-regression">−{totals.removed}</span>
-          </p>
           <DiffFiles files={run.diff.map((d) => ({ path: d.path, diff: d.unified_diff, ...diffStats(d.unified_diff) }))} />
         </TabsContent>
 

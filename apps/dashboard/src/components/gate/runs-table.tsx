@@ -29,11 +29,11 @@ export function RunsTable({ runs, changes }: { runs: GateRunSummary[]; changes: 
                 <TableCell className="max-w-0 min-w-48 py-3">
                   <Link
                     href={href}
+                    title={r.run_id}
                     className="block truncate font-medium after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
                   >
                     {intentOf.get(r.change_id) ?? r.change_id}
                   </Link>
-                  <span className="text-muted-foreground mt-0.5 block truncate font-mono text-[11px]">{r.run_id}</span>
                 </TableCell>
                 <TableCell className="whitespace-nowrap">
                   <StatusPill value={r.status} />
