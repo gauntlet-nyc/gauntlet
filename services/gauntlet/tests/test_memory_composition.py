@@ -39,7 +39,7 @@ def test_build_memory_selects_configured_backend(
     store, label = build_memory("surreal", settings)
     expected = SurrealTemporalMemory if backend == "http" else AgentMemorySdkStore
     assert isinstance(store, expected)
-    assert label == "live_surreal_memory"
+    assert label == ("live_surreal_memory" if backend == "http" else "live_agent_memory_sdk")
 
 
 def test_build_memory_still_requires_live_opt_in() -> None:

@@ -12,7 +12,8 @@ router = APIRouter(prefix="/memory", tags=["memory"])
 _LABELS = {
     "offline_in_memory": "OFFLINE in-process temporal memory (append-only, as_of, supersession); "
     "SurrealDB Agent Memory live NOT RUN",
-    "live_surreal_memory": "LIVE SurrealDB Agent Memory",
+    "live_surreal_memory": "LIVE SurrealDB memory context (SurrealQL over HTTP)",
+    "live_agent_memory_sdk": "LIVE SurrealDB Agent Memory (hosted context, SDK)",
 }
 
 
