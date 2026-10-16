@@ -86,7 +86,7 @@ def _server(*, covered: bool) -> tuple[ThreadingHTTPServer, Thread]:
 @pytest.mark.skipif(not CHROME.exists(), reason="local Chrome is needed for browser evidence")
 @pytest.mark.parametrize("covered,expected", [(False, "pass"), (True, "fail")])
 def test_checkout_workflow_from_real_browser(tmp_path: Path, covered: bool, expected: str) -> None:
-    from playwright.async_api import async_playwright
+    async_playwright = pytest.importorskip("playwright.async_api").async_playwright
 
     server, thread = _server(covered=covered)
 

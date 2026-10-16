@@ -80,7 +80,7 @@ def test_simulated_browser_does_not_advertise_workflow(tmp_path: Path) -> None:
     reason="local Chrome is needed for browser evidence",
 )
 def test_inspect_waits_for_async_order_receipt(tmp_path: Path) -> None:
-    from playwright.async_api import async_playwright
+    async_playwright = pytest.importorskip("playwright.async_api").async_playwright
 
     html = b"""<button data-testid="checkout-primary-action"
       style="position:absolute;left:20px;top:20px;width:130px;height:40px"
