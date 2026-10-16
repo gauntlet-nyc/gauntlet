@@ -31,7 +31,7 @@ def load(name: str) -> ModuleType:
 async def make_attempt(output: Path, frozen: object, side: str, index: int) -> dict[str, object]:
     attack = frozen.attacks[0]
     change = frozen.change
-    sha = change.head_sha if side == "head" else change.base_sha
+    sha = change.head_sha if side in {"head", "clean"} else change.base_sha
     checksum = json.loads((ROOT / "apps/cartwheel/fixture-manifest.v1.json").read_text())[
         "fixture_checksum_sha256"
     ]

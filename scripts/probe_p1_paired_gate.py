@@ -9,6 +9,7 @@ import argparse
 import asyncio
 import hashlib
 import json
+import re
 from pathlib import Path
 
 from gauntlet.application.gate.pair_verdict import GateAttempt, adjudicate_ui_pair
@@ -128,17 +129,22 @@ async def pair_reports(
     expected_plan_hash: str,
     base_report_sha256: str,
     head_report_sha256: str,
+    clean_sha: str | None = None,
 ) -> dict[str, object]:
     """Recompute the scripted plan and adjudicate two hash-pinned local run records."""
     manifest = json.loads(Path("apps/cartwheel/fixture-manifest.v1.json").read_text())
+    if clean_sha is not None and re.fullmatch(r"[0-9a-f]{40}", clean_sha) is None:
+        raise ValueError("clean commit SHA must be full lowercase Git SHA")
     change = ChangeRequest(
         repository_id="cartwheel",
         base_sha=manifest["git_refs"]["base_sha"],
-        head_sha=manifest["git_refs"]["head_sha"],
+        head_sha=clean_sha or manifest["git_refs"]["head_sha"],
         fixture_id=manifest["fixture_id"],
         target_id=manifest["target_id"],
         max_cost_usd_cents=500,
-        feature_intent="Synthetic UI update",
+        feature_intent=(
+            "Clarify the product description" if clean_sha is not None else "Synthetic UI update"
+        ),
     )
     frozen = (await freeze_diagnostic_plan(fixture_repo, change, run_id=run_id)).frozen
     if (
@@ -148,10 +154,17 @@ async def pair_reports(
         or frozen.rejected
     ):
         raise ValueError("trusted scripted plan identity differs from expected plan")
+    if clean_sha is not None and frozen.impact.changed_files != ("src/app/products/demo/page.tsx",):
+        raise ValueError("clean comparison must change only the product description page")
     attempts: dict[str, tuple[GateAttempt, ...]] = {}
     for side, output, digest, sha in (
         ("base", base_output, base_report_sha256, change.base_sha),
-        ("head", head_output, head_report_sha256, change.head_sha),
+        (
+            "clean" if clean_sha is not None else "head",
+            head_output,
+            head_report_sha256,
+            change.head_sha,
+        ),
     ):
         report = _read_report(output / "report.json", digest)
         expected_fields = {
@@ -175,7 +188,9 @@ async def pair_reports(
         }
         if any(report.get(key) != value for key, value in expected_fields.items()):
             raise ValueError(f"{side} report identity or local receipt differs from trusted plan")
-        attempts[side] = await _load_attempts(output, report, frozen.attacks[0])
+        attempts["head" if side == "clean" else side] = await _load_attempts(
+            output, report, frozen.attacks[0]
+        )
     result = adjudicate_ui_pair(
         change=change,
         attack=frozen.attacks[0],
@@ -189,6 +204,7 @@ async def pair_reports(
         "plan_source": "scripted_proposal_validated_against_real_diff",
         "server_source_verified": False,
         "source_provenance": "local_cartwheel_build_receipt_only",
+        "comparison": "clean_unrelated_change" if clean_sha is not None else "regression_fixture",
         "run_id": run_id,
         "plan_hash": frozen.plan_hash,
         "base_report_sha256": base_report_sha256,
@@ -218,6 +234,7 @@ def main() -> int:
         "head-report-sha256",
     ):
         parser.add_argument(f"--{name}", required=True)
+    parser.add_argument("--clean-sha")
     args = parser.parse_args()
     try:
         report = asyncio.run(
@@ -229,6 +246,7 @@ def main() -> int:
                 expected_plan_hash=args.expected_plan_hash,
                 base_report_sha256=args.base_report_sha256,
                 head_report_sha256=args.head_report_sha256,
+                clean_sha=args.clean_sha,
             )
         )
         args.output.open("x").write(json.dumps(report, indent=2) + "\n")
