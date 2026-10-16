@@ -33,7 +33,7 @@ export function TargetCard({ target }: { target: Target }) {
           <Hash value={target.head_sha} />
         </dd>
         <dt className="text-muted-foreground">Routes</dt>
-        <dd className="truncate font-mono text-xs leading-5">{target.routes.map((r) => r.path).join("  ")}</dd>
+        <dd className="truncate font-mono text-xs leading-5">{target.routes.map((r) => r.path).join(" · ")}</dd>
         <dt className="text-muted-foreground">Identities</dt>
         <dd>
           <Tooltip>
