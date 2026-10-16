@@ -44,9 +44,12 @@ export function actionLabel(action: string | null | undefined): string {
   return ACTION_LABELS[action] ?? action.replaceAll("_", " ");
 }
 
+const USD = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+
 export function formatAmount(minor: number | null | undefined): string | null {
   if (minor == null) return null;
-  return `${minor.toLocaleString("en-US")}¢`;
+  // Ledger amounts are USD minor units (cents), as in the Cartwheel order fixture.
+  return USD.format(minor / 100);
 }
 
 export interface Outcome {

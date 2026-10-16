@@ -139,6 +139,7 @@ export function Section({
   actions,
   children,
   className,
+  id,
 }: {
   title: string;
   description?: ReactNode;
@@ -146,9 +147,10 @@ export function Section({
   actions?: ReactNode;
   children: ReactNode;
   className?: string;
+  id?: string;
 }) {
   return (
-    <section className={cn("mt-10 scroll-mt-20", className)}>
+    <section id={id} className={cn("mt-10 scroll-mt-20", className)}>
       <div className="mb-4 flex items-end justify-between gap-4">
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight">
