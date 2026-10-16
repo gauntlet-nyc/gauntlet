@@ -327,7 +327,10 @@ def main() -> int:
         _wait(f"{web}/")
         with sync_playwright() as pw:
             browser = pw.chromium.launch(executable_path=_chromium(args.chromium))
-            page = browser.new_page(viewport={"width": 1100, "height": 900})
+            # Reduced motion: backups capture settled pages, not entrance animations mid-way.
+            page = browser.new_page(
+                viewport={"width": 1100, "height": 900}, reduced_motion="reduce"
+            )
             try:
                 steps = rehearse(page, web, api, backup)
             except Exception:

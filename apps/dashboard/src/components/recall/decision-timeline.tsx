@@ -1,5 +1,6 @@
 "use client";
 
+import { useReducedMotion } from "motion/react";
 import { useMemo, useState } from "react";
 import { Bar, BarChart, ResponsiveContainer, Tooltip as ChartTooltip, XAxis, YAxis } from "recharts";
 
@@ -45,6 +46,7 @@ function bucketByDay(rows: readonly TimelineRow[]): DayBucket[] {
 
 function DayChart({ rows, highlightSources }: { rows: readonly TimelineRow[]; highlightSources: string }) {
   const data = useMemo(() => bucketByDay(rows), [rows]);
+  const reduce = useReducedMotion();
   return (
     <div className="border-b px-4 pt-4 pb-2">
       <div className="text-muted-foreground mb-2 flex flex-wrap items-center justify-between gap-2 text-xs">
@@ -82,6 +84,7 @@ function DayChart({ rows, highlightSources }: { rows: readonly TimelineRow[]; hi
                 stackId="d"
                 fill={s.color}
                 radius={i === SERIES.length - 1 ? [3, 3, 0, 0] : 0}
+                isAnimationActive={!reduce}
                 animationDuration={700}
               />
             ))}
