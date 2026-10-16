@@ -2,24 +2,16 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 /** Text wordmarks only: no borrowed logos. */
-const WORDMARKS: readonly { name: string; className: string }[] = [
-  { name: "Daytona", className: "font-semibold tracking-tight" },
-  { name: "Anchor", className: "font-semibold tracking-[-0.02em]" },
-  { name: "Azure OpenAI", className: "font-medium tracking-tight" },
-  { name: "Arize", className: "font-semibold" },
-  { name: "SurrealDB", className: "font-semibold tracking-tight" },
-  { name: "ElevenLabs", className: "font-medium tracking-tight" },
-  { name: "GitHub", className: "font-semibold tracking-tight" },
-];
+const WORDMARKS: readonly string[] = ["Daytona", "Anchor", "Azure OpenAI", "Arize", "SurrealDB", "ElevenLabs", "GitHub"];
 
 export function SponsorRow() {
   return (
-    <div className="flex flex-col gap-5 rounded-xl border px-5 py-5 md:flex-row md:items-center md:justify-between md:px-6">
-      <div className="text-muted-foreground shrink-0 text-xs font-medium tracking-wide uppercase">Built with</div>
-      <ul className="flex flex-wrap items-center gap-x-7 gap-y-3">
-        {WORDMARKS.map((w) => (
-          <li key={w.name} className={`text-foreground/55 text-[15px] ${w.className}`}>
-            {w.name}
+    <div className="flex flex-col gap-4 border-t pt-6 md:flex-row md:items-center md:justify-between">
+      <ul className="flex flex-wrap items-center gap-x-6 gap-y-2">
+        <li className="text-muted-foreground text-xs">Built with</li>
+        {WORDMARKS.map((name) => (
+          <li key={name} className="text-foreground/55 text-sm font-semibold tracking-tight">
+            {name}
           </li>
         ))}
       </ul>

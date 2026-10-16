@@ -23,7 +23,7 @@ export default async function Overview() {
   const { runs, audit } = await loadNumbers();
   return (
     <main>
-      <section className="pt-6 pb-10 md:pt-12 md:pb-14">
+      <section className="pt-4 pb-10 md:pt-8 md:pb-12">
         <Reveal>
           <div className="text-muted-foreground inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs">
             <span className="bg-foreground/60 size-1.5 rounded-full" aria-hidden />
@@ -67,13 +67,13 @@ export default async function Overview() {
               plan frozen before anything executes
             </span>
           </figcaption>
-          <div className="px-5 py-8 md:px-8">
+          <div className="px-5 py-6 md:px-8">
             <PipelineDiagram />
           </div>
         </figure>
       </Reveal>
 
-      <Section title="Two products, one rule: evidence decides" className="mt-14">
+      <Section title="Two products" className="mt-12">
         <div className="grid gap-4 md:grid-cols-2">
           <Reveal index={5} className="flex">
             <GateCard runs={runs} />
@@ -84,11 +84,11 @@ export default async function Overview() {
         </div>
       </Section>
 
-      <Section title="How it stays safe" className="mt-14">
+      <Section title="How it stays safe" className="mt-12">
         <SafetyStrip />
       </Section>
 
-      <div className="mt-14">
+      <div className="mt-12">
         <SponsorRow />
       </div>
     </main>
