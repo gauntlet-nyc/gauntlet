@@ -56,6 +56,66 @@ preview before opening Anchor. A mismatched receipt stops that browser action
 and the environment pair is cleaned. This verifies an app-served SHA claim;
 the sandbox image and custom proxy egress policy still need separate proof.
 
+### B-01p Daytona snapshot bootstrap preparation (2026-10-16)
+
+The project-local Daytona 0.224.1 package was inspected without credentials or
+provider calls. Its installed signatures expose
+`AsyncDaytona.snapshot.create(CreateSnapshotParams(name, image, entrypoint), timeout=...)`,
+`AsyncDaytona.create(CreateSandboxFromSnapshotParams(snapshot, domain_allow_list), timeout=...)`,
+`AsyncSandbox.fs.upload_file`, `AsyncSandbox.process.exec`, `AsyncSandbox.stop`,
+`AsyncSandbox.create_snapshot(name, timeout=...)`, `AsyncDaytona.snapshot.get/delete`,
+and `AsyncDaytona.delete(sandbox, wait=True)`. The [official snapshot docs](https://www.daytona.io/docs/en/snapshots/)
+say container cold snapshots retain filesystem state and require a stopped
+sandbox; the [Python SDK reference](https://www.daytona.io/docs/en/python-sdk/async/async-sandbox/)
+documents the snapshot call. The [network policy docs](https://www.daytona.io/docs/en/network-limits/)
+document `domain_allow_list` and warn that organization policy can still block
+the npm registry.
+
+`scripts/provision_cartwheel_snapshots.py` performs a local preflight against the
+committed synthetic manifest, rebuilt base/head SHAs, identical fixture-state
+bytes and a trusted, operator-supplied npm lockfile. Its hash is recorded for
+reproduction; this is not a supply-chain verification. It accepts only the
+tested full Node 22 Bookworm image index
+`node:22-bookworm@sha256:0e5f906573693feaa1e21057ebdcfdb5bd5021f050b2dc7c9deceb629c7da2a8`.
+On 2026-10-16, a local Docker linux/amd64 run found `/usr/bin/git`,
+`/usr/bin/tar` and `/usr/local/bin/npm` in that image. The exact check was
+`docker run --rm --pull=never --platform linux/amd64 --network none
+--entrypoint /bin/sh <pinned-image> -c 'command -v git && command -v tar &&
+command -v npm'` (exit 0). The slim candidate
+`node:22-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392`
+was rejected because it has no `git`; both the bootstrap and later Daytona
+attestation require `git rev-parse HEAD`. The optional paid path requires both CLI flags,
+`RUN_LIVE_INTEGRATIONS=1`, the Cartwheel target allowlist and Daytona credentials.
+It creates one temporary image snapshot with a conditional Next startup
+entrypoint, seeds two private revision sandboxes with npm-registry-only egress,
+stops them, captures cold snapshots and checks their recorded entrypoint.
+Temporary sandboxes and image snapshot are deleted; failed runs also delete
+revision snapshots. Output is an untracked registration file and sanitized
+metadata, including the actual SDK version and lockfile hash. No paid path was
+run for B-01p; offline fakes establish call order and cleanup only.
+
+Run the local preflight from the repository root with
+`uv run --frozen --no-sync --group live-providers python -m scripts.provision_cartwheel_snapshots
+--lockfile <reviewed-package-lock-outside-git> --image
+node:22-bookworm@sha256:0e5f906573693feaa1e21057ebdcfdb5bd5021f050b2dc7c9deceb629c7da2a8 --preview-domain-suffix
+.proxy.daytona.work --output /tmp/cartwheel-snapshot-registration.json`.
+Without `--execute --authorize-spend`, it prints missing prerequisite names and
+does not write a registration or call Daytona. Keep the lockfile and output
+outside Git; the lockfile is a trusted operator input, and its hash is retained
+for audit. The registration output's parent must already exist outside any Git
+checkout. The pinned image still needs Daytona acceptance and a restored
+startup smoke before a Gate claim.
+
+The generated fixture currently has no committed `package-lock.json`, so an
+operator must supply a reviewed lockfile matching its `package.json`. A
+successful snapshot creation would still be `not_tested` for P1: the installed
+SDK cannot by itself prove that the entrypoint survives a cold restore *and*
+serves the selected compiled build. The next authorized live check must create
+one sandbox from each output snapshot, verify checkout/state, fetch each signed
+preview's `/api/build-info` exact SHA, then delete both sandboxes before using
+Anchor. If Daytona omits the inherited entrypoint or blocks npm registry
+access, report `environment_error` and keep P1 open.
+
 On the integrated tree, the rebuilt fixture passed `npm run build` on both
 revisions. Headless Chrome with one frozen, diff-cited scripted plan produced
 two `pass` observations on base and two `fail` observations on head. Reports:
