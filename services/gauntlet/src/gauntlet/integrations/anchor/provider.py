@@ -178,6 +178,8 @@ class AnchorBrowserProvider:
             connection.browser,
             self._collector,
             lambda value: _preview_origin(value, self._suffix),
+            # Daytona serves an interstitial warning page to browsers without this header.
+            extra_http_headers={"X-Daytona-Skip-Preview-Warning": "true"},
         )
         caller_task = asyncio.current_task()
         caller_cancellations = caller_task.cancelling() if caller_task is not None else 0
