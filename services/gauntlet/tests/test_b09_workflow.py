@@ -1,6 +1,7 @@
 """A workflow verdict comes from real browser actions and bound evidence."""
 
 import asyncio
+import hashlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Thread
@@ -11,6 +12,7 @@ from gauntlet.contracts import AttackSpec, EvidenceSubject
 from gauntlet.integrations.browser_evidence import BrowserEvidenceCollector
 from gauntlet.integrations.local_artifacts import LocalArtifactStore
 from gauntlet.integrations.local_browser import LocalBrowserProvider
+from gauntlet.ports.artifacts import StoredArtifact
 from gauntlet.ports.sandbox import EnvironmentHandle
 from gauntlet.verification.catalog import OracleCatalog
 from gauntlet.verification.workflow import DESCRIPTOR, WorkflowCompletionOracle
@@ -129,6 +131,57 @@ def test_checkout_workflow_from_real_browser(tmp_path: Path, covered: bool, expe
                         targets={"cartwheel-fixture": ("checkout-primary-action", "order-receipt")},
                     ).evaluate(DESCRIPTOR.oracle_id, spec, unbound, subject)
                 ).outcome == "inconclusive"
+
+                screenshot_id = observation.action_log[2].evidence_ids[1]
+
+                class AlteredScreenshotStore:
+                    async def get(self, artifact_id: str) -> StoredArtifact | None:
+                        stored = await store.get(artifact_id)
+                        if artifact_id != screenshot_id or stored is None:
+                            return stored
+                        if alteration == "missing":
+                            return None
+                        if alteration == "corrupt":
+                            return StoredArtifact(stored.binding, stored.content + b"corrupt")
+                        if alteration == "wrong_media":
+                            evidence = stored.binding.evidence.model_copy(
+                                update={"media_type": "application/json"}
+                            )
+                            return StoredArtifact(
+                                stored.binding.model_copy(update={"evidence": evidence}),
+                                stored.content,
+                            )
+                        if alteration == "invalid_png":
+                            content = b"not a PNG"
+                            evidence = stored.binding.evidence.model_copy(
+                                update={"sha256": hashlib.sha256(content).hexdigest()}
+                            )
+                            return StoredArtifact(
+                                stored.binding.model_copy(
+                                    update={"evidence": evidence, "byte_size": len(content)}
+                                ),
+                                content,
+                            )
+                        wrong_subject = stored.binding.subject.model_copy(
+                            update={"attempt_id": "different-attempt"}
+                        )
+                        return StoredArtifact(
+                            stored.binding.model_copy(update={"subject": wrong_subject}),
+                            stored.content,
+                        )
+
+                for alteration in (
+                    "missing",
+                    "corrupt",
+                    "wrong_subject",
+                    "wrong_media",
+                    "invalid_png",
+                ):
+                    tampered = await WorkflowCompletionOracle(
+                        AlteredScreenshotStore(),
+                        targets={"cartwheel-fixture": ("checkout-primary-action", "order-receipt")},
+                    ).evaluate(DESCRIPTOR.oracle_id, spec, observation, subject)
+                    assert tampered.outcome == "inconclusive", alteration
                 if covered:
                     assert observation.action_log[2].outcome == "blocked"
                     assert len(observation.action_log) == 3
