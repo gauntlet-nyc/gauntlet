@@ -311,7 +311,9 @@ async def build_gate(
             sandbox_port: SandboxProvider = tool_sandbox
             sandbox_label, browser_label = "local_tool_world", f"agent:{agent_label}"
         else:
-            sandbox_port, sandbox_label, preview_suffix = _build_sandbox(sandbox, settings, target)
+            sandbox_port, sandbox_label, preview_suffix = _build_sandbox(
+                sandbox, settings, target, stack
+            )
             browser_port, browser_label = await _build_browser(
                 browser, settings, target, collector, stack, preview_suffix
             )
@@ -378,7 +380,7 @@ async def build_gate(
 
 
 def _build_sandbox(
-    kind: GateSandbox, settings: Settings, target: GateTarget
+    kind: GateSandbox, settings: Settings, target: GateTarget, stack: AsyncExitStack
 ) -> tuple[SandboxProvider, str, str | None]:
     if kind == "fake":
         fixture = Fixture(
@@ -415,6 +417,7 @@ def _build_sandbox(
         api_url=settings.optional("DAYTONA_API_URL") or "https://app.daytona.io/api",
         target=settings.require("DAYTONA_TARGET"),
     )
+    stack.push_async_callback(runtime.close)
     provider = DaytonaSandboxProvider(
         runtime, {registered.target_id: registered}, HttpxHealthProbe()
     )
@@ -476,6 +479,7 @@ async def _build_browser(
             )
         runtime = without_proxy(api_key=api_key)
         label = "live_anchor_no_egress_proxy"
+    stack.push_async_callback(runtime.close)
     if preview_suffix is None:
         raise ValueError("Anchor needs the Daytona preview domain suffix")
     anchor = anchor_provider.AnchorBrowserProvider(
