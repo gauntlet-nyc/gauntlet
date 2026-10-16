@@ -22,6 +22,7 @@ from gauntlet.integrations.browser_evidence import BrowserEvidenceCollector
 from gauntlet.integrations.daytona.provider import DaytonaSandboxProvider
 from gauntlet.integrations.daytona.sdk import HttpxHealthProbe, SdkDaytonaRuntime
 from gauntlet.integrations.local_artifacts import LocalArtifactStore
+from gauntlet.settings import load_settings, require
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "apps/cartwheel/fixture-manifest.v1.json"
@@ -55,11 +56,14 @@ async def _live_capture(registration: Path, output: Path) -> dict[str, object]:
             api_url=os.environ["DAYTONA_API_URL"],
             target=os.environ["DAYTONA_TARGET"],
         )
+        anchor_settings = require("anchor", load_settings().anchor)
+        proxy = anchor_settings.proxy
         anchor = SdkAnchorRuntime.from_credentials(
-            api_key=os.environ["ANCHOR_API_KEY"],
-            proxy_server=os.environ["ANCHOR_PROXY_SERVER"],
-            proxy_username=os.environ["ANCHOR_PROXY_USERNAME"],
-            proxy_password=os.environ["ANCHOR_PROXY_PASSWORD"],
+            api_key=anchor_settings.api_key.reveal(),
+            proxy_server=proxy.server if proxy else None,
+            proxy_username=proxy.username if proxy else None,
+            proxy_password=proxy.password.reveal() if proxy else None,
+            require_proxy=anchor_settings.require_proxy,
         )
         sandbox = DaytonaSandboxProvider(daytona, {target.target_id: target}, HttpxHealthProbe())
         browser = AnchorBrowserProvider(
@@ -94,6 +98,7 @@ async def _live_capture(registration: Path, output: Path) -> dict[str, object]:
         "synthetic_build_receipt_verified": status == "passed",
         "sandbox_image_attested": False,
         "egress_proxy_policy_verified": False,
+        "egress_isolation": anchor.egress_isolation if anchor is not None else None,
         "sdk_versions": _sdk_versions(),
         "target_id": target.target_id,
         "base_sha": change.base_sha,
