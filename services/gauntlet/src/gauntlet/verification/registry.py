@@ -13,7 +13,7 @@ from gauntlet.contracts import AttackSpec, Observation, OracleVerdict
 from gauntlet.contracts.gate import ClickStep, InspectStep
 from gauntlet.domain import OracleKind, OracleOutcome
 from gauntlet.ports.errors import UnknownOracleError
-from gauntlet.ports.oracle import OracleDescriptor
+from gauntlet.ports.oracle import OracleDescriptor, PrimaryActionContract
 
 _ORACLE_ID = "ui.primary_action_reachable"
 
@@ -50,6 +50,13 @@ class RegisteredOracleRegistry:
 
     def is_registered(self, oracle_id: str) -> bool:
         return oracle_id == _ORACLE_ID
+
+    def primary_action_contract(
+        self, oracle_id: str, target_id: str
+    ) -> PrimaryActionContract | None:
+        if oracle_id != _ORACLE_ID or target_id not in self._targets:
+            return None
+        return PrimaryActionContract(self._targets[target_id], self._routes.get(target_id))
 
     def descriptors(self) -> tuple[OracleDescriptor, ...]:
         return (self.descriptor(_ORACLE_ID),)
