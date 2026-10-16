@@ -42,6 +42,37 @@ def _loopback_origin(origin: str) -> str:
     return canonical
 
 
+def _hosted_origin(origin: str, preview_domain_suffix: str) -> str:
+    """Accept only a canonical signed HTTPS host under an operator registration."""
+    if (
+        not isinstance(preview_domain_suffix, str)
+        or re.fullmatch(
+            r"\.(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]*[a-z0-9])?",
+            preview_domain_suffix,
+        )
+        is None
+    ):
+        raise EnvironmentUnavailableError("Cartwheel hosted receipt domain is invalid")
+    try:
+        parsed = urlsplit(origin)
+        host = parsed.hostname
+        port = parsed.port
+    except (TypeError, ValueError):
+        host = None
+        port = None
+    if (
+        host is None
+        or not host.endswith(preview_domain_suffix)
+        or host == preview_domain_suffix[1:]
+        or re.fullmatch(r"[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?", host) is None
+        or ".." in host
+        or port is not None
+        or origin != f"https://{host}"
+    ):
+        raise EnvironmentUnavailableError("Cartwheel hosted receipt origin is invalid")
+    return origin
+
+
 def _unique_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
     values: dict[str, object] = {}
     for key, value in pairs:
@@ -63,6 +94,27 @@ async def verify_fixture_build_receipt(
     This trusted fixture receipt does not attest a hostile target or image.
     """
     base = _loopback_origin(origin)
+    await _verify_build_receipt(base, expected_sha, transport=transport)
+
+
+async def verify_hosted_fixture_build_receipt(
+    origin: str,
+    expected_sha: str,
+    *,
+    preview_domain_suffix: str,
+    transport: httpx.AsyncBaseTransport | None = None,
+) -> None:
+    """Check a registered Daytona signed preview before a cloud browser opens."""
+    base = _hosted_origin(origin, preview_domain_suffix)
+    await _verify_build_receipt(base, expected_sha, transport=transport)
+
+
+async def _verify_build_receipt(
+    base: str,
+    expected_sha: str,
+    *,
+    transport: httpx.AsyncBaseTransport | None,
+) -> None:
     if not isinstance(expected_sha, str) or _SHA.fullmatch(expected_sha) is None:
         raise EnvironmentUnavailableError("Cartwheel receipt requires a full expected SHA")
     try:
