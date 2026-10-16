@@ -14,9 +14,9 @@ from datetime import UTC, datetime
 from typing import Final, Literal
 
 from gauntlet.ports.errors import PortError
-from gauntlet.settings import IntegrationSettings, Secret, SettingsError
+from gauntlet.settings import IntegrationSettings, Secret, SettingsError, load_settings
 
-Status = Literal["ready", "missing", "probe_ok", "probe_failed", "not_probed"]
+Status = Literal["ready", "missing", "probe_ok", "probe_failed", "not_probed", "invalid"]
 Probe = Callable[[IntegrationSettings], Awaitable[str]]
 
 PROBE_TIMEOUT_SECONDS: Final = 25.0
@@ -51,6 +51,7 @@ class SponsorResult:
         label = {
             "ready": "ready",
             "missing": f"missing: {self.detail}",
+            "invalid": f"invalid: {self.detail}",
             "probe_ok": f"probe ok ({self.detail})" if self.detail else "probe ok",
             "probe_failed": f"probe failed: {self.detail}",
             "not_probed": f"not probed: {self.detail}",
@@ -98,10 +99,13 @@ async def run_check(
     probe: bool,
     probes: Mapping[str, Probe],
     timeout_seconds: float = PROBE_TIMEOUT_SECONDS,
+    only_sponsor: str | None = None,
 ) -> list[SponsorResult]:
     results: list[SponsorResult] = []
     secrets = _secrets(settings)
     for sponsor, (section, names) in SPONSORS.items():
+        if only_sponsor is not None and sponsor != only_sponsor:
+            continue
         configured = getattr(settings, section) is not None
         if not configured:
             missing = missing_names(environ, names) or list(names)
@@ -126,7 +130,58 @@ async def run_check(
     return results
 
 
+async def run_environment_check(
+    environ: Mapping[str, str], *, probe: bool, probes: Mapping[str, Probe]
+) -> list[SponsorResult]:
+    """Assess each provider independently; invalid sections never reach their probe.
+
+    Execution still uses strict load_settings. This diagnostic validates shared core
+    settings once, then validates only one provider section at a time so a missing
+    unrelated credential cannot suppress the rest of the readiness report.
+    """
+    shared = {
+        key: value
+        for key, value in environ.items()
+        if (
+            key.startswith("GAUNTLET_")
+            and key not in {"GAUNTLET_REVIEWER_TOKENS", "GAUNTLET_ANCHOR_REQUIRE_PROXY"}
+        )
+        or key == "RUN_LIVE_INTEGRATIONS"
+    }
+    load_settings(shared)
+    prefixes = {
+        "azure_openai": ("AZURE_OPENAI_",),
+        "daytona": ("DAYTONA_",),
+        "anchor": ("ANCHOR_", "GAUNTLET_ANCHOR_REQUIRE_PROXY"),
+        "arize": ("ARIZE_",),
+        "surrealdb": ("SURREAL_",),
+        "surrealdb_memory": ("SURREAL_MEMORY_",),
+        "elevenlabs": ("ELEVENLABS_", "VOICE_WEBHOOK_SECRET", "PUBLIC_BASE_URL"),
+        "github_app": ("GITHUB_",),
+    }
+    results: list[SponsorResult] = []
+    for sponsor in SPONSORS:
+        selected = {
+            key: value
+            for key, value in environ.items()
+            if key.startswith(prefixes[sponsor])
+            and not (sponsor == "surrealdb" and key.startswith("SURREAL_MEMORY_"))
+        }
+        try:
+            settings = load_settings({**shared, **selected})
+        except SettingsError as exc:
+            status: Status = "missing" if "missing" in str(exc) else "invalid"
+            results.append(SponsorResult(sponsor, status, str(exc)))
+            continue
+        results.extend(
+            await run_check(environ, settings, probe=probe, probes=probes, only_sponsor=sponsor)
+        )
+    return results
+
+
 def exit_code(results: list[SponsorResult]) -> int:
+    if any(item.status == "invalid" for item in results):
+        return 2
     return 1 if any(item.status == "probe_failed" for item in results) else 0
 
 
