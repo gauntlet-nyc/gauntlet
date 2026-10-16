@@ -1,8 +1,11 @@
-import Link from "next/link";
+import { AlertTriangle, CheckCircle2, History, ShieldCheck, XCircle } from "lucide-react";
 
 import { startRun } from "@/app/actions";
-import { ErrorPanel, OfflineBadge, Section, StatusPill } from "@/components/shared";
-import { api, shortSha } from "@/lib/gauntlet";
+import { RunsTable } from "@/components/gate/runs-table";
+import { StartRunForm } from "@/components/gate/start-run-form";
+import { Reveal } from "@/components/motion/reveal";
+import { EmptyState, ErrorPanel, OfflineBadge, PageHeader, Section, StatCard, toneOf } from "@/components/shared";
+import { api } from "@/lib/gauntlet";
 
 export const dynamic = "force-dynamic";
 
@@ -14,44 +17,54 @@ export default async function GatePage({ searchParams }: { searchParams: Promise
   } catch (err) {
     return <ErrorPanel what="Gate" error={err} />;
   }
+  const regressions = runs.filter((r) => toneOf(r.status) === "bad").length;
+  const passed = runs.filter((r) => toneOf(r.status) === "good").length;
   return (
     <main>
-      <h1>Gate</h1>
-      <p>Read a PR diff, plan attacks, run them on base and head, let independent oracles decide.</p>
+      <PageHeader
+        eyebrow="Gate"
+        icon={ShieldCheck}
+        title="Test a pull request before it ships"
+        description="Gauntlet reads the diff, plans attacks against what changed, runs each one on base and on head, and lets independent oracles decide."
+      />
       {runs.some((r) => r.offline) && <OfflineBadge provenance={[]} />}
-      {params.error && <p role="alert">Could not start run (HTTP {params.error}).</p>}
-      <Section title="Start a run">
-        <form action={startRun} style={{ display: "flex", gap: 8 }}>
-          <select name="change_id" defaultValue="help-button">
-            {changes.map((c) => (
-              <option key={c.change_id} value={c.change_id}>
-                {c.feature_intent} ({shortSha(c.base_sha)}..{shortSha(c.head_sha)})
-                {c.offline_recording_available ? " — offline recording" : " — needs live run"}
-              </option>
-            ))}
-          </select>
-          <button type="submit">Start Gate run</button>
-        </form>
+      {params.error && (
+        <div role="alert" className="border-regression/30 bg-regression/[0.07] text-regression my-4 flex items-center gap-2.5 rounded-lg border px-4 py-3 text-sm">
+          <AlertTriangle className="size-4 shrink-0" aria-hidden />
+          Could not start run (HTTP {params.error}).
+        </div>
+      )}
+
+      <Section title="Start a run" description="Pick a change. The plan is hashed and frozen before any worker touches it.">
+        <Reveal>
+          <StartRunForm action={startRun} changes={changes} />
+        </Reveal>
       </Section>
-      <Section title="Runs">
+
+      <Section title="Runs" description="Newest first. Each run is immutable once its plan is frozen.">
         {runs.length === 0 ? (
-          <p>No runs yet in this API process.</p>
+          <EmptyState
+            icon={History}
+            title="No runs yet"
+            description="Runs live in this API process. Pick a change above and start one; it takes a few seconds offline."
+          />
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr><th align="left">Run</th><th align="left">Change</th><th align="left">Verdict</th><th align="left">Source</th></tr>
-            </thead>
-            <tbody>
-              {runs.map((r) => (
-                <tr key={r.run_id}>
-                  <td><Link href={`/gate/runs/${encodeURIComponent(r.run_id)}`}>{r.run_id}</Link></td>
-                  <td>{r.change_id}</td>
-                  <td><StatusPill value={r.status} /> {r.attribution !== "unknown" && r.attribution}</td>
-                  <td>{r.offline ? "OFFLINE" : "live"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <>
+            <div className="mb-4 grid grid-cols-3 gap-3">
+              <Reveal index={0}>
+                <StatCard label="Runs" value={runs.length} icon={History} />
+              </Reveal>
+              <Reveal index={1}>
+                <StatCard label="Regressions" value={regressions} tone={regressions > 0 ? "bad" : undefined} icon={XCircle} />
+              </Reveal>
+              <Reveal index={2}>
+                <StatCard label="Passed" value={passed} tone={passed > 0 ? "good" : undefined} icon={CheckCircle2} />
+              </Reveal>
+            </div>
+            <Reveal index={3}>
+              <RunsTable runs={runs} changes={changes} />
+            </Reveal>
+          </>
         )}
       </Section>
     </main>
