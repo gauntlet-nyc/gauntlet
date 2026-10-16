@@ -39,6 +39,9 @@ class Sandbox:
     async def read_file(self, path: str) -> bytes:
         return STATE
 
+    async def start_cartwheel(self, repo_path: str, port: int) -> None:
+        assert (repo_path, port) == ("/repo", 3000)
+
     async def signed_preview_origin(self, port: int, expires_in_seconds: int) -> str:
         return f"https://signed-secret-{self.sha[0]}.preview.test"
 
@@ -80,6 +83,7 @@ def run(runtime: Runtime, *, mismatch: bool = False, cancel: bool = False) -> di
         3000,
         ".preview.test",
         "/checkout",
+        "cartwheel_next_v1",
         (RegisteredSnapshot(BASE, "base", "d" * 64), RegisteredSnapshot(HEAD, "head", "d" * 64)),
     )
     change = ChangeRequest(

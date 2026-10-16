@@ -96,6 +96,7 @@ class Sandbox(Protocol):
 
 class Snapshot(Protocol):
     entrypoint: list[str] | None
+    state: str
 
 
 class Snapshots(Protocol):
@@ -456,8 +457,9 @@ async def provision(
             if cancelled:
                 raise asyncio.CancelledError()
             stage = f"{side}_snapshot_get"
-            if (await client.snapshot.get(names[index + 1])).entrypoint != ENTRYPOINT:
-                raise RuntimeError("Daytona captured snapshot lost its startup entrypoint")
+            captured = await client.snapshot.get(names[index + 1])
+            if captured.state != "active" or captured.entrypoint is not None:
+                raise RuntimeError("Daytona cold snapshot has unexpected state or entrypoint")
     except BaseException as exc:
         error = exc
     cleanup_task = asyncio.create_task(_cleanup(client, sandboxes, [names[0]]))
