@@ -56,7 +56,7 @@ export function MemoryFlow({ steps, links }: { steps: readonly FlowStep[]; links
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: i * STEP_DELAY_S, ease: [0.16, 1, 0.3, 1] }}
               className={cn(
-                "bg-card min-w-0 flex-1 rounded-lg border px-3.5 py-3",
+                "min-w-0 flex-1 rounded-lg border px-3 py-2.5",
                 s.emphasis && "border-info/35",
               )}
             >

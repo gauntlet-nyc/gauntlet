@@ -190,7 +190,7 @@ function Graph({
   }, [fitView]);
 
   return (
-    <div ref={box} className="h-[440px] w-full min-w-[720px] sm:h-[520px]">
+    <div ref={box} className="h-[460px] w-full min-w-[720px] sm:h-[560px]">
       <ReactFlow
         nodes={nodes}
         edges={edges}

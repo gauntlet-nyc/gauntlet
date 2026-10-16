@@ -1,16 +1,18 @@
-import { ArrowLeft, ClipboardCheck, FileLock2 } from "lucide-react";
-import Link from "next/link";
+import { ClipboardCheck } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { decide } from "@/app/actions";
-import { Reveal } from "@/components/motion/reveal";
-import { ReviewItemCard, type ReviewEvidence } from "@/components/recall/review-item-card";
-import { Banner, DecideForm, EmptyState, ErrorPanel, OfflineBadge, PageHeader, Section } from "@/components/shared";
-import { Button } from "@/components/ui/button";
+import { ReviewRow, type ReviewEvidence } from "@/components/recall/review-row";
+import { Banner, EmptyState, ErrorPanel, OfflineBadge, PageHeader } from "@/components/shared";
 import type { AuditView, CounterfactualView, ReviewItem } from "@/lib/gauntlet";
 import { recallApi, ReviewerAuthRequired } from "@/lib/recall-api";
 
 export const dynamic = "force-dynamic";
+
+const GROUPS = [
+  { title: "Remediation drafts", kind: "remediation_proposal" },
+  { title: "Counterfactual cases", kind: "counterfactual_case" },
+] as const;
 
 function evidenceFor(item: ReviewItem, audit: AuditView, cf: CounterfactualView): ReviewEvidence {
   const verdicts = [...audit.verdicts, ...cf.cases.map((c) => c.verdict)];
@@ -46,12 +48,11 @@ export default async function ReviewQueuePage({ searchParams }: { searchParams: 
     return <ErrorPanel what="Review queue" error={err} />;
   }
   const pending = items.filter((i) => i.status === "pending").length;
+  const known = new Set<string>(GROUPS.map((g) => g.kind));
   const groups = [
-    { title: "Remediation drafts", description: "Grouped follow-ups proposed from confirmed findings.", kind: "remediation_proposal" },
-    { title: "Counterfactual cases", description: "Individual decisions that need a human look.", kind: "counterfactual_case" },
-  ];
-  const other = items.filter((i) => !groups.some((g) => g.kind === i.kind));
-  if (other.length) groups.push({ title: "Other", description: "", kind: "" });
+    ...GROUPS.map((g) => ({ title: g.title, items: items.filter((i) => i.kind === g.kind) })),
+    { title: "Other", items: items.filter((i) => !known.has(i.kind)) },
+  ].filter((g) => g.items.length > 0);
 
   return (
     <main>
@@ -59,82 +60,36 @@ export default async function ReviewQueuePage({ searchParams }: { searchParams: 
         eyebrow="Recall"
         icon={ClipboardCheck}
         title="Review queue"
-        description="Drafts produced by the Recall audit. A person approves or rejects each one; approving only marks it for human follow-up."
+        description="Drafts only, nothing auto-applied. Approving marks an item for human follow-up; nothing is reversed, refunded or sent."
         actions={
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/recall">
-              <ArrowLeft aria-hidden />
-              Back to Recall
-            </Link>
-          </Button>
+          <>
+            <OfflineBadge provenance={[...audit.provenance, ...cf.provenance]} />
+            <span className="text-muted-foreground text-sm tabular-nums">
+              <span className="text-foreground font-medium">{pending}</span> pending
+            </span>
+          </>
         }
       />
-      <OfflineBadge provenance={[...audit.provenance, ...cf.provenance]} />
       <Banner params={query} />
 
-      <div className="bg-card flex flex-col gap-4 rounded-xl border p-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-start gap-3">
-          <FileLock2 className="text-muted-foreground mt-0.5 size-5 shrink-0" aria-hidden />
-          <div>
-            <p className="text-sm font-medium">Drafts only, nothing auto-applied</p>
-            <p className="text-muted-foreground mt-0.5 text-sm">
-              Every item is review-only. Nothing is reversed, refunded or sent to a customer from this page.
-            </p>
-          </div>
-        </div>
-        <div className="flex shrink-0 gap-6 text-sm sm:border-l sm:pl-6">
-          <div>
-            <div className="text-2xl font-semibold tabular-nums">{pending}</div>
-            <div className="text-muted-foreground text-xs">pending</div>
-          </div>
-          <div>
-            <div className="text-2xl font-semibold tabular-nums">{items.length - pending}</div>
-            <div className="text-muted-foreground text-xs">decided</div>
-          </div>
-        </div>
-      </div>
-
-      {items.length === 0 && (
-        <div className="mt-10">
-          <EmptyState title="Queue is empty" description="Recall produced no drafts for review." />
+      {items.length === 0 ? (
+        <EmptyState title="Queue is empty" description="Recall produced no drafts for review." />
+      ) : (
+        <div className="space-y-8">
+          {groups.map((g) => (
+            <section key={g.title}>
+              <h2 className="text-muted-foreground mb-2 text-xs font-medium">
+                {g.title} <span className="tabular-nums">· {g.items.length}</span>
+              </h2>
+              <ul className="divide-y rounded-xl border">
+                {g.items.map((item) => (
+                  <ReviewRow key={item.item_id} item={item} evidence={evidenceFor(item, audit, cf)} action={decide} />
+                ))}
+              </ul>
+            </section>
+          ))}
         </div>
       )}
-
-      {groups.map((g) => {
-        const groupItems = g.kind ? items.filter((i) => i.kind === g.kind) : other;
-        if (!groupItems.length) return null;
-        return (
-          <Section key={g.title} title={`${g.title} (${groupItems.length})`} description={g.description || undefined}>
-            <div className="space-y-4">
-              {groupItems.map((item, i) => (
-                <Reveal key={item.item_id} index={i}>
-                  <ReviewItemCard
-                    item={item}
-                    evidence={evidenceFor(item, audit, cf)}
-                    form={
-                      item.status === "pending" ? (
-                        <DecideForm
-                          action={decide}
-                          runId={item.recall_id}
-                          subject="remediation"
-                          subjectId={item.item_id}
-                          planSha256={item.plan_sha256}
-                          back="/recall/review"
-                          approveLabel="Approve for review"
-                        />
-                      ) : (
-                        <p className="text-muted-foreground text-xs">
-                          Decision <code className="font-mono">{item.approval_id}</code>
-                        </p>
-                      )
-                    }
-                  />
-                </Reveal>
-              ))}
-            </div>
-          </Section>
-        );
-      })}
     </main>
   );
 }

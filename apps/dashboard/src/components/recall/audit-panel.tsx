@@ -56,15 +56,12 @@ export function AuditPanel({ audit }: { audit: AuditView }) {
   const { summary } = audit;
   const flagged = audit.verdicts.filter((v) => v.classification !== "audit_clear");
   return (
-    <div className="bg-card rounded-xl border">
-      <div className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between md:gap-10">
-        <div className="shrink-0">
-          <p className="text-lg font-semibold tracking-tight tabular-nums">{summary.audited} operations audited</p>
-          <p className="text-muted-foreground mt-0.5 text-xs">
-            <code className="font-mono">{summary.tool_name}</code> against the ledger, every recorded call in the window
-          </p>
-        </div>
-        <div className="min-w-0 flex-1">
+    <div className="rounded-xl border">
+      <div className="flex flex-col gap-3 px-5 py-4 md:flex-row md:items-start md:justify-between md:gap-10">
+        <p className="text-muted-foreground shrink-0 text-sm">
+          Every <span className="text-foreground font-mono text-xs">{summary.tool_name}</span> call checked against the ledger
+        </p>
+        <div className="min-w-0 flex-1 md:max-w-md">
           <AuditBar summary={summary} />
         </div>
       </div>

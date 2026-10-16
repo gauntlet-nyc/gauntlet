@@ -109,7 +109,7 @@ export function DecisionTimeline({
   const shown = filter === "all" ? rows : rows.filter((r) => r.exposure || r.audit);
 
   return (
-    <div className="bg-card overflow-hidden rounded-xl border">
+    <div className="overflow-hidden rounded-xl border">
       <DayChart rows={rows} highlightSources={trigger} />
       <div className="flex items-center justify-between gap-3 border-b px-4 py-2.5">
         <span className="text-muted-foreground text-xs tabular-nums">
@@ -131,9 +131,9 @@ export function DecisionTimeline({
           </ToggleGroupItem>
         </ToggleGroup>
       </div>
-      <ScrollArea className="h-[420px]">
+      <ScrollArea className="h-[400px]">
         <Table>
-          <TableHeader className="bg-card sticky top-0 z-10">
+          <TableHeader className="bg-background sticky top-0 z-10">
             <TableRow className="hover:bg-transparent">
               <TableHead className="pl-4">Time (UTC)</TableHead>
               <TableHead>Decision</TableHead>
