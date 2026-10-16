@@ -151,7 +151,14 @@ class HarnessRun:
 
 class NodeRefundHarness:
     def __init__(self, node: str = "node", timeout_seconds: float = 15) -> None:
-        self._node = node
+        # Resolve once from the caller's PATH (e.g. /opt/homebrew/bin on macOS), then run the
+        # absolute binary with a minimal environment.
+        resolved = shutil.which(node)
+        if resolved is None:
+            raise EnvironmentUnavailableError(
+                f"'{node}' was not found on PATH; install Node.js 22+ for AI-agent attacks"
+            )
+        self._node = str(Path(resolved).resolve())
         self._timeout = timeout_seconds
         self._dir = Path(tempfile.mkdtemp(prefix="gauntlet-harness-"))
         self._script = self._dir / "harness.mjs"
@@ -176,7 +183,7 @@ class NodeRefundHarness:
                 ],
                 capture_output=True,
                 timeout=self._timeout,
-                env={"PATH": "/usr/local/bin:/usr/bin:/bin", "NODE_OPTIONS": ""},
+                env={"PATH": str(Path(self._node).parent), "NODE_OPTIONS": ""},
                 cwd=root,
             )
             parsed = json.loads(done.stdout[:65536])

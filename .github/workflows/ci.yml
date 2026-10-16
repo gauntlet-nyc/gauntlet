@@ -10,9 +10,11 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - run: uv sync --frozen
-      - run: uv run ruff check services/gauntlet/src/gauntlet/api services/gauntlet/tests/test_api.py
-      - run: uv run mypy services/gauntlet/src/gauntlet/api
+      - run: uv run ruff check services/gauntlet scripts
       - run: uv run pytest -q
       - run: uv run python scripts/export_schemas.py
       - run: git diff --exit-code packages/contracts/jsonschema
@@ -25,19 +27,24 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - run: uv sync --frozen --group live-providers
       - run: uv run --frozen ruff check services/gauntlet scripts
       - run: uv run --frozen mypy services/gauntlet/src
       - run: uv run --frozen pytest -q
   python-macos:
-    # The demo laptop is a Mac. Advisory until the known macOS-only failures are fixed.
+    # The demo laptop is a Mac. Required: the refund harness now resolves node from PATH.
     runs-on: macos-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - run: uv sync --frozen
       - run: uv run --frozen pytest -q
   dashboard:

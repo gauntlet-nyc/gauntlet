@@ -243,3 +243,48 @@ def test_model_agent_only_chooses_a_checked_tool_argument(
         ModelSupportAgent(ScriptedAgentModel(answer)).decide("a", "refund")  # type: ignore[arg-type]
     )
     assert decision.tool_order_id == expected_order
+
+
+def test_harness_finds_node_outside_usr_local_bin(
+    refund_repo: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Homebrew on macOS installs node in /opt/homebrew/bin; PATH decides, not a fixed list."""
+    from gauntlet.integrations.tool_world import NodeRefundHarness
+
+    real_node = shutil.which("node")
+    assert real_node is not None
+    brew_bin = tmp_path / "opt" / "homebrew" / "bin"
+    brew_bin.mkdir(parents=True)
+    (brew_bin / "node").symlink_to(real_node)
+    target = GateTarget.cartwheel_refund(refund_repo)
+    _, sandbox = _world(refund_repo, tmp_path, target)
+
+    async def go() -> object:
+        env = await sandbox.create(
+            target_id=target.target_id,
+            source_sha=target.head_sha,
+            fixture_id=target.fixture_id,
+            mode="gate_compare",
+        )
+        try:
+            monkeypatch.setenv("PATH", str(brew_bin))  # only the Homebrew-style dir
+            harness = NodeRefundHarness()
+            return await harness.refund(
+                sandbox.root_of(env.environment_id), "synthetic-owner-01", "ord-2001", ()
+            )
+        finally:
+            await sandbox.destroy(env.environment_id)
+
+    run = asyncio.run(go())
+    assert run.error is None and len(run.entries) == 1  # type: ignore[attr-defined]
+
+
+def test_harness_without_node_fails_clearly(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    from gauntlet.integrations.tool_world import NodeRefundHarness
+    from gauntlet.ports import EnvironmentUnavailableError
+
+    monkeypatch.setenv("PATH", str(tmp_path))
+    with pytest.raises(EnvironmentUnavailableError, match="not found on PATH"):
+        NodeRefundHarness()
