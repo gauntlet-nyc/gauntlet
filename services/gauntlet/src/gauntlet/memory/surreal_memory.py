@@ -140,6 +140,14 @@ class SurrealTemporalMemory:
         valid.sort(key=lambda fact: (fact.known_at, fact.fact_id), reverse=True)
         return tuple(valid[: query.limit])
 
+    async def all(self, limit: int = 500) -> tuple[TemporalMemoryFact, ...]:
+        """Every stored fact, newest first, for the read-only memory view (audit, not planning)."""
+        result = await self._client.query(
+            "SELECT doc, known_at FROM memory_fact ORDER BY known_at DESC LIMIT $limit;",
+            {"limit": limit},
+        )
+        return tuple(_parse(row.get("doc")) for row in rows(result[-1]))
+
     async def history(self, fact_id: str) -> tuple[TemporalMemoryFact, ...]:
         """The fact and every fact it (transitively) supersedes, newest first. For audit."""
         chain: list[TemporalMemoryFact] = []

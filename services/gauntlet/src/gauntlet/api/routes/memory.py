@@ -1,5 +1,7 @@
 """Memory comparison: which remembered facts each Gate plan received, and which it wrote."""
 
+import inspect
+
 from fastapi import APIRouter
 
 from ..container import get_container
@@ -18,8 +20,13 @@ _LABELS = {
 async def memory_view() -> MemoryView:
     gate = get_container().gate
     runs = sorted(gate.runs.values(), key=lambda r: r.created_at)
+    # Offline stores list facts synchronously; SurrealDB stores are async; a store without a
+    # listing (e.g. the Agent Memory SDK) still shows the per-run facts below.
+    lister = getattr(gate.memory, "all", None)
+    listed = lister() if callable(lister) else ()
+    facts = await listed if inspect.isawaitable(listed) else listed
     return MemoryView(
-        facts=list(gate.memory.all()),
+        facts=list(facts),
         runs=[
             MemoryRunRow(
                 run_id=r.view.run_id,

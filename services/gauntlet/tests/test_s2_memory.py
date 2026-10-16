@@ -138,6 +138,8 @@ def test_local_supersession_and_as_of() -> None:
         assert [f.fact_id for f in late] == ["f2"]
         fixer = await memory.recall(query(T0 + timedelta(days=10), "fixer"))
         assert {f.fact_id for f in fixer} == {"f2", "fix1"}
+        listed = await memory.all()
+        assert {f.fact_id for f in listed} == {"f1", "f2", "fix1", "other"}
         history = await memory.history("f2")
         assert [f.fact_id for f in history] == ["f2", "f1"]
         assert history[1].source.finding_id == "finding-1"
