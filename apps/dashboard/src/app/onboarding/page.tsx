@@ -1,5 +1,3 @@
-import { Rocket } from "lucide-react";
-
 import { Reveal } from "@/components/motion/reveal";
 import { OnboardingStepper, TargetCard } from "@/components/onboarding";
 import { ErrorPanel, PageHeader, Section } from "@/components/shared";
@@ -14,32 +12,37 @@ export default async function OnboardingPage() {
   } catch (err) {
     return <ErrorPanel what="Onboarding" error={err} />;
   }
+  const done = view.steps.filter((s) => s.done).length;
   return (
     <main>
       <PageHeader
-        eyebrow="Setup"
-        icon={Rocket}
         title="Target onboarding"
-        description="Targets come only from committed, synthetic manifests. This page shows what is registered and what an operator still has to configure. It changes nothing."
+        description="Targets come only from committed, synthetic manifests. This page changes nothing."
       />
-      <Section
-        title="Registered targets"
-        description="Synthetic fixtures Gate is allowed to attack, pinned to exact commits and a checksum."
-        className="mt-0"
-      >
-        <div className="grid gap-4 lg:grid-cols-2">
-          {view.targets.map((t, i) => (
-            <Reveal key={t.fixture_id} index={i} className="flex">
-              <TargetCard target={t} />
-            </Reveal>
-          ))}
-        </div>
-      </Section>
-      <Section title="Operator steps" description="What is already in place, and what still needs an operator before live runs.">
-        <Reveal index={2}>
-          <OnboardingStepper steps={view.steps} />
-        </Reveal>
-      </Section>
+      <div className="grid gap-x-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <Section title="Registered targets" className="mt-0">
+          <div className="space-y-3">
+            {view.targets.map((t, i) => (
+              <Reveal key={t.fixture_id} index={i}>
+                <TargetCard target={t} />
+              </Reveal>
+            ))}
+          </div>
+        </Section>
+        <Section
+          title="Operator steps"
+          className="mt-10 lg:mt-0"
+          actions={
+            <span className="text-muted-foreground text-xs tabular-nums">
+              {done} of {view.steps.length} done
+            </span>
+          }
+        >
+          <Reveal index={2}>
+            <OnboardingStepper steps={view.steps} />
+          </Reveal>
+        </Section>
+      </div>
     </main>
   );
 }
