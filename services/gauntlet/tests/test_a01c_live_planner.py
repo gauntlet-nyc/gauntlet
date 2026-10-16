@@ -217,6 +217,46 @@ def test_real_diff_plan_composition_freezes_only_valid_model_proposals(demo_repo
     assert "untrusted" in str(client.calls[0]["messages"])
 
 
+def test_probe_rejects_live_shaped_help_click_without_primary_action_evidence(
+    demo_repo: DemoRepo,
+) -> None:
+    request = change(demo_repo)
+    impact = asyncio.run(
+        GitRepositoryInspector({"cartwheel": demo_repo.path}).inspect_change(request)
+    )
+    ref = next(surface for surface in impact.surfaces if surface.kind == "style").source_refs[0]
+    proposal = {
+        "attack_id": "help-button-under-900",
+        "hypothesis": "Help button remains reachable below the breakpoint",
+        "why_this_change": "Fixed positioning is new in cited CSS",
+        "expected_observation": "Help button receives a click",
+        "source_refs": [ref.model_dump(mode="json")],
+        "worker_kind": "ui",
+        "target_id": request.target_id,
+        "fixture_id": request.fixture_id,
+        "steps": [
+            {"action": "navigate", "path": "/products/demo"},
+            {"action": "resize", "width": 899, "height": 800},
+            {"action": "click", "target": "help-button"},
+        ],
+        "oracle_ids": ["ui.primary_action_reachable"],
+        "max_actions": 3,
+        "max_runtime_seconds": 90,
+    }
+    client = RecordingClient(response(json.dumps({"attacks": [proposal]})))
+    frozen, _ = asyncio.run(
+        freeze_live_plan(
+            demo_repo.path,
+            request,
+            BedrockConverseGateway(client, "test-model"),
+            "trusted instruction",
+            StaticTargetCatalog(),
+        )
+    )
+    assert frozen.attacks == ()
+    assert frozen.rejected[0].attack_id == "help-button-under-900"
+
+
 def test_preflight_never_constructs_a_client_or_reads_a_change_request(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tmp_path: Path
 ) -> None:
