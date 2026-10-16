@@ -1,4 +1,4 @@
-import { ErrorPanel, Section } from "@/components/ui";
+import { ErrorPanel, Section } from "@/components/shared";
 import { api, shortSha } from "@/lib/gauntlet";
 
 export const dynamic = "force-dynamic";

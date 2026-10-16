@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
-import { Card, ErrorPanel, OfflineBadge, ProvenanceList, Section, StatusPill } from "@/components/ui";
+import { Card, ErrorPanel, OfflineBadge, ProvenanceList, Section, StatusPill } from "@/components/shared";
 import { api, type CounterfactualCase } from "@/lib/gauntlet";
 
 import { recallApi, ReviewerAuthRequired } from "@/lib/recall-api";

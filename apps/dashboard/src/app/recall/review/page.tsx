@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { decide } from "@/app/actions";
-import { Banner, Card, DecideForm, ErrorPanel, OfflineBadge, Section, StatusPill } from "@/components/ui";
+import { Banner, Card, DecideForm, ErrorPanel, OfflineBadge, Section, StatusPill } from "@/components/shared";
 
 import { recallApi, ReviewerAuthRequired } from "@/lib/recall-api";
 

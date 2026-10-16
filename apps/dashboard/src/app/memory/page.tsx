@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { ErrorPanel, OfflineBadge, Section, StatusPill } from "@/components/ui";
+import { ErrorPanel, OfflineBadge, Section, StatusPill } from "@/components/shared";
 import { api } from "@/lib/gauntlet";
 
 export const dynamic = "force-dynamic";

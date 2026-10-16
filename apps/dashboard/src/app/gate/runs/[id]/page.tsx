@@ -1,6 +1,6 @@
 import { decide, runRepair } from "@/app/actions";
 import { VoiceBriefingButton } from "@/components/VoiceBriefing";
-import { Banner, Card, DecideForm, ErrorPanel, OfflineBadge, ProvenanceList, Section, StatusPill } from "@/components/ui";
+import { Banner, Card, DecideForm, ErrorPanel, OfflineBadge, ProvenanceList, Section, StatusPill } from "@/components/shared";
 import { api, artifactUrl, shortSha, type AttemptView } from "@/lib/gauntlet";
 
 export const dynamic = "force-dynamic";

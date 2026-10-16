@@ -1,4 +1,4 @@
-import { ErrorPanel } from "@/components/ui";
+import { ErrorPanel } from "@/components/shared";
 import { api } from "@/lib/gauntlet";
 
 export const dynamic = "force-dynamic";

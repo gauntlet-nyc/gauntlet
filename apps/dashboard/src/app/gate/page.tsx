@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { startRun } from "@/app/actions";
-import { ErrorPanel, OfflineBadge, Section, StatusPill } from "@/components/ui";
+import { ErrorPanel, OfflineBadge, Section, StatusPill } from "@/components/shared";
 import { api, shortSha } from "@/lib/gauntlet";
 
 export const dynamic = "force-dynamic";
