@@ -9,6 +9,7 @@ from types import ModuleType
 
 import pytest
 from fakes import StaticTargetCatalog
+from image_samples import PNG
 
 from gauntlet.contracts import ActionRecord, ChangeRequest, EvidenceSubject, Observation
 from gauntlet.integrations.local_artifacts import LocalArtifactStore
@@ -18,7 +19,6 @@ from gauntlet.verification.stored_browser import StoredBrowserOracle
 ROOT = Path(__file__).resolve().parents[3]
 RUN_ID = "run-local-pair"
 TARGET = "checkout-primary-action"
-PNG = b"\x89PNG\r\n\x1a\nsynthetic"
 
 
 def load(name: str) -> ModuleType:

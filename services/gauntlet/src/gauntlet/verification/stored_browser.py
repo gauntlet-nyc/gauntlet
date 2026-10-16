@@ -11,13 +11,13 @@ import math
 from collections.abc import Mapping
 
 from gauntlet.application.evidence import check_evidence
+from gauntlet.application.image_format import valid_screenshot
 from gauntlet.contracts import AttackSpec, EvidenceSubject, Observation, OracleVerdict
 from gauntlet.contracts.gate import CaptureStep, ClickStep, InspectStep
 from gauntlet.ports.artifacts import ArtifactStore, StoredArtifact
 
 from .registry import ClickEvidence, RegisteredOracleRegistry
 
-_PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 _MAX_MEASUREMENT_BYTES = 64 * 1024
 
 
@@ -146,9 +146,9 @@ class StoredBrowserOracle:
             if isinstance(step, InspectStep):
                 expected_media = ("application/json",)
             elif isinstance(step, ClickStep):
-                expected_media = ("application/json", "image/png")
+                expected_media = ("application/json", "image")
             elif isinstance(step, CaptureStep):
-                expected_media = ("image/png",)
+                expected_media = ("image",)
             else:
                 expected_media = ()
             if len(record.evidence_ids) != len(expected_media):
@@ -158,9 +158,12 @@ class StoredBrowserOracle:
                 stored = await self._read_checked(
                     artifact_id, subject.model_copy(update={"step_index": index})
                 )
-                if stored is None or stored.binding.evidence.media_type != media:
+                if stored is None:
                     return None
-                if media == "image/png" and not stored.content.startswith(_PNG_SIGNATURE):
+                if media == "image":
+                    if not valid_screenshot(stored.content, stored.binding.evidence.media_type):
+                        return None
+                elif stored.binding.evidence.media_type != media:
                     return None
                 artifacts.append(stored)
             if isinstance(step, (InspectStep, ClickStep)):
@@ -172,9 +175,8 @@ class StoredBrowserOracle:
                 if isinstance(step, ClickStep) and step.target == primary:
                     hit = measurement["hit_target"]
                     received = measurement["received_target"]
-                    if (
-                        not isinstance(hit, str)
-                        or (received is not None and not isinstance(received, str))
+                    if not isinstance(hit, str) or (
+                        received is not None and not isinstance(received, str)
                     ):
                         return None
                     proof = ClickEvidence(

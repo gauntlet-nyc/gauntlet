@@ -6,6 +6,7 @@ from typing import Final
 from uuid import uuid4
 
 from gauntlet.application.evidence import check_evidence
+from gauntlet.application.image_format import valid_screenshot
 from gauntlet.contracts import AttackSpec, EvidenceSubject, Observation, OracleVerdict
 from gauntlet.contracts.gate import ClickStep, InspectStep, NavigateStep
 from gauntlet.domain import OracleKind, OracleOutcome
@@ -14,8 +15,6 @@ from gauntlet.ports.errors import UnknownOracleError
 from gauntlet.ports.oracle import OracleDescriptor
 
 from .stored_browser import _measurement
-
-_PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
 DESCRIPTOR: Final = OracleDescriptor(
     oracle_id="workflow.completion_marker_visible",
@@ -59,7 +58,11 @@ class WorkflowCompletionOracle:
         if (
             stored is None
             or stored.binding.evidence.artifact_id != artifact_id
-            or stored.binding.evidence.media_type != media_type
+            or (
+                not valid_screenshot(stored.content, stored.binding.evidence.media_type)
+                if media_type == "image"
+                else stored.binding.evidence.media_type != media_type
+            )
             or len(stored.content) != stored.binding.byte_size
             or hashlib.sha256(stored.content).hexdigest() != stored.binding.evidence.sha256
             or not (
@@ -136,9 +139,9 @@ class WorkflowCompletionOracle:
             click.evidence_ids[0], subject, click_index, "application/json"
         )
         screenshot = await self._checked_artifact(
-            click.evidence_ids[1], subject, click_index, "image/png"
+            click.evidence_ids[1], subject, click_index, "image"
         )
-        if screenshot is None or not screenshot.startswith(_PNG_SIGNATURE):
+        if screenshot is None:
             return self._verdict(observation, inconclusive, "Invalid click screenshot")
         click_measurement = (
             _measurement(click_bytes, submit, click=True) if click_bytes is not None else None

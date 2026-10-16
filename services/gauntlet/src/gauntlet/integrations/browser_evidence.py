@@ -10,6 +10,7 @@ import math
 from collections.abc import Mapping
 from typing import Literal, Protocol
 
+from gauntlet.application.image_format import screenshot_media_type
 from gauntlet.contracts import ActionRecord, EvidenceSubject
 from gauntlet.ports import ArtifactStore
 from gauntlet.ports.errors import EnvironmentUnavailableError
@@ -122,9 +123,12 @@ class BrowserEvidenceCollector:
         step_subject = _step_subject(subject, step_index)
         try:
             screenshot = await page.screenshot(type="png")
-            if not screenshot.startswith(b"\x89PNG\r\n\x1a\n"):
-                raise EnvironmentUnavailableError("browser did not return a PNG screenshot")
-            binding = await self._artifacts.put(screenshot, "image/png", step_subject)
+            media_type = screenshot_media_type(screenshot)
+            if media_type is None:
+                raise EnvironmentUnavailableError(
+                    "browser did not return a complete PNG or JPEG screenshot"
+                )
+            binding = await self._artifacts.put(screenshot, media_type, step_subject)
         except Exception as exc:
             raise EnvironmentUnavailableError("browser screenshot capture failed") from exc
         return ActionRecord(
@@ -193,9 +197,12 @@ class BrowserEvidenceCollector:
             )
             evidence_ids.append(binding.evidence.artifact_id)
             screenshot = await page.screenshot(type="png")
-            if not screenshot.startswith(b"\x89PNG\r\n\x1a\n"):
-                raise EnvironmentUnavailableError("browser did not return a PNG screenshot")
-            image = await self._artifacts.put(screenshot, "image/png", step_subject)
+            media_type = screenshot_media_type(screenshot)
+            if media_type is None:
+                raise EnvironmentUnavailableError(
+                    "browser did not return a complete PNG or JPEG screenshot"
+                )
+            image = await self._artifacts.put(screenshot, media_type, step_subject)
             evidence_ids.append(image.evidence.artifact_id)
         except Exception as exc:
             raise EnvironmentUnavailableError("browser click capture failed") from exc

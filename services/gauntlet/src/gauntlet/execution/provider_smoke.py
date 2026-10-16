@@ -12,6 +12,7 @@ from uuid import uuid4
 
 import httpx
 
+from gauntlet.application.image_format import valid_screenshot
 from gauntlet.contracts import CaptureStep, ChangeRequest, EvidenceSubject, NavigateStep
 from gauntlet.integrations.daytona.provider import RegisteredTarget
 from gauntlet.integrations.fixture_identity import verify_hosted_fixture_build_receipt
@@ -21,8 +22,6 @@ from gauntlet.ports.errors import EnvironmentUnavailableError
 from gauntlet.ports.sandbox import EnvironmentHandle, SandboxProvider
 
 from .environment_pair import gate_environment_pair
-
-_PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
 
 @dataclass(frozen=True)
@@ -88,8 +87,7 @@ async def _capture_one(
             stored is None
             or stored.binding.evidence.artifact_id != artifact_id
             or stored.binding.subject != subject.model_copy(update={"step_index": 1})
-            or stored.binding.evidence.media_type != "image/png"
-            or not stored.content.startswith(_PNG_SIGNATURE)
+            or not valid_screenshot(stored.content, stored.binding.evidence.media_type)
             or len(stored.content) != stored.binding.byte_size
             or hashlib.sha256(stored.content).hexdigest() != stored.binding.evidence.sha256
         ):

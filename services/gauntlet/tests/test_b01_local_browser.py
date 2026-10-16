@@ -7,6 +7,7 @@ from pathlib import Path
 from threading import Thread
 
 import pytest
+from image_samples import PNG
 
 from gauntlet.contracts import (
     CaptureStep,
@@ -71,7 +72,7 @@ class FakePage:
         return self.locator
 
     async def screenshot(self, *, type: str = "png") -> bytes:
-        return b"\x89PNG\r\n\x1a\nlocal-browser"
+        return PNG
 
     async def close(self) -> None:
         self.closed = True

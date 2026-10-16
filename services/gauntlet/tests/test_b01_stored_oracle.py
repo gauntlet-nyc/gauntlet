@@ -4,6 +4,8 @@ import asyncio
 import json
 from pathlib import Path
 
+import pytest
+from image_samples import JPEG, PNG
 from test_b01_browser_evidence import GEOMETRY, SUBJECT, FakePage
 
 from gauntlet.contracts import ActionRecord, AttackSpec, Observation
@@ -20,18 +22,23 @@ def plan() -> AttackSpec:
 
 
 async def recorded_run(
-    store: LocalArtifactStore, *, hit: str, received: str | None, trusted: bool = True
+    store: LocalArtifactStore,
+    *,
+    hit: str,
+    received: str | None,
+    trusted: bool = True,
+    image: bytes = PNG,
 ) -> Observation:
     collector = BrowserEvidenceCollector(store)
     geometry = {**GEOMETRY, "hit_target": hit}
     inspect = await collector.inspect(FakePage(geometry), "checkout-primary-action", SUBJECT, 2)
     click = await collector.click(
-        FakePage(geometry, None, {"received_target": received, "trusted": trusted}),
+        FakePage(geometry, None, {"received_target": received, "trusted": trusted}, image=image),
         "checkout-primary-action",
         SUBJECT,
         3,
     )
-    capture = await collector.capture(FakePage(), SUBJECT, 4)
+    capture = await collector.capture(FakePage(image=image), SUBJECT, 4)
     records = (
         ActionRecord(step_index=0, action="navigate", outcome="ok"),
         ActionRecord(step_index=1, action="resize", outcome="ok"),
@@ -55,13 +62,14 @@ def oracle(store: LocalArtifactStore) -> StoredBrowserOracle:
     return StoredBrowserOracle(store, primary_targets={plan().target_id: "checkout-primary-action"})
 
 
-def test_verified_base_pass_and_head_interception_fail(tmp_path: Path) -> None:
+@pytest.mark.parametrize("image", [PNG, JPEG], ids=["png", "jpeg"])
+def test_verified_base_pass_and_head_interception_fail(tmp_path: Path, image: bytes) -> None:
     async def scenario() -> None:
         store = LocalArtifactStore(tmp_path / "evidence")
         base = await recorded_run(
-            store, hit="checkout-primary-action", received="checkout-primary-action"
+            store, hit="checkout-primary-action", received="checkout-primary-action", image=image
         )
-        head = await recorded_run(store, hit="help-button", received="help-button")
+        head = await recorded_run(store, hit="help-button", received="help-button", image=image)
         base_verdict = await oracle(store).evaluate(
             "ui.primary_action_reachable", plan(), base, SUBJECT
         )
@@ -165,6 +173,43 @@ def test_changed_bytes_between_store_reads_cannot_prove_pass(tmp_path: Path) -> 
 
         verdict = await StoredBrowserOracle(
             ChangingStore(), primary_targets={plan().target_id: "checkout-primary-action"}
+        ).evaluate("ui.primary_action_reachable", plan(), observation, SUBJECT)
+        assert verdict.outcome == "inconclusive"
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize(
+    "image,media",
+    [(JPEG, "image/png"), (PNG, "image/jpeg"), (JPEG[:-2], "image/jpeg"), (PNG[:-1], "image/png")],
+)
+def test_consistent_binding_cannot_hide_mislabeled_or_truncated_image(
+    tmp_path: Path, image: bytes, media: str
+) -> None:
+    import hashlib
+
+    async def scenario() -> None:
+        store = LocalArtifactStore(tmp_path / "evidence")
+        observation = await recorded_run(store, hit="help-button", received="help-button")
+        screenshot_id = observation.action_log[3].evidence_ids[1]
+
+        class ChangedImageStore:
+            async def get(self, artifact_id: str) -> StoredArtifact | None:
+                stored = await store.get(artifact_id)
+                if stored is None or artifact_id != screenshot_id:
+                    return stored
+                evidence = stored.binding.evidence.model_copy(
+                    update={"media_type": media, "sha256": hashlib.sha256(image).hexdigest()}
+                )
+                return StoredArtifact(
+                    stored.binding.model_copy(
+                        update={"evidence": evidence, "byte_size": len(image)}
+                    ),
+                    image,
+                )
+
+        verdict = await StoredBrowserOracle(
+            ChangedImageStore(), primary_targets={plan().target_id: "checkout-primary-action"}
         ).evaluate("ui.primary_action_reachable", plan(), observation, SUBJECT)
         assert verdict.outcome == "inconclusive"
 
