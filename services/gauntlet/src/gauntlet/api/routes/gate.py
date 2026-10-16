@@ -60,7 +60,11 @@ async def start_gate_run(
     service = get_container().gate
     if service.uses_live_provider(Settings.from_env(), body.change_id):
         authenticated_reviewer(authorization)  # raises 401 without a valid reviewer token
-    return await service.start(body.change_id)
+    try:
+        return await service.start(body.change_id)
+    except EnvironmentUnavailableError as exc:
+        # A live provider (planner, sandbox, browser) failed: say so instead of a bare 500.
+        raise HTTPException(status_code=503, detail=f"{exc}; try the run again") from None
 
 
 @router.get("/runs")
