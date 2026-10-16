@@ -158,3 +158,23 @@ with the same receipt/expected identity on the other revision. Reports include
 actual observations and oracle outcomes, without asserting which revision should
 fail. A single-revision report is not a paired Gate finding: `gate_status` remains
 `not_tested` pending independent attribution. Empty or rejected plans do not run.
+
+For the scripted local diagnostic, run `scripts/probe_p1_local_gate.py` once on
+each separately built Cartwheel revision with the same explicit `--run-id` and
+fresh output directories. Its stdout includes the SHA-256 of each saved report.
+Then run `scripts/probe_p1_paired_gate.py` with the independently noted run ID,
+plan hash, both report hashes, both output directories, and the generated
+fixture repository. The paired consumer re-freezes the plan, reloads every
+stored artifact, and recomputes the hard browser oracle before attribution.
+Its `local_pair_status` describes the diagnostic; top-level `gate_status`
+remains `not_tested` because this path has a scripted proposal and only a local
+Cartwheel build receipt for server provenance.
+
+The 2026-10-16 headless Chrome check on generated revisions
+`ad74b08a77ceb1d9452d4335261c99c1db7376e9` and
+`fd32708bcd615e072327c0771f49c69329e123e3` produced two base passes and
+two head failures under the same plan hash
+`b4e27820046f163f71b45924708aa9359db519d7c53f4d9d4efebec469d7bca0`.
+The paired report is `/tmp/gauntlet-a01f-paired-report.json`. It labels the
+local result `confirmed_regression` with `introduced` attribution and keeps the
+product Gate status `not_tested`. No Daytona or Anchor resource was used.
