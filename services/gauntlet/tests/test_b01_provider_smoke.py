@@ -62,6 +62,7 @@ def target() -> RegisteredTarget:
         preview_port=3000,
         preview_domain_suffix=".proxy.daytona.work",
         ready_path="/checkout",
+        startup_profile="cartwheel_next_v1",
         snapshots=(
             RegisteredSnapshot(BASE, "base-snapshot", "e" * 64),
             RegisteredSnapshot(HEAD, "head-snapshot", "e" * 64),

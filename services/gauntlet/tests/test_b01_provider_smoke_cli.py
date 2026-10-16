@@ -33,6 +33,7 @@ def registration() -> dict[str, object]:
         "preview_port": 3100,
         "preview_domain_suffix": ".proxy.daytona.work",
         "ready_path": "/checkout",
+        "startup_profile": "cartwheel_next_v1",
         "snapshots": [
             {"source_sha": BASE, "snapshot": "base-snapshot", "image_digest": "e" * 64},
             {"source_sha": HEAD, "snapshot": "head-snapshot", "image_digest": "e" * 64},
@@ -91,4 +92,16 @@ def test_registration_rejects_a_ready_path_outside_checkout(tmp_path: Path) -> N
     path = tmp_path / "registered.json"
     path.write_text(json.dumps({**registration(), "ready_path": "/health"}))
     with pytest.raises(ValueError, match="checkout path"):
+        load_registration(path, manifest())
+
+
+def test_registration_rejects_untrusted_startup_profile(tmp_path: Path) -> None:
+    path = tmp_path / "registered.json"
+    path.write_text(json.dumps({**registration(), "startup_profile": "sh -c arbitrary"}))
+    with pytest.raises(ValueError, match="startup profile"):
+        load_registration(path, manifest())
+    stale = registration()
+    del stale["startup_profile"]
+    path.write_text(json.dumps(stale))
+    with pytest.raises(ValueError, match="fields"):
         load_registration(path, manifest())
