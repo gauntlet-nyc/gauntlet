@@ -1374,3 +1374,46 @@ scripted planning, and the existing registration file. Dashboard is port 3000.
 Persistent `.env.local` still defaults live integration off. Restarting this
 process loses its in-memory run views and dedup reservations; saved evidence
 remains on disk. Arbitrary project PRs are still ignored by the fixture guard.
+
+### P3 UI proposal and local repair runner (2026-10-16)
+
+One real AWS Bedrock `ModelFixProposer` call used the captured PR87 finding,
+frozen attack, and cited head source. It proposed changing Help CSS bottom16px
+to96px. Its hunk header declared7 context lines but contained6; review corrected
+only the header before `git apply --check` passed. Raw and reviewed plans are
+saved in ignored `artifacts/pr87-hosted-demo/ui-fix-plan-raw-model.json` and
+`ui-fix-plan.json`. Reviewed approval hash:
+`1f2fddf49747545220ccd84c3df146e276f02695da8a4ede4f6260d6dfa4b086`.
+The actual model proposal is **not applied** and awaits human hash approval.
+
+The original hosted run and artifacts were restored from saved local evidence
+for the development API, with that reviewed proposal attached. The temporary
+bootstrap is `/tmp/gauntlet-serve-ui-review.py`; port8002 serves it, dashboard
+port3000. This session bootstrap does not provide durable production storage.
+It makes no new hosted browser or model calls. Persistent live integration stays
+OFF; dependency cache configured at `/tmp/gauntlet-c-cartwheel-base/node_modules`.
+
+An independent automated scripted-plan smoke exercised the new repair runner
+against a real fresh Next build and real local Chrome. This is a synthetic test
+approval, **not human approval of the model plan**. Patched test SHA
+`cb080fd8a3b340717a8bbca314391baa64e5966f`: original attack,390px/1280px variants,
+and legitimate action passed; Help opened/closed and checkout produced a receipt
+at375px and1280px. Eight trusted replay attempts stored evidence. Temporary
+server/export cleaned by the runner. Report `/tmp/gauntlet-ui-repair-smoke.json`,
+evidence `/tmp/gauntlet-ui-repair-smoke-artifacts`. Initial real-build smoke
+correctly reported not_verified because the shared exporter required refund
+files; UI-specific required paths fixed that defect before the passing run.
+
+MAIN checks after integration:
+- `uv run --frozen --group live-providers pytest -q`:945 passed,4 skipped.
+- `uv run --frozen --group live-providers ruff check services/gauntlet scripts`:pass.
+- `uv run --frozen --group live-providers mypy services/gauntlet/src`:171 files pass.
+- `uv build --package gauntlet-control --out-dir /tmp/gauntlet-ui-main-build`:wheel/sdist pass.
+- `npm run test --prefix apps/dashboard`:21 pass.
+- `npm run build --prefix apps/dashboard`:pass.
+- `npm run typecheck --prefix apps/dashboard`:pass.
+- `.venv/bin/python scripts/demo_rehearsal.py --chromium '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --backup-dir /tmp/gauntlet-ui-main-rehearsal`:12/12 pass.
+
+Headless Chrome confirmed the saved real run displays the reviewed96px diff and
+approval/apply controls. Screenshot `/tmp/gauntlet-ui-proposal-dashboard.png`.
+No human approval was synthesized and no original/model patch was executed.
