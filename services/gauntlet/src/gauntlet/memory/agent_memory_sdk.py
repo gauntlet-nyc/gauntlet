@@ -113,6 +113,21 @@ class AgentMemorySdkStore:
             _log.warning("Agent Memory returned %d undecodable hits", self.undecodable_hits)
         return _visible(facts, query, kinds)
 
+    async def all(self) -> tuple[TemporalMemoryFact, ...]:
+        """Every decodable Gauntlet fact the context returns, newest first (read-only view)."""
+        try:
+            response = await self._client.recall("gauntlet findings", k=_MAX_K, labels=["gauntlet"])
+        except Exception as exc:
+            raise EnvironmentUnavailableError(
+                f"Agent Memory recall failed ({type(exc).__name__})"
+            ) from None
+        facts = {
+            fact.fact_id: fact
+            for hit in getattr(response, "hits", ())
+            if (fact := decode_fact_text(str(getattr(hit, "text", "")))) is not None
+        }
+        return tuple(sorted(facts.values(), key=lambda f: (f.known_at, f.fact_id), reverse=True))
+
     async def close(self) -> None:
         await self._client.close()
 

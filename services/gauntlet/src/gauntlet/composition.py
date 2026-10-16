@@ -732,7 +732,10 @@ def build_memory(kind: MemoryKindSetting, settings: Settings) -> tuple[Any, str]
 
         return JsonFileTemporalMemory(LOCAL_MEMORY_FILE), "offline_local_file"
     settings.require_live("SurrealDB Agent Memory")
-    from gauntlet.memory.surreal_memory import SurrealTemporalMemory
-    from gauntlet.persistence.factory import memory_client
+    from gauntlet.persistence.factory import memory_store
 
-    return SurrealTemporalMemory(memory_client(settings.integrations())), "live_surreal_memory"
+    # The hosted Agent Memory service speaks its own API, not raw SurrealQL, so prefer the SDK
+    # adapter; GAUNTLET_MEMORY_BACKEND=http keeps the plain SurrealDB context.
+    store = memory_store(settings.integrations())
+    label = "live_agent_memory_sdk" if hasattr(store, "backend") else "live_surreal_memory"
+    return store, label
