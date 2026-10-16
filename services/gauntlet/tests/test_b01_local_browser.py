@@ -1,13 +1,18 @@
 """Local browser port: exact session identity, typed steps and origin boundary."""
 
 import asyncio
+import time
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from threading import Thread
 
 import pytest
 
 from gauntlet.contracts import (
     CaptureStep,
+    ClickStep,
     EvidenceSubject,
+    InspectStep,
     NavigateStep,
     PressStep,
     ResizeStep,
@@ -54,6 +59,9 @@ class FakePage:
     async def goto(self, url: str, *, wait_until: str) -> None:
         assert wait_until == "domcontentloaded"
         self.url = self.redirect or url
+
+    async def wait_for_load_state(self, state: str) -> None:
+        assert state == "networkidle"
 
     async def set_viewport_size(self, size: dict[str, int]) -> None:
         self.viewport = size
@@ -289,7 +297,9 @@ def test_loopback_rule_matches_fixture_identity(tmp_path: Path) -> None:
         adapter = provider(tmp_path, browser)
         with pytest.raises(EnvironmentUnavailableError):
             await adapter.open_session(
-                EnvironmentHandle(**{**vars(ENVIRONMENT), "preview_origin": "http://localhost:3100"}),
+                EnvironmentHandle(
+                    **{**vars(ENVIRONMENT), "preview_origin": "http://localhost:3100"}
+                ),
                 SUBJECT,
             )
         session = await adapter.open_session(
@@ -299,3 +309,90 @@ def test_loopback_rule_matches_fixture_identity(tmp_path: Path) -> None:
         await adapter.close_session(session)
 
     asyncio.run(scenario())
+
+
+@pytest.mark.skipif(
+    not Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome").exists(),
+    reason="local Chrome is needed for browser hydration evidence",
+)
+def test_click_waits_for_client_handler_after_navigation(tmp_path: Path) -> None:
+    """A DOM-ready button must receive its late client handler before a typed click."""
+    async_playwright = pytest.importorskip("playwright.async_api").async_playwright
+    html = b"""<button data-testid="checkout-primary-action">Place order</button>
+    <script async src="/hydrate.js"></script>"""
+    script = b"""document.querySelector('[data-testid="checkout-primary-action"]')
+      .addEventListener('click', async () => {
+        const response = await fetch('/api/orders', {method: 'POST'});
+        if (response.status === 201) {
+          const receipt = document.createElement('p');
+          receipt.dataset.testid = 'order-receipt';
+          receipt.textContent = 'Order placed';
+          document.body.appendChild(receipt);
+        }
+      });"""
+
+    class Handler(BaseHTTPRequestHandler):
+        order_posts = 0
+
+        def do_GET(self) -> None:
+            if self.path == "/hydrate.js":
+                time.sleep(0.35)
+                body, media_type = script, "application/javascript"
+            else:
+                body, media_type = html, "text/html"
+            self.send_response(200)
+            self.send_header("Content-Type", media_type)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_POST(self) -> None:
+            if self.path == "/api/orders":
+                Handler.order_posts += 1
+                self.send_response(201)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+
+        def log_message(self, _format: str, *args: object) -> None:
+            pass
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+
+    async def scenario() -> None:
+        async with async_playwright() as playwright:
+            browser = await playwright.chromium.launch(
+                executable_path="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+                headless=True,
+            )
+            try:
+                origin = f"http://127.0.0.1:{server.server_port}"
+                adapter = provider(
+                    tmp_path,
+                    browser,
+                )
+                environment = EnvironmentHandle(**{**vars(ENVIRONMENT), "preview_origin": origin})
+                session = await adapter.open_session(environment, SUBJECT)
+                try:
+                    navigated = await adapter.perform(session, 0, NavigateStep(path="/checkout"))
+                    assert navigated.outcome == "ok"
+                    assert (
+                        await adapter.perform(
+                            session, 1, ClickStep(target="checkout-primary-action")
+                        )
+                    ).outcome == "ok"
+                    receipt = await adapter.perform(session, 2, InspectStep(target="order-receipt"))
+                    assert receipt.outcome == "ok"
+                    assert Handler.order_posts == 1
+                finally:
+                    await adapter.close_session(session)
+            finally:
+                await browser.close()
+
+    try:
+        asyncio.run(scenario())
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)

@@ -95,6 +95,8 @@ class _Page(BrowserPage, Protocol):
 
     async def goto(self, url: str, *, wait_until: str) -> object: ...
 
+    async def wait_for_load_state(self, state: str) -> None: ...
+
     async def set_viewport_size(self, size: dict[str, int]) -> None: ...
 
     async def close(self) -> None: ...
@@ -257,6 +259,12 @@ class ScopedPlaywrightProvider:
         try:
             if isinstance(step, NavigateStep):
                 await page.goto(session.origin + step.path, wait_until="domcontentloaded")
+                # DOM readiness can precede client event-handler hydration. Wait for
+                # in-flight assets, but let continuously polling sites proceed.
+                try:
+                    await asyncio.wait_for(page.wait_for_load_state("networkidle"), timeout=2)
+                except TimeoutError:
+                    pass
                 record = ActionRecord(step_index=step_index, action="navigate", outcome="ok")
             elif isinstance(step, ResizeStep):
                 await page.set_viewport_size({"width": step.width, "height": step.height})
