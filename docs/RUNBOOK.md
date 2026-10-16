@@ -63,6 +63,44 @@ Log UTC/run_id/attempt_id/replay_id/trace_id for every attempt. Track sandbox le
 
 Approved and pinned for B-01a only, in the non-default dependency group `live-providers` (root `pyproject.toml`, resolved in `uv.lock`): `daytona==0.224.1`, `anchorbrowser==1.0.1`, `playwright==1.64.0`, and `boto3==1.43.114` (A-01c planning probe). Default `uv sync` and CI do not install them; use `uv sync --frozen --group live-providers`. Checked: PyPI publisher metadata matches the vendors, none are yanked, and `pip-audit` on the resolved set reported no known vulnerabilities. Approval is for installing and signature checking only. Live calls still need `RUN_LIVE_INTEGRATIONS=1`, explicit spend authorization and an approved synthetic target. `playwright install` (browser download) is not part of this approval.
 
-Not yet approved: `surrealdb`/`surrealdb[memory]` (the memory extra is a prerelease that needs a separately resolved lock), `arize`/`arize-otel`, `boto3`, ElevenLabs. Each needs its own owner proposal. New packages need A/B/C review per CONTRIBUTING.
+Not yet approved: `surrealdb`/`surrealdb[memory]` (the memory extra is a prerelease that needs a separately resolved lock), `arize`/`arize-otel`, ElevenLabs. Each needs its own owner proposal. New packages need A/B/C review per CONTRIBUTING.
 
 Dashboard: `pnpm audit --prod` found four postcss advisories (two high, two moderate) bundled by Next 15.5.28, the latest 15.x. A root `pnpm.overrides` entry forces `postcss>=8.5.23`; typecheck, lint, tests and build pass and the audit is clean. Revisit when Next ships a patched dependency.
+
+## P1 credential loading and readiness
+
+The probe scripts read the process environment; they do not automatically load
+`.env.local`. Keep credentials in a private, gitignored file. Never paste keys
+into command arguments or commit them. For the pinned optional provider environment,
+load that file without shell evaluation using the installed dotenv module:
+
+```bash
+uv sync --frozen --group live-providers
+.venv/bin/python -m dotenv -f .env.local run --no-override -- .venv/bin/python scripts/probe_b01_provider_smoke.py
+```
+
+This command performs local preflight only. It does not create resources, validate
+keys, or authorize spend. Existing process variables take precedence. Provider
+execution additionally requires `RUN_LIVE_INTEGRATIONS=1`, `--execute`,
+`--authorize-spend`, and a validated `--registration` file.
+
+For the current P1 smoke, configure `DAYTONA_API_KEY`, `DAYTONA_API_URL`,
+`DAYTONA_TARGET`, `ANCHOR_API_KEY`, and `ANCHOR_PROXY_SERVER`,
+`ANCHOR_PROXY_USERNAME`, `ANCHOR_PROXY_PASSWORD`. Allow `cartwheel-fixture` in
+`GAUNTLET_ALLOWED_TARGET_IDS`. Registration must identify the exact committed
+base/head source revisions, registered snapshots, equivalent pinned image digest,
+fixture IDs/checksums/state path, repository path, preview port/domain and readiness
+path. Snapshots must already serve their separately compiled synthetic fixture.
+An ordinary proxy credential does not establish the required egress policy.
+
+Bedrock planning separately requires AWS credentials through a profile/role or
+credential environment variables, model access, and explicit `--model-id` and
+`--region` arguments. `BEDROCK_MODEL_ID` and `AWS_REGION` in the example file are
+operator configuration references; the CLI does not translate them into arguments.
+Also pass an authorized `--repository`, `--change-request`, unused writable
+`--output`, and the same explicit live/spend switches. Run the CLI without
+arguments for its safe missing-input report.
+
+Full source mypy validation currently requires the optional provider SDKs installed
+via `uv sync --frozen --group live-providers`. The default CI environment runs
+API-only mypy and the full offline test suite without those SDKs.
