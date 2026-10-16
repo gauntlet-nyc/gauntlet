@@ -128,6 +128,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/gate/runs/{run_id}/check-run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Gate Check Run
+         * @description Preview of the GitHub check run (checks-only; never comments, approves or merges).
+         */
+        get: operations["get_gate_check_run_gate_runs__run_id__check_run_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/gate/runs/{run_id}/repair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Gate Repair
+         * @description Apply the human-approved fix plan in a fresh worktree and re-verify it.
+         *
+         *     Needs a reviewer token and a prior approval of the exact plan hash (single use). The
+         *     result is review-only: nothing is merged, pushed or deployed.
+         */
+        post: operations["run_gate_repair_gate_runs__run_id__repair_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -137,6 +180,40 @@ export interface paths {
         };
         /** Health */
         get: operations["health_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/memory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Memory View */
+        get: operations["memory_view_memory_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/onboarding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Onboarding Status */
+        get: operations["onboarding_status_onboarding_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -292,6 +369,43 @@ export interface paths {
         get: operations["cartwheel_change_request_targets_cartwheel_change_request_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/webhooks/elevenlabs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Elevenlabs Webhook
+         * @description Voice can only read findings or ask for a replay; it can never approve anything.
+         */
+        post: operations["elevenlabs_webhook_webhooks_elevenlabs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/webhooks/github": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Github Webhook */
+        post: operations["github_webhook_webhooks_github_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -622,6 +736,29 @@ export interface components {
              */
             schema_version: "1.0";
         };
+        /**
+         * CheckRunPreview
+         * @description What the GitHub App would publish for this run. Not sent anywhere from this endpoint.
+         */
+        CheckRunPreview: {
+            /**
+             * Conclusion
+             * @enum {string}
+             */
+            conclusion: "success" | "failure" | "neutral";
+            /** Details Url */
+            details_url: string | null;
+            /** Name */
+            name: string;
+            /** Note */
+            note: string;
+            /** Published */
+            published: boolean;
+            /** Summary */
+            summary: string;
+            /** Title */
+            title: string;
+        };
         /** ClickStep */
         ClickStep: {
             /**
@@ -806,6 +943,8 @@ export interface components {
             /** Plan Sha256 */
             plan_sha256: string;
             provenance: components["schemas"]["Provenance"];
+            /** Repairable */
+            repairable: boolean;
         };
         /** GateRunSummary */
         GateRunSummary: {
@@ -845,6 +984,16 @@ export interface components {
             fixture_id: string;
             /** Head Sha */
             head_sha: string;
+            /**
+             * Memory Fact Ids Used
+             * @default []
+             */
+            memory_fact_ids_used: string[];
+            /**
+             * Memory Facts Written
+             * @default []
+             */
+            memory_facts_written: string[];
             /** Model Id */
             model_id: string | null;
             /** Not Tested Reason */
@@ -855,6 +1004,7 @@ export interface components {
             provenance: components["schemas"]["Provenance"][];
             /** Rejected Attacks */
             rejected_attacks: string[];
+            repair?: components["schemas"]["RepairView"] | null;
             /** Run Id */
             run_id: string;
             /** Status */
@@ -985,6 +1135,48 @@ export interface components {
             /** Edges */
             edges: components["schemas"]["LineageEdge"][];
         };
+        /** MemoryProvenance */
+        MemoryProvenance: {
+            /** Commit */
+            commit?: string | null;
+            /** Finding Id */
+            finding_id?: string | null;
+            /** Oracle Id */
+            oracle_id?: string | null;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /** Trace Id */
+            trace_id?: string | null;
+        };
+        /** MemoryRunRow */
+        MemoryRunRow: {
+            /** Attack Ids */
+            attack_ids: string[];
+            /** Change Id */
+            change_id: string;
+            /** Memory Fact Ids Used */
+            memory_fact_ids_used: string[];
+            /** Memory Facts Written */
+            memory_facts_written: string[];
+            /** Planned At */
+            planned_at: string;
+            /** Run Id */
+            run_id: string;
+            /** Status */
+            status: string;
+        };
+        /** MemoryView */
+        MemoryView: {
+            /** Facts */
+            facts: components["schemas"]["TemporalMemoryFact"][];
+            provenance: components["schemas"]["Provenance"];
+            /** Runs */
+            runs: components["schemas"]["MemoryRunRow"][];
+        };
         /**
          * MissingInput
          * @description A replay/historical input that was not recorded, and why. Missing never means safe.
@@ -1049,6 +1241,43 @@ export interface components {
             oracle_outcomes: string[];
             /** Status */
             status: string;
+        };
+        /** OnboardingStep */
+        OnboardingStep: {
+            /** Detail */
+            detail: string;
+            /** Done */
+            done: boolean;
+            /** Step */
+            step: string;
+        };
+        /** OnboardingTarget */
+        OnboardingTarget: {
+            /** Base Sha */
+            base_sha: string;
+            /** Fixture Checksum Sha256 */
+            fixture_checksum_sha256: string;
+            /** Fixture Id */
+            fixture_id: string;
+            /** Github Repository */
+            github_repository: string | null;
+            /** Head Sha */
+            head_sha: string;
+            /** Identities */
+            identities: components["schemas"]["TargetIdentity"][];
+            /** Routes */
+            routes: components["schemas"]["TargetRoute"][];
+            /** Synthetic Only */
+            synthetic_only: boolean;
+            /** Target Id */
+            target_id: string;
+        };
+        /** OnboardingView */
+        OnboardingView: {
+            /** Steps */
+            steps: components["schemas"]["OnboardingStep"][];
+            /** Targets */
+            targets: components["schemas"]["OnboardingTarget"][];
         };
         /** PressStep */
         PressStep: {
@@ -1176,6 +1405,35 @@ export interface components {
             status: "draft" | "approved_for_review" | "dismissed";
             /** Verdict Ids */
             verdict_ids: string[];
+        };
+        /** RepairCheckView */
+        RepairCheckView: {
+            /** Detail */
+            detail: string;
+            /** Name */
+            name: string;
+            /** Passed */
+            passed: boolean;
+        };
+        /** RepairView */
+        RepairView: {
+            /** Approval Id */
+            approval_id: string;
+            /** Checks */
+            checks: components["schemas"]["RepairCheckView"][];
+            /** Note */
+            note: string;
+            /** Patched Sha */
+            patched_sha: string | null;
+            /** Provenance */
+            provenance: components["schemas"]["Provenance"][];
+            /** Touched Paths */
+            touched_paths: string[];
+            /**
+             * Verdict
+             * @enum {string}
+             */
+            verdict: "fix_verified_review_required" | "fix_rejected" | "not_verified";
         };
         /** ResizeStep */
         ResizeStep: {
@@ -1329,6 +1587,67 @@ export interface components {
              */
             change_id: "help-button" | "refund-tool" | "clean";
         };
+        /** TargetIdentity */
+        TargetIdentity: {
+            /** Id */
+            id: string;
+            /** Role */
+            role: string;
+        };
+        /** TargetRoute */
+        TargetRoute: {
+            /** Path */
+            path: string;
+            /** Primary Action */
+            primary_action: string | null;
+        };
+        /** TemporalMemoryFact */
+        TemporalMemoryFact: {
+            /** Fact Id */
+            fact_id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "ui_occlusion" | "authz_bypass" | "workflow_state" | "policy_conflict" | "fix_pattern";
+            /**
+             * Known At
+             * Format: date-time
+             */
+            known_at: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /** Scope */
+            scope: string;
+            source: components["schemas"]["MemoryProvenance"];
+            /** Summary */
+            summary: string;
+            /** Supersedes */
+            supersedes?: string | null;
+            /** Surface Kinds */
+            surface_kinds: ("route" | "component" | "api" | "agent_tool" | "style" | "workflow")[];
+            /**
+             * Trust
+             * @enum {string}
+             */
+            trust: "verified_test" | "policy" | "app_content" | "model_summary";
+            /**
+             * Valid From
+             * Format: date-time
+             */
+            valid_from: string;
+            /** Valid Until */
+            valid_until?: string | null;
+            /**
+             * Verification
+             * @enum {string}
+             */
+            verification: "confirmed" | "unverified";
+        };
         /**
          * ToolEvent
          * @description One recorded tool operation. `outcome='unknown'` is never treated as success or failure.
@@ -1401,6 +1720,14 @@ export interface components {
             /** Error Type */
             type: string;
         };
+        /** VoiceAnswer */
+        VoiceAnswer: {
+            /** Intent */
+            intent: string;
+            replay_request?: components["schemas"]["VoiceReplayRequest"] | null;
+            /** Spoken Text */
+            spoken_text: string;
+        };
         /**
          * VoiceBriefing
          * @description Built only from persisted findings; `source_event_sequence` ties it to the event log.
@@ -1428,6 +1755,54 @@ export interface components {
             spoken_summary: string;
             /** Suspected */
             suspected: number;
+        };
+        /** VoiceReplayRequest */
+        VoiceReplayRequest: {
+            /** Attack Id */
+            attack_id: string;
+            /** Confirmed By */
+            confirmed_by?: string | null;
+            /** Confirmed Channel */
+            confirmed_channel?: ("dashboard" | "api") | null;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Request Id */
+            request_id: string;
+            /**
+             * Requested At
+             * Format: date-time
+             */
+            requested_at: string;
+            /** Requested By */
+            requested_by: string;
+            /** Run Id */
+            run_id: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending_operator_confirmation" | "confirmed" | "declined" | "expired";
+        };
+        /** WebhookAccepted */
+        WebhookAccepted: {
+            /** Detail */
+            detail: string;
+            /** Run Id */
+            run_id?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "accepted" | "ignored";
         };
     };
     responses: never;
@@ -1681,6 +2056,70 @@ export interface operations {
             };
         };
     };
+    get_gate_check_run_gate_runs__run_id__check_run_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckRunPreview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_gate_repair_gate_runs__run_id__repair_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateRunView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     health_health_get: {
         parameters: {
             query?: never;
@@ -1697,6 +2136,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    memory_view_memory_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryView"];
+                };
+            };
+        };
+    };
+    onboarding_status_onboarding_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingView"];
                 };
             };
         };
@@ -1899,6 +2378,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChangeRequest"];
+                };
+            };
+        };
+    };
+    elevenlabs_webhook_webhooks_elevenlabs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoiceAnswer"];
+                };
+            };
+        };
+    };
+    github_webhook_webhooks_github_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookAccepted"];
                 };
             };
         };

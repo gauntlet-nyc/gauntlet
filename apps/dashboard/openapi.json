@@ -859,6 +859,62 @@
         "title": "ChatStep",
         "type": "object"
       },
+      "CheckRunPreview": {
+        "description": "What the GitHub App would publish for this run. Not sent anywhere from this endpoint.",
+        "properties": {
+          "conclusion": {
+            "enum": [
+              "success",
+              "failure",
+              "neutral"
+            ],
+            "title": "Conclusion",
+            "type": "string"
+          },
+          "details_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details Url"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "published": {
+            "title": "Published",
+            "type": "boolean"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "conclusion",
+          "title",
+          "summary",
+          "details_url",
+          "published",
+          "note"
+        ],
+        "title": "CheckRunPreview",
+        "type": "object"
+      },
       "ClickStep": {
         "additionalProperties": false,
         "properties": {
@@ -1372,13 +1428,18 @@
           },
           "provenance": {
             "$ref": "#/components/schemas/Provenance"
+          },
+          "repairable": {
+            "title": "Repairable",
+            "type": "boolean"
           }
         },
         "required": [
           "plan",
           "plan_sha256",
           "allowed_paths",
-          "provenance"
+          "provenance",
+          "repairable"
         ],
         "title": "FixPlanView",
         "type": "object"
@@ -1487,6 +1548,22 @@
             "title": "Head Sha",
             "type": "string"
           },
+          "memory_fact_ids_used": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Memory Fact Ids Used",
+            "type": "array"
+          },
+          "memory_facts_written": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Memory Facts Written",
+            "type": "array"
+          },
           "model_id": {
             "anyOf": [
               {
@@ -1533,6 +1610,16 @@
             },
             "title": "Rejected Attacks",
             "type": "array"
+          },
+          "repair": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RepairView"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "run_id": {
             "title": "Run Id",
@@ -1903,6 +1990,152 @@
         "title": "LineageView",
         "type": "object"
       },
+      "MemoryProvenance": {
+        "additionalProperties": false,
+        "properties": {
+          "commit": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{7,64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commit"
+          },
+          "finding_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finding Id"
+          },
+          "oracle_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oracle Id"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "trace_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trace Id"
+          }
+        },
+        "title": "MemoryProvenance",
+        "type": "object"
+      },
+      "MemoryRunRow": {
+        "properties": {
+          "attack_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Attack Ids",
+            "type": "array"
+          },
+          "change_id": {
+            "title": "Change Id",
+            "type": "string"
+          },
+          "memory_fact_ids_used": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Memory Fact Ids Used",
+            "type": "array"
+          },
+          "memory_facts_written": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Memory Facts Written",
+            "type": "array"
+          },
+          "planned_at": {
+            "title": "Planned At",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "change_id",
+          "status",
+          "planned_at",
+          "attack_ids",
+          "memory_fact_ids_used",
+          "memory_facts_written"
+        ],
+        "title": "MemoryRunRow",
+        "type": "object"
+      },
+      "MemoryView": {
+        "properties": {
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/TemporalMemoryFact"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/MemoryRunRow"
+            },
+            "title": "Runs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "facts",
+          "runs",
+          "provenance"
+        ],
+        "title": "MemoryView",
+        "type": "object"
+      },
       "MissingInput": {
         "additionalProperties": false,
         "description": "A replay/historical input that was not recorded, and why. Missing never means safe.",
@@ -2046,6 +2279,119 @@
           "events"
         ],
         "title": "OfflineGateResponse",
+        "type": "object"
+      },
+      "OnboardingStep": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "done": {
+            "title": "Done",
+            "type": "boolean"
+          },
+          "step": {
+            "title": "Step",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step",
+          "done",
+          "detail"
+        ],
+        "title": "OnboardingStep",
+        "type": "object"
+      },
+      "OnboardingTarget": {
+        "properties": {
+          "base_sha": {
+            "title": "Base Sha",
+            "type": "string"
+          },
+          "fixture_checksum_sha256": {
+            "title": "Fixture Checksum Sha256",
+            "type": "string"
+          },
+          "fixture_id": {
+            "title": "Fixture Id",
+            "type": "string"
+          },
+          "github_repository": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Github Repository"
+          },
+          "head_sha": {
+            "title": "Head Sha",
+            "type": "string"
+          },
+          "identities": {
+            "items": {
+              "$ref": "#/components/schemas/TargetIdentity"
+            },
+            "title": "Identities",
+            "type": "array"
+          },
+          "routes": {
+            "items": {
+              "$ref": "#/components/schemas/TargetRoute"
+            },
+            "title": "Routes",
+            "type": "array"
+          },
+          "synthetic_only": {
+            "title": "Synthetic Only",
+            "type": "boolean"
+          },
+          "target_id": {
+            "title": "Target Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "target_id",
+          "fixture_id",
+          "synthetic_only",
+          "base_sha",
+          "head_sha",
+          "fixture_checksum_sha256",
+          "routes",
+          "identities",
+          "github_repository"
+        ],
+        "title": "OnboardingTarget",
+        "type": "object"
+      },
+      "OnboardingView": {
+        "properties": {
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/OnboardingStep"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "targets": {
+            "items": {
+              "$ref": "#/components/schemas/OnboardingTarget"
+            },
+            "title": "Targets",
+            "type": "array"
+          }
+        },
+        "required": [
+          "targets",
+          "steps"
+        ],
+        "title": "OnboardingView",
         "type": "object"
       },
       "PressStep": {
@@ -2362,6 +2708,93 @@
           "created_at"
         ],
         "title": "RemediationProposal",
+        "type": "object"
+      },
+      "RepairCheckView": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "passed",
+          "detail"
+        ],
+        "title": "RepairCheckView",
+        "type": "object"
+      },
+      "RepairView": {
+        "properties": {
+          "approval_id": {
+            "title": "Approval Id",
+            "type": "string"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/RepairCheckView"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "patched_sha": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patched Sha"
+          },
+          "provenance": {
+            "items": {
+              "$ref": "#/components/schemas/Provenance"
+            },
+            "title": "Provenance",
+            "type": "array"
+          },
+          "touched_paths": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Touched Paths",
+            "type": "array"
+          },
+          "verdict": {
+            "enum": [
+              "fix_verified_review_required",
+              "fix_rejected",
+              "not_verified"
+            ],
+            "title": "Verdict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "approval_id",
+          "patched_sha",
+          "touched_paths",
+          "checks",
+          "verdict",
+          "note",
+          "provenance"
+        ],
+        "title": "RepairView",
         "type": "object"
       },
       "ResizeStep": {
@@ -2776,6 +3209,179 @@
         "title": "StartGateRun",
         "type": "object"
       },
+      "TargetIdentity": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "role"
+        ],
+        "title": "TargetIdentity",
+        "type": "object"
+      },
+      "TargetRoute": {
+        "properties": {
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "primary_action": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Action"
+          }
+        },
+        "required": [
+          "path",
+          "primary_action"
+        ],
+        "title": "TargetRoute",
+        "type": "object"
+      },
+      "TemporalMemoryFact": {
+        "additionalProperties": false,
+        "properties": {
+          "fact_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Fact Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "ui_occlusion",
+              "authz_bypass",
+              "workflow_state",
+              "policy_conflict",
+              "fix_pattern"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "known_at": {
+            "format": "date-time",
+            "title": "Known At",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "scope": {
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9_/.-]*$",
+            "title": "Scope",
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/MemoryProvenance"
+          },
+          "summary": {
+            "maxLength": 2500,
+            "minLength": 1,
+            "title": "Summary",
+            "type": "string"
+          },
+          "supersedes": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supersedes"
+          },
+          "surface_kinds": {
+            "items": {
+              "enum": [
+                "route",
+                "component",
+                "api",
+                "agent_tool",
+                "style",
+                "workflow"
+              ],
+              "type": "string"
+            },
+            "maxItems": 6,
+            "minItems": 1,
+            "title": "Surface Kinds",
+            "type": "array"
+          },
+          "trust": {
+            "enum": [
+              "verified_test",
+              "policy",
+              "app_content",
+              "model_summary"
+            ],
+            "title": "Trust",
+            "type": "string"
+          },
+          "valid_from": {
+            "format": "date-time",
+            "title": "Valid From",
+            "type": "string"
+          },
+          "valid_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          },
+          "verification": {
+            "enum": [
+              "confirmed",
+              "unverified"
+            ],
+            "title": "Verification",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fact_id",
+          "kind",
+          "summary",
+          "verification",
+          "trust",
+          "scope",
+          "surface_kinds",
+          "source",
+          "known_at",
+          "valid_from"
+        ],
+        "title": "TemporalMemoryFact",
+        "type": "object"
+      },
       "ToolEvent": {
         "additionalProperties": false,
         "description": "One recorded tool operation. `outcome='unknown'` is never treated as success or failure.",
@@ -2957,6 +3563,34 @@
         "title": "ValidationError",
         "type": "object"
       },
+      "VoiceAnswer": {
+        "properties": {
+          "intent": {
+            "title": "Intent",
+            "type": "string"
+          },
+          "replay_request": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VoiceReplayRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "spoken_text": {
+            "title": "Spoken Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "intent",
+          "spoken_text"
+        ],
+        "title": "VoiceAnswer",
+        "type": "object"
+      },
       "VoiceBriefing": {
         "additionalProperties": false,
         "description": "Built only from persisted findings; `source_event_sequence` ties it to the event log.",
@@ -3025,6 +3659,138 @@
           "spoken_summary"
         ],
         "title": "VoiceBriefing",
+        "type": "object"
+      },
+      "VoiceReplayRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "attack_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Attack Id",
+            "type": "string"
+          },
+          "confirmed_by": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmed By"
+          },
+          "confirmed_channel": {
+            "anyOf": [
+              {
+                "enum": [
+                  "dashboard",
+                  "api"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmed Channel"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "request_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "requested_at": {
+            "format": "date-time",
+            "title": "Requested At",
+            "type": "string"
+          },
+          "requested_by": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Requested By",
+            "type": "string"
+          },
+          "run_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending_operator_confirmation",
+              "confirmed",
+              "declined",
+              "expired"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "run_id",
+          "attack_id",
+          "requested_by",
+          "requested_at",
+          "expires_at",
+          "status"
+        ],
+        "title": "VoiceReplayRequest",
+        "type": "object"
+      },
+      "WebhookAccepted": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "status": {
+            "enum": [
+              "accepted",
+              "ignored"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "detail"
+        ],
+        "title": "WebhookAccepted",
         "type": "object"
       }
     }
@@ -3357,6 +4123,108 @@
         ]
       }
     },
+    "/gate/runs/{run_id}/check-run": {
+      "get": {
+        "description": "Preview of the GitHub check run (checks-only; never comments, approves or merges).",
+        "operationId": "get_gate_check_run_gate_runs__run_id__check_run_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckRunPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Gate Check Run",
+        "tags": [
+          "gate"
+        ]
+      }
+    },
+    "/gate/runs/{run_id}/repair": {
+      "post": {
+        "description": "Apply the human-approved fix plan in a fresh worktree and re-verify it.\n\nNeeds a reviewer token and a prior approval of the exact plan hash (single use). The\nresult is review-only: nothing is merged, pushed or deployed.",
+        "operationId": "run_gate_repair_gate_runs__run_id__repair_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GateRunView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Gate Repair",
+        "tags": [
+          "gate"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "health_health_get",
@@ -3373,6 +4241,48 @@
           }
         },
         "summary": "Health"
+      }
+    },
+    "/memory": {
+      "get": {
+        "operationId": "memory_view_memory_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemoryView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Memory View",
+        "tags": [
+          "memory"
+        ]
+      }
+    },
+    "/onboarding": {
+      "get": {
+        "operationId": "onboarding_status_onboarding_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Onboarding Status",
+        "tags": [
+          "onboarding"
+        ]
       }
     },
     "/recall/audit": {
@@ -3608,6 +4518,49 @@
           }
         },
         "summary": "Cartwheel Change Request"
+      }
+    },
+    "/webhooks/elevenlabs": {
+      "post": {
+        "description": "Voice can only read findings or ask for a replay; it can never approve anything.",
+        "operationId": "elevenlabs_webhook_webhooks_elevenlabs_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceAnswer"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Elevenlabs Webhook",
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/webhooks/github": {
+      "post": {
+        "operationId": "github_webhook_webhooks_github_post",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookAccepted"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Github Webhook",
+        "tags": [
+          "webhooks"
+        ]
       }
     }
   }

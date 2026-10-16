@@ -36,8 +36,24 @@ Then go to `/login` and paste the reviewer token (kept in an httpOnly cookie; de
 | **▶ Play voice briefing** | Spoken summary | "Briefing is built from stored findings only. Voice can't approve anything." |
 
 Optional false-positive check: start **"Clarify the product description"** → `passed` on both
-sides. Start **"Let the support assistant request refunds"** → `not_tested` (AI/tool worker not
-routed yet): "Not tested does not mean safe."
+sides, check run `success`.
+
+Scroll to **GitHub check run (preview)**: "This is exactly what the GitHub App posts on the PR.
+Checks only: it never comments, approves or merges." (The App isn't installed yet; preview only.)
+
+## 1b. Act B — Gate on the AI refund-tool PR (≈60 s)
+
+| Click | Show | Say |
+|---|---|---|
+| **Gate** → "Let the support assistant request refunds" → **Start Gate run** | Diff: the ownership check is deleted from `request_refund.ts` | "Same planner, different surface: it sees a removed permission check on a tool with a money side effect." |
+| **Frozen plan** | `attack-ai-cross-owner-refund` (ai_agent worker) | "It plans an AI attack, not a UI one: an attacker asks the assistant to refund someone else's order." |
+| **Attempts** | head 2/2 fail "Forbidden refund recorded: ord-2001 …", base 0/2 | "The oracle reads the trusted test ledger, not the chat. On head money moved to the wrong person; on base it didn't." |
+| **Fix plan review** | Proposed diff restores the ownership check; allowed path only `request_refund.ts` | "Fix belongs in the tool, not the prompt." |
+| **Apply approved plan…** *before* approving | "Refused (HTTP 409)" | "No approval, no patch." |
+| **Approve fix plan** → **Apply approved plan in a fresh worktree and re-verify** | Release verdict `fix verified review required`: original attack pass, variant pass, owner refund still works | "Patched in a fresh worktree, never pushed. The original attack, a variant and the legitimate flow all re-run. The approval is spent: click again and it's refused. A human still merges." |
+
+Provenance says **Local tool world** (the fixture's real tool code per revision, not Daytona) and
+the scripted planner unless Azure is live.
 
 ## 2. Act C — Recall on the refund agent (≈90 s)
 
@@ -54,6 +70,9 @@ routed yet): "Not tested does not mean safe."
 ## 3. Close (≈30 s) — **Sponsor proof**
 
 Read each row honestly: which artifact each sponsor produces and whether it ran live today.
+Optional (≈20 s) **Memory**: start the Help-button run a second time, open **Memory**: run 1 planned one attack with no facts and wrote a verified fact; run 2 received that fact and planned an extra viewport attack citing it. "Memory is evidence for planning, never the oracle; only confirmed facts with finding + oracle provenance are shown to the planner."
+
+Also show **Onboarding**: registered synthetic targets and the open operator steps.
 Pitch: "CI passed because no one wrote the test. Gauntlet read what changed, invented the test,
 proved the failure in isolation and gated the fix on a human. When the bug already shipped,
 Recall separates documented harm from assumptions."
@@ -73,6 +92,8 @@ into commands. First run `uv run python scripts/check_settings.py` — it prints
 | SurrealDB core | `SURREAL_URL`, `SURREAL_NS`, `SURREAL_DB`, `SURREAL_USER`, `SURREAL_PASS` | see the SurrealDB row in `docs/SDK_VALIDATION.md` | records visible in Surrealist |
 | SurrealDB Agent Memory | `SURREAL_MEMORY_ENDPOINT`, `SURREAL_MEMORY_CONTEXT`, `SURREAL_MEMORY_API_KEY` | see the Agent Memory row in `docs/SDK_VALIDATION.md` | `remember`/`recall as_of` round-trip |
 | ElevenLabs | `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID`, `VOICE_WEBHOOK_SECRET` | see the ElevenLabs row in `docs/SDK_VALIDATION.md` | briefing spoken by the agent |
+| GitHub App (check runs + webhook) | `GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_PRIVATE_KEY_PATH` (file outside the repo), `GITHUB_WEBHOOK_SECRET`, `GAUNTLET_GITHUB_REPOSITORIES=<owner/name>`; App webhook URL → `<public API>/webhooks/github` (or `GITHUB_WEBHOOK_PROXY_URL` smee channel) | `RUN_LIVE_INTEGRATIONS=1 uv run python scripts/smoke_adapters.py github --repo <owner/name> --sha <sha>` | neutral check run visible on that commit. A PR whose base/head are the registered fixture SHAs starts a Gate run and publishes its check run; other PRs are ignored as not tested |
+| ElevenLabs voice tool | `ELEVENLABS_AGENT_ID`, `VOICE_WEBHOOK_SECRET`; agent server tool → `<public API>/webhooks/elevenlabs` | ask the agent "summarise run <run_id>" | spoken summary from stored findings; "approve" is refused |
 | Recall with a model | Azure vars above | `RUN_LIVE_INTEGRATIONS=1 uv run python scripts/run_recall.py --model azure` | control replays must still match; any mismatch shows as inconclusive |
 
 After a sponsor's command really succeeds: record date, version, command and sanitized result

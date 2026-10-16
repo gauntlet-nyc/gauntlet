@@ -1,4 +1,4 @@
-import { decide } from "@/app/actions";
+import { decide, runRepair } from "@/app/actions";
 import { VoiceBriefingButton } from "@/components/VoiceBriefing";
 import { Banner, Card, DecideForm, ErrorPanel, OfflineBadge, ProvenanceList, Section, StatusPill } from "@/components/ui";
 import { api, artifactUrl, shortSha, type AttemptView } from "@/lib/gauntlet";
@@ -36,9 +36,9 @@ export default async function GateRunPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
-  let run, briefing;
+  let run, briefing, check;
   try {
-    [run, briefing] = await Promise.all([api.run(id), api.briefing(id)]);
+    [run, briefing, check] = await Promise.all([api.run(id), api.briefing(id), api.checkRun(id)]);
   } catch (err) {
     return <ErrorPanel what="Gate run" error={err} />;
   }
@@ -161,8 +161,44 @@ export default async function GateRunPage({
             back={back}
             approveLabel="Approve fix plan"
           />
+          {run.fix_plan.repairable ? (
+            <form action={runRepair} style={{ marginTop: 8 }}>
+              <input type="hidden" name="run_id" value={run.run_id} />
+              <button type="submit">Apply approved plan in a fresh worktree and re-verify</button>
+              {query.repair && query.repair !== "done" && (
+                <span role="alert"> Refused (HTTP {query.repair}): approve this exact hash first; approvals are single use.</span>
+              )}
+            </form>
+          ) : (
+            <p style={{ fontSize: 13 }}>This sample plan is for review only; the repair runner is wired for AI-agent findings.</p>
+          )}
+          {run.repair && (
+            <Card tone={run.repair.verdict === "fix_verified_review_required" ? "passed" : "fail"}>
+              <strong>Release verdict: {run.repair.verdict.replaceAll("_", " ")}</strong>
+              {run.repair.patched_sha && (
+                <span> · patched <code>{shortSha(run.repair.patched_sha)}</code> (local commit, never pushed)</span>
+              )}
+              <ul>
+                {run.repair.checks.map((c) => (
+                  <li key={c.name}>
+                    <StatusPill value={c.passed ? "pass" : "fail"} /> {c.name.replaceAll("_", " ")} — {c.detail}
+                  </li>
+                ))}
+              </ul>
+              <small>{run.repair.note}</small>
+              <ProvenanceList provenance={run.repair.provenance} />
+            </Card>
+          )}
         </Section>
       )}
+
+      <Section title="GitHub check run (preview)">
+        <p>
+          <strong>{check.name}</strong> · conclusion <StatusPill value={check.conclusion === "failure" ? "fail" : check.conclusion === "success" ? "pass" : "inconclusive"} /> · {check.title}
+        </p>
+        <pre style={{ background: "#f6f8fa", padding: 8, fontSize: 12, whiteSpace: "pre-wrap" }}>{check.summary}</pre>
+        <small style={{ color: "#555" }}>{check.note} Checks-only: Gauntlet never comments, approves or merges.</small>
+      </Section>
 
       <Section title="Events">
         <ol>

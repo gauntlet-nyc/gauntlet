@@ -203,7 +203,9 @@ pnpm --filter @gauntlet/dashboard build && (cd apps/dashboard && npx next start 
   `RunGateUseCase`. Adapter choice: Daytona + Anchor only with `RUN_LIVE_INTEGRATIONS=1` and all
   their keys; else local Chromium if `CARTWHEEL_BASE_ORIGIN`/`CARTWHEEL_HEAD_ORIGIN` are set
   (Help-button only, needs `--group live-providers`); else offline fake sandbox + simulated
-  layout. `refund-tool` is `not_tested` until the AI/tool worker is routed.
+  layout. `refund-tool` runs the AI-agent route (fixture tool code per revision in the local
+  tool world, ledger oracle). `GET /gate/runs/{id}/check-run` previews the GitHub check run;
+  `GET /onboarding` lists registered targets and open operator steps.
 - `/recall/*` runs Session 1's `RunRecallUseCase` over `apps/cartwheel/history` (checksum
   verified). `/approvals` records hash-bound A-03 approvals; identity comes only from the bearer
   token table. Remediation approvals are review-only.

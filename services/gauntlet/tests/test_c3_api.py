@@ -1,9 +1,11 @@
 """Session 3 API: Gate runs, Recall views, hash-bound approvals, sponsor status, settings."""
 
+import json
 import shutil
 from collections.abc import Iterator
 from pathlib import Path
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 
@@ -63,20 +65,23 @@ def test_clean_change_passes_on_both_revisions(client: TestClient) -> None:
     assert all(a["outcome"] == "pass" for a in run["attempts"])
 
 
-def test_change_without_recording_is_not_tested_never_passed(client: TestClient) -> None:
+def test_refund_tool_runs_ai_agent_route_against_real_tool_code(client: TestClient) -> None:
     run = _start(client, "refund-tool")
-    assert run["status"] == "not_tested"
-    assert "AI/tool worker" in run["not_tested_reason"]
-    assert "Not tested does not mean safe" in run["not_tested_reason"]
-    assert run["attempts"] == [] and run["findings"] == []
+    assert run["status"] == "confirmed_regression"
+    assert run["attribution"] == "introduced"
+    sides = [(a["revision"], a["outcome"]) for a in run["attempts"]]
+    assert sides == [("head", "fail"), ("head", "fail"), ("base", "pass"), ("base", "pass")]
+    assert "Forbidden refund recorded" in run["attempts"][0]["observed"]
+    assert "sandbox:local_tool_world" in {p["provider"] for p in run["provenance"]}
     assert run["diff"][0]["path"] == "api/src/tools/request_refund.ts"
-    assert "-  if (order.ownerId !== ctx.actorId) {" in run["diff"][0]["unified_diff"]
+    assert run["fix_plan"]["allowed_paths"] == ["api/src/tools/request_refund.ts"]
 
 
 def test_briefing_is_templated_from_findings(client: TestClient) -> None:
-    run = _start(client, "refund-tool")
+    run = _start(client, "clean")
     body = client.get(f"/gate/runs/{run['run_id']}/briefing").json()
-    assert "Not tested does not mean safe." in body["briefing"]["spoken_summary"]
+    assert body["briefing"]["confirmed"] == 0
+    assert "Run run-clean-" in body["briefing"]["spoken_summary"]
     assert body["provenance"]["live"] is False
 
 
@@ -241,3 +246,189 @@ def test_adapter_selection_never_goes_live_without_opt_in() -> None:
     }
     assert GateService.adapters(Settings.from_env(local)) == ("scripted", "local", "local")
     assert GateService.adapters(Settings.from_env(local), "clean") == ("scripted", "fake", "fake")
+    assert GateService.adapters(live, "refund-tool") == ("azure", "fake", "fake")
+
+
+def test_check_run_preview_is_never_published(client: TestClient) -> None:
+    run = _start(client)
+    preview = client.get(f"/gate/runs/{run['run_id']}/check-run").json()
+    assert preview["conclusion"] == "failure"
+    assert preview["published"] is False
+    assert "Not tested does not mean safe" in preview["summary"]
+    clean = _start(client, "clean")
+    passed = client.get(f"/gate/runs/{clean['run_id']}/check-run").json()
+    assert passed["conclusion"] == "success"
+
+
+def test_onboarding_lists_synthetic_targets_and_open_steps(client: TestClient) -> None:
+    view = client.get("/onboarding").json()
+    assert {t["fixture_id"] for t in view["targets"]} == {"baseline-v1", "refund-v1"}
+    assert all(t["synthetic_only"] for t in view["targets"])
+    steps = {s["step"]: s for s in view["steps"]}
+    assert steps["Configure reviewer tokens"]["done"] is True
+    github = steps["Install the GitHub App and bind the repository"]
+    assert github["done"] is False and "GITHUB_APP_ID" in github["detail"]
+
+
+def test_refund_repair_needs_hash_approval_and_spends_it_once(client: TestClient) -> None:
+    run = _start(client, "refund-tool")
+    fix = run["fix_plan"]
+    assert fix["repairable"] is True
+    assert fix["provenance"]["provider"] == "proposer:offline_scripted_fix"
+    url = f"/gate/runs/{run['run_id']}/repair"
+    assert client.post(url).status_code == 401
+    assert client.post(url, headers=AUTH).status_code == 409
+    approved = client.post("/approvals", json=_fix_approval(run), headers=AUTH)
+    assert approved.status_code == 201
+    repaired = client.post(url, headers=AUTH)
+    assert repaired.status_code == 200
+    repair = repaired.json()["repair"]
+    assert repair["verdict"] == "fix_verified_review_required"
+    assert {c["name"]: c["passed"] for c in repair["checks"]} == {
+        "original_attack": True,
+        "variant_0": True,
+        "legitimate_workflow": True,
+    }
+    assert repair["touched_paths"] == ["api/src/tools/request_refund.ts"]
+    assert "never merges" in repair["note"]
+    assert client.post(url, headers=AUTH).status_code == 409  # approval already spent
+    events = [e["event_type"] for e in repaired.json()["events"]]
+    assert events[-2:] == ["repair_requested", "repair_verified"]
+
+
+def test_ui_sample_fix_is_not_repairable(client: TestClient) -> None:
+    run = _start(client)
+    assert run["fix_plan"]["repairable"] is False
+    response = client.post(f"/gate/runs/{run['run_id']}/repair", headers=AUTH)
+    assert response.status_code == 422
+
+
+def _webhook_client(monkeypatch: pytest.MonkeyPatch, **env: str) -> TestClient:
+    from gauntlet.api.routes import webhooks
+
+    for name, value in env.items():
+        monkeypatch.setenv(name, value)
+    monkeypatch.setattr(webhooks, "_STATE", webhooks._WebhookState())
+    get_settings.cache_clear()
+    get_container.cache_clear()
+    return TestClient(app)
+
+
+GH_SECRET = "github-webhook-secret-0123456789"
+
+
+def _github_post(
+    client: TestClient,
+    payload: dict,
+    delivery: str,
+    event: str = "pull_request",  # type: ignore[type-arg]
+) -> httpx.Response:
+    import hashlib
+    import hmac
+
+    body = json.dumps(payload).encode()
+    signature = "sha256=" + hmac.new(GH_SECRET.encode(), body, hashlib.sha256).hexdigest()
+    headers = {
+        "X-Hub-Signature-256": signature,
+        "X-GitHub-Delivery": delivery,
+        "X-GitHub-Event": event,
+        "content-type": "application/json",
+    }
+    return client.post("/webhooks/github", content=body, headers=headers)
+
+
+def _pr(repo: str, base: str, head: str) -> dict:  # type: ignore[type-arg]
+    return {
+        "action": "opened",
+        "pull_request": {
+            "number": 7,
+            "title": "Add a floating Help button",
+            "draft": False,
+            "base": {"sha": base},
+            "head": {"sha": head},
+        },
+        "repository": {"full_name": repo},
+    }
+
+
+def test_github_webhook_verifies_and_starts_only_registered_revisions(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    assert client.post("/webhooks/github", content=b"{}").status_code == 503
+    hook = _webhook_client(
+        monkeypatch,
+        GITHUB_WEBHOOK_SECRET=GH_SECRET,
+        GAUNTLET_GITHUB_REPOSITORIES="demo/cartwheel",
+    )
+    manifest = json.loads((REPO_ROOT / "apps/cartwheel/fixture-manifest.v1.json").read_text())
+    base, head = manifest["git_refs"]["base_sha"], manifest["git_refs"]["head_sha"]
+    bad = hook.post(
+        "/webhooks/github",
+        content=b"{}",
+        headers={"X-Hub-Signature-256": "sha256=00", "X-GitHub-Delivery": "deliv-0001"},
+    )
+    assert bad.status_code == 401
+    assert _github_post(hook, {}, "deliv-ping-01", "ping").json()["status"] == "ignored"
+    unbound = _github_post(hook, _pr("evil/repo", base, head), "deliv-0002")
+    assert unbound.json()["status"] == "ignored"
+    accepted = _github_post(hook, _pr("demo/cartwheel", base, head), "deliv-0003")
+    assert accepted.status_code == 202 and accepted.json()["status"] == "accepted"
+    assert _github_post(hook, _pr("demo/cartwheel", base, head), "deliv-0003").status_code == 401
+    runs = hook.get("/gate/runs").json()
+    assert runs and runs[0]["change_id"] == "help-button"
+    unknown = _github_post(hook, _pr("demo/cartwheel", "a" * 40, "b" * 40), "deliv-0004")
+    assert unknown.json()["status"] == "ignored"
+
+
+def test_elevenlabs_webhook_reads_findings_and_never_approves(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import time
+
+    from gauntlet.security.webhooks import elevenlabs_signature
+
+    secret = "voice-webhook-secret-0123456789"
+    hook = _webhook_client(
+        monkeypatch, VOICE_WEBHOOK_SECRET=secret, ELEVENLABS_AGENT_ID="agent_demo"
+    )
+    run = hook.post("/gate/runs", json={"change_id": "help-button"}).json()
+
+    def call(payload: dict) -> object:  # type: ignore[type-arg]
+        body = json.dumps(payload).encode()
+        signature = elevenlabs_signature(secret.encode(), int(time.time()), body)
+        return hook.post(
+            "/webhooks/elevenlabs", content=body, headers={"ElevenLabs-Signature": signature}
+        )
+
+    summary = call({"call_id": "c1", "intent": "run_summary", "run_id": run["run_id"]})
+    assert "1 confirmed" in summary.json()["spoken_text"]  # type: ignore[attr-defined]
+    approve = call({"call_id": "c2", "intent": "approve", "run_id": run["run_id"]})
+    assert approve.status_code == 401  # type: ignore[attr-defined]
+    replay = call(
+        {
+            "call_id": "c3",
+            "intent": "replay_request",
+            "run_id": run["run_id"],
+            "attack_id": run["attacks"][0]["attack_id"],
+        }
+    ).json()  # type: ignore[attr-defined]
+    assert replay["replay_request"]["status"] == "pending_operator_confirmation"
+    unsigned = hook.post("/webhooks/elevenlabs", content=b"{}")
+    assert unsigned.status_code == 401
+
+
+def test_memory_feeds_later_plans_append_only(client: TestClient) -> None:
+    first = _start(client)
+    assert first["memory_fact_ids_used"] == []
+    (fact_id,) = first["memory_facts_written"]
+    second = _start(client)
+    assert second["memory_fact_ids_used"] == [fact_id]
+    assert second["memory_facts_written"] == []  # same finding on the same commit: kept once
+    assert len(second["attacks"]) > len(first["attacks"])
+    view = client.get("/memory").json()
+    (fact,) = view["facts"]
+    assert fact["fact_id"] == fact_id and fact["verification"] == "confirmed"
+    assert fact["source"]["finding_id"] and fact["source"]["oracle_id"]
+    assert view["provenance"]["live"] is False
+    rows = {r["run_id"]: r for r in view["runs"]}
+    assert rows[second["run_id"]]["attack_ids"] == [a["attack_id"] for a in second["attacks"]]

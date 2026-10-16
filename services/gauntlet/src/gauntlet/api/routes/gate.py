@@ -2,12 +2,16 @@
 
 from fastapi import APIRouter, HTTPException, Response
 
+from gauntlet.application.errors import ApprovalDeniedError
 from gauntlet.application.voice import build_briefing
+from gauntlet.intake.github import render_check_run
 
+from ..auth import Reviewer
 from ..container import get_container
 from ..schemas import (
     BriefingView,
     ChangeOption,
+    CheckRunPreview,
     GateRunSummary,
     GateRunView,
     Provenance,
@@ -77,3 +81,41 @@ async def get_gate_artifact(run_id: str, artifact_id: str) -> Response:
         media_type=media_type,
         headers={"X-Content-Type-Options": "nosniff", "Cache-Control": "no-store"},
     )
+
+
+@router.get("/runs/{run_id}/check-run")
+async def get_gate_check_run(run_id: str) -> CheckRunPreview:
+    """Preview of the GitHub check run (checks-only; never comments, approves or merges)."""
+    view = _run(run_id)
+    report = render_check_run(view.run_id, view.findings, [], view.not_tested_reason)
+    return CheckRunPreview(
+        name=report.name,
+        conclusion=report.conclusion,
+        title=report.title,
+        summary=report.summary,
+        details_url=report.details_url,
+        published=False,
+        note="Preview only: the GitHub App is not installed, so nothing was published.",
+    )
+
+
+@router.post("/runs/{run_id}/repair")
+async def run_gate_repair(run_id: str, reviewer: Reviewer) -> GateRunView:
+    """Apply the human-approved fix plan in a fresh worktree and re-verify it.
+
+    Needs a reviewer token and a prior approval of the exact plan hash (single use). The
+    result is review-only: nothing is merged, pushed or deployed.
+    """
+    service = get_container().gate
+    if run_id not in service.runs:
+        raise HTTPException(status_code=404, detail="unknown run")
+    service.append_event(run_id, "repair_requested", {"reviewer_id": reviewer.reviewer_id})
+    try:
+        view = await service.run_repair(run_id)
+    except PermissionError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ApprovalDeniedError as exc:
+        raise HTTPException(status_code=409, detail=f"approval refused: {exc}") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return view

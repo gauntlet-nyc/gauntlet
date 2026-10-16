@@ -8,7 +8,7 @@ from functools import lru_cache
 from importlib import resources
 
 from gauntlet.application.gate import ApprovalService
-from gauntlet.composition import build_recall
+from gauntlet.composition import build_memory, build_recall
 from gauntlet.settings import Settings
 
 from .services.gate import GateService
@@ -46,6 +46,13 @@ def _manifests(settings: ApiSettings) -> dict[str, dict[str, str]]:
     }
 
 
+def _gate_service(settings: ApiSettings, core: Settings) -> GateService:
+    service = GateService(settings, _manifests(settings))
+    if core.run_live_integrations and settings.provider_configured("surrealdb_agent_memory"):
+        service.memory, service.memory_label = build_memory("surreal", core)
+    return service
+
+
 @dataclass
 class Container:
     settings: ApiSettings
@@ -65,7 +72,7 @@ def build_container(settings: ApiSettings) -> Container:
     store = InMemoryApprovalStore()
     return Container(
         settings=settings,
-        gate=GateService(settings, _manifests(settings)),
+        gate=_gate_service(settings, core),
         recall=RecallService(build_recall(core, model=model, history_dir=settings.history_dir)),
         approval_store=store,
         approvals=ApprovalService(

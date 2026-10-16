@@ -56,3 +56,16 @@ export async function decide(form: FormData): Promise<void> {
   const sep = back.includes("?") ? "&" : "?";
   redirect(`${back}${sep}approval=${res.ok ? "recorded" : String(res.status)}`);
 }
+
+export async function runRepair(form: FormData): Promise<void> {
+  const runId = String(form.get("run_id"));
+  const back = `/gate/runs/${encodeURIComponent(runId)}`;
+  const token = (await cookies()).get(COOKIE)?.value;
+  if (!token) redirect(`/login?next=${encodeURIComponent(back)}`);
+  const res = await fetch(`${API_URL}/gate/runs/${encodeURIComponent(runId)}/repair`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  redirect(`${back}?repair=${res.ok ? "done" : String(res.status)}`);
+}

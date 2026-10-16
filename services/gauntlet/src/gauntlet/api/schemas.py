@@ -16,6 +16,7 @@ from gauntlet.contracts import (
     RecallVerdict,
     RemediationProposal,
     RunEvent,
+    TemporalMemoryFact,
     ToolEvent,
     VoiceBriefing,
 )
@@ -54,6 +55,24 @@ class FixPlanView(BaseModel):
     plan_sha256: str
     allowed_paths: list[str]
     provenance: Provenance
+    repairable: bool
+    """True when an approved plan can be applied and re-verified by the repair loop here."""
+
+
+class RepairCheckView(BaseModel):
+    name: str
+    passed: bool
+    detail: str
+
+
+class RepairView(BaseModel):
+    approval_id: str
+    patched_sha: str | None
+    touched_paths: list[str]
+    checks: list[RepairCheckView]
+    verdict: Literal["fix_verified_review_required", "fix_rejected", "not_verified"]
+    note: str
+    provenance: list[Provenance]
 
 
 class GateRunView(BaseModel):
@@ -75,6 +94,9 @@ class GateRunView(BaseModel):
     attempts: list[AttemptView]
     findings: list[Finding]
     fix_plan: FixPlanView | None
+    repair: RepairView | None = None
+    memory_fact_ids_used: list[str] = []
+    memory_facts_written: list[str] = []
     events: list[RunEvent]
     provenance: list[Provenance]
 
@@ -178,4 +200,65 @@ class SponsorStatus(BaseModel):
 class BriefingView(BaseModel):
     briefing: VoiceBriefing
     audio_available: bool
+    provenance: Provenance
+
+
+class CheckRunPreview(BaseModel):
+    """What the GitHub App would publish for this run. Not sent anywhere from this endpoint."""
+
+    name: str
+    conclusion: Literal["success", "failure", "neutral"]
+    title: str
+    summary: str
+    details_url: str | None
+    published: bool
+    note: str
+
+
+class TargetRoute(BaseModel):
+    path: str
+    primary_action: str | None
+
+
+class TargetIdentity(BaseModel):
+    id: str
+    role: str
+
+
+class OnboardingTarget(BaseModel):
+    target_id: str
+    fixture_id: str
+    synthetic_only: bool
+    base_sha: str
+    head_sha: str
+    fixture_checksum_sha256: str
+    routes: list[TargetRoute]
+    identities: list[TargetIdentity]
+    github_repository: str | None
+
+
+class OnboardingStep(BaseModel):
+    step: str
+    done: bool
+    detail: str
+
+
+class OnboardingView(BaseModel):
+    targets: list[OnboardingTarget]
+    steps: list[OnboardingStep]
+
+
+class MemoryRunRow(BaseModel):
+    run_id: str
+    change_id: str
+    status: str
+    planned_at: str
+    attack_ids: list[str]
+    memory_fact_ids_used: list[str]
+    memory_facts_written: list[str]
+
+
+class MemoryView(BaseModel):
+    facts: list[TemporalMemoryFact]
+    runs: list[MemoryRunRow]
     provenance: Provenance
