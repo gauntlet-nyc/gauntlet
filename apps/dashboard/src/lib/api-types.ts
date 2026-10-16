@@ -4,6 +4,24 @@
  */
 
 export interface paths {
+    "/approvals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Approvals */
+        get: operations["list_approvals_approvals_get"];
+        put?: never;
+        /** Record Approval */
+        post: operations["record_approval_approvals_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/fake-run": {
         parameters: {
             query?: never;
@@ -21,6 +39,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/gate/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Changes */
+        get: operations["list_changes_gate_changes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/gate/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Gate Runs */
+        get: operations["list_gate_runs_gate_runs_get"];
+        put?: never;
+        /** Start Gate Run */
+        post: operations["start_gate_run_gate_runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/gate/runs/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Gate Run */
+        get: operations["get_gate_run_gate_runs__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/gate/runs/{run_id}/briefing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Gate Briefing */
+        get: operations["get_gate_briefing_gate_runs__run_id__briefing_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -30,6 +117,91 @@ export interface paths {
         };
         /** Health */
         get: operations["health_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/recall/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recall Audit */
+        get: operations["recall_audit_recall_audit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/recall/counterfactual": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recall Counterfactual */
+        get: operations["recall_counterfactual_recall_counterfactual_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/recall/lineage/{decision_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recall Lineage */
+        get: operations["recall_lineage_recall_lineage__decision_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/recall/review-queue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recall Review Queue */
+        get: operations["recall_review_queue_recall_review_queue_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/recall/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recall Timeline */
+        get: operations["recall_timeline_recall_timeline_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -64,6 +236,23 @@ export interface paths {
         };
         /** Offline Gate */
         get: operations["offline_gate_runs_offline_gate_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sponsors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Sponsors */
+        get: operations["list_sponsors_sponsors_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -118,6 +307,91 @@ export interface components {
              */
             schema_version: "1.0";
         };
+        /** ApprovalRecord */
+        ApprovalRecord: {
+            /**
+             * Allowed Paths
+             * @default []
+             */
+            allowed_paths: string[];
+            /** Approval Id */
+            approval_id: string;
+            /**
+             * Channel
+             * @enum {string}
+             */
+            channel: "dashboard" | "api";
+            /**
+             * Decided At
+             * Format: date-time
+             */
+            decided_at: string;
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approved" | "rejected";
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Fixture Id */
+            fixture_id: string;
+            /** Plan Sha256 */
+            plan_sha256: string;
+            /** Reason */
+            reason?: string | null;
+            /** Reviewer Id */
+            reviewer_id: string;
+            /** Run Id */
+            run_id: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /**
+             * Subject
+             * @enum {string}
+             */
+            subject: "scope" | "fix_plan" | "remediation";
+            /** Subject Id */
+            subject_id: string;
+            /** Target Id */
+            target_id: string;
+        };
+        /**
+         * ApprovalRequest
+         * @description Binds to the exact plan hash the reviewer saw. Identity comes from the bearer token.
+         */
+        ApprovalRequest: {
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approved" | "rejected";
+            /** Plan Sha256 */
+            plan_sha256: string;
+            /** Reason */
+            reason?: string | null;
+            /** Run Id */
+            run_id: string;
+            /**
+             * Subject
+             * @enum {string}
+             */
+            subject: "scope" | "fix_plan" | "remediation";
+            /** Subject Id */
+            subject_id: string;
+        };
+        /** ApprovalView */
+        ApprovalView: {
+            /** Note */
+            note: string;
+            record: components["schemas"]["ApprovalRecord"];
+        };
         /** AttackSpec */
         AttackSpec: {
             /** Attack Id */
@@ -154,6 +428,105 @@ export interface components {
              */
             worker_kind: "ui" | "accessibility" | "workflow" | "api" | "concurrency" | "ai_agent";
         };
+        /** AttemptView */
+        AttemptView: {
+            /** Attempt */
+            attempt: number;
+            /** Evidence Ids */
+            evidence_ids: string[];
+            /** Oracle Id */
+            oracle_id: string;
+            /** Outcome */
+            outcome: string;
+            provenance: components["schemas"]["Provenance"];
+            /**
+             * Revision
+             * @enum {string}
+             */
+            revision: "base" | "head";
+            /** Screenshot Artifact Ids */
+            screenshot_artifact_ids: string[];
+            /** Source Sha */
+            source_sha: string;
+        };
+        /**
+         * Attribution
+         * @enum {string}
+         */
+        Attribution: "introduced" | "pre_existing" | "unknown";
+        /**
+         * AuditSummary
+         * @description Counts computed from verdict records; never typed in by hand or by a model.
+         */
+        AuditSummary: {
+            /** Audited */
+            audited: number;
+            /** Clear */
+            clear: number;
+            /**
+             * End At
+             * Format: date-time
+             */
+            end_at: string;
+            /**
+             * Gaps
+             * @default []
+             */
+            gaps: string[];
+            /** Inconclusive */
+            inconclusive: number;
+            /** Recall Id */
+            recall_id: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /**
+             * Start At
+             * Format: date-time
+             */
+            start_at: string;
+            /** Tool Name */
+            tool_name: string;
+            /** Violations */
+            violations: number;
+        };
+        /** AuditView */
+        AuditView: {
+            /** Proposals */
+            proposals: components["schemas"]["RemediationProposal"][];
+            /** Provenance */
+            provenance: components["schemas"]["Provenance"][];
+            /** Recall Id */
+            recall_id: string;
+            summary: components["schemas"]["AuditSummary"];
+            /** Verdicts */
+            verdicts: components["schemas"]["RecallVerdict"][];
+        };
+        /** BriefFinding */
+        BriefFinding: {
+            /** Finding Id */
+            finding_id: string;
+            /** Headline */
+            headline: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            severity: components["schemas"]["Severity"];
+            status: components["schemas"]["GateStatus"];
+        };
+        /** BriefingView */
+        BriefingView: {
+            /** Audio Available */
+            audio_available: boolean;
+            briefing: components["schemas"]["VoiceBriefing"];
+            provenance: components["schemas"]["Provenance"];
+        };
         /** CaptureStep */
         CaptureStep: {
             /**
@@ -169,6 +542,19 @@ export interface components {
              * @constant
              */
             schema_version: "1.0";
+        };
+        /** ChangeOption */
+        ChangeOption: {
+            /** Base Sha */
+            base_sha: string;
+            /** Change Id */
+            change_id: string;
+            /** Feature Intent */
+            feature_intent: string;
+            /** Head Sha */
+            head_sha: string;
+            /** Offline Recording Available */
+            offline_recording_available: boolean;
         };
         /** ChangeRequest */
         ChangeRequest: {
@@ -229,6 +615,69 @@ export interface components {
             /** Target */
             target: string;
         };
+        /** CounterfactualCase */
+        CounterfactualCase: {
+            /** Decision Id */
+            decision_id: string;
+            exposure: components["schemas"]["ExposureRecord"];
+            /** Missing Fields */
+            missing_fields: string[];
+            /** Replayable */
+            replayable: boolean;
+            verdict: components["schemas"]["RecallVerdict"];
+        };
+        /** CounterfactualView */
+        CounterfactualView: {
+            /** Cases */
+            cases: components["schemas"]["CounterfactualCase"][];
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Gaps */
+            gaps: string[];
+            /** Provenance */
+            provenance: components["schemas"]["Provenance"][];
+            /** Recall Id */
+            recall_id: string;
+            /** Trigger Reference */
+            trigger_reference: string;
+        };
+        /** DecisionView */
+        DecisionView: {
+            decision: components["schemas"]["HistoricalDecision"];
+            /** Message */
+            message: string;
+            /** Requester */
+            requester: string;
+            /** Tool Events */
+            tool_events: components["schemas"]["ToolEvent"][];
+        };
+        /**
+         * ExposureRecord
+         * @description A decision reachable from the trigger through recorded edges. Exposure is not harm.
+         */
+        ExposureRecord: {
+            /** Decision Id */
+            decision_id: string;
+            /** Direct */
+            direct: boolean;
+            /** Exposure Id */
+            exposure_id: string;
+            /** Note */
+            note?: string | null;
+            /** Path */
+            path: components["schemas"]["LineageEdge"][];
+            /** Recall Id */
+            recall_id: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            trigger_node: components["schemas"]["NodeRef"];
+        };
         /** FakeRunResponse */
         FakeRunResponse: {
             /** Events */
@@ -239,6 +688,160 @@ export interface components {
             /** Run Id */
             run_id: string;
         };
+        /** FileDiff */
+        FileDiff: {
+            /** Path */
+            path: string;
+            /** Unified Diff */
+            unified_diff: string;
+        };
+        /** Finding */
+        Finding: {
+            /** Attack Id */
+            attack_id: string;
+            attribution: components["schemas"]["Attribution"];
+            /** Base Attempts */
+            base_attempts: number;
+            /** Base Reproductions */
+            base_reproductions: number;
+            /**
+             * Evidence Ids
+             * @default []
+             */
+            evidence_ids: string[];
+            /** Finding Id */
+            finding_id: string;
+            /** Head Attempts */
+            head_attempts: number;
+            /** Head Reproductions */
+            head_reproductions: number;
+            /**
+             * Limitations
+             * @default []
+             */
+            limitations: string[];
+            /** Oracle Ids */
+            oracle_ids: string[];
+            /**
+             * Oracle Verdict Ids
+             * @default []
+             */
+            oracle_verdict_ids: string[];
+            /** Repro Manifest Id */
+            repro_manifest_id?: string | null;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            severity: components["schemas"]["Severity"];
+            status: components["schemas"]["GateStatus"];
+            /**
+             * Trace Ids
+             * @default []
+             */
+            trace_ids: string[];
+        };
+        /** FixPlan */
+        FixPlan: {
+            /** Allowed Paths */
+            allowed_paths: string[];
+            /** Base Sha */
+            base_sha: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Finding Id */
+            finding_id: string;
+            /** Fix Plan Id */
+            fix_plan_id: string;
+            /** Rationale */
+            rationale: string;
+            /** Run Id */
+            run_id: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /** Test Plan */
+            test_plan: string[];
+            /** Unified Diff */
+            unified_diff: string;
+        };
+        /** FixPlanView */
+        FixPlanView: {
+            /** Allowed Paths */
+            allowed_paths: string[];
+            plan: components["schemas"]["FixPlan"];
+            /** Plan Sha256 */
+            plan_sha256: string;
+            provenance: components["schemas"]["Provenance"];
+        };
+        /** GateRunSummary */
+        GateRunSummary: {
+            /** Attribution */
+            attribution: string;
+            /** Change Id */
+            change_id: string;
+            /** Offline */
+            offline: boolean;
+            /** Run Id */
+            run_id: string;
+            /** Status */
+            status: string;
+        };
+        /** GateRunView */
+        GateRunView: {
+            /** Attempts */
+            attempts: components["schemas"]["AttemptView"][];
+            /** Attribution */
+            attribution: string;
+            /** Base Sha */
+            base_sha: string;
+            /** Change Id */
+            change_id: string;
+            /** Diff */
+            diff: components["schemas"]["FileDiff"][];
+            /** Events */
+            events: components["schemas"]["RunEvent"][];
+            /** Feature Intent */
+            feature_intent: string;
+            /** Findings */
+            findings: components["schemas"]["Finding"][];
+            fix_plan: components["schemas"]["FixPlanView"] | null;
+            /** Fixture Id */
+            fixture_id: string;
+            frozen_plan: components["schemas"]["AttackSpec"] | null;
+            /** Head Sha */
+            head_sha: string;
+            /** Not Tested Reason */
+            not_tested_reason: string | null;
+            /** Plan Sha256 */
+            plan_sha256: string | null;
+            /** Provenance */
+            provenance: components["schemas"]["Provenance"][];
+            /** Run Id */
+            run_id: string;
+            /** Status */
+            status: string;
+            /** Target Id */
+            target_id: string;
+        };
+        /**
+         * GateStatus
+         * @enum {string}
+         */
+        GateStatus: "confirmed_regression" | "confirmed_pre_existing" | "confirmed_policy_violation" | "suspected" | "not_reproducible" | "environment_error" | "passed" | "not_tested";
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
         /** HealthResponse */
         HealthResponse: {
             /** Mode */
@@ -247,6 +850,61 @@ export interface components {
             provider_integrations: string;
             /** Status */
             status: string;
+        };
+        /** HistoricalDecision */
+        HistoricalDecision: {
+            /** Actor Ref */
+            actor_ref: string;
+            /** Agent Id */
+            agent_id: string;
+            /** Amount Minor */
+            amount_minor?: number | null;
+            /** Decision Id */
+            decision_id: string;
+            /** Input Messages Hash */
+            input_messages_hash?: string | null;
+            /** Kb Snapshot Hash */
+            kb_snapshot_hash?: string | null;
+            /** Memory Snapshot Hash */
+            memory_snapshot_hash?: string | null;
+            /**
+             * Missing Inputs
+             * @default []
+             */
+            missing_inputs: components["schemas"]["MissingInput"][];
+            /** Model Id */
+            model_id: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Policy Version */
+            policy_version: string;
+            /** Prompt Version */
+            prompt_version: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /**
+             * Source Ids
+             * @default []
+             */
+            source_ids: string[];
+            /** Structured Action */
+            structured_action: string;
+            /** Target Id */
+            target_id: string;
+            /**
+             * Tool Names
+             * @default []
+             */
+            tool_names: string[];
+            /** Tool Results Hash */
+            tool_results_hash?: string | null;
         };
         /** InspectStep */
         InspectStep: {
@@ -264,6 +922,57 @@ export interface components {
             /** Target */
             target: string;
         };
+        /** LineageEdge */
+        LineageEdge: {
+            /** Edge Id */
+            edge_id: string;
+            /**
+             * Evidence Ids
+             * @default []
+             */
+            evidence_ids: string[];
+            /**
+             * Recorded At
+             * Format: date-time
+             */
+            recorded_at: string;
+            /**
+             * Relation
+             * @enum {string}
+             */
+            relation: "retrieved_by" | "wrote" | "read_by" | "derived_into" | "configured" | "produced";
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            source: components["schemas"]["NodeRef"];
+            target: components["schemas"]["NodeRef"];
+        };
+        /** LineageView */
+        LineageView: {
+            /** Edges */
+            edges: components["schemas"]["LineageEdge"][];
+        };
+        /**
+         * MissingInput
+         * @description A replay/historical input that was not recorded, and why. Missing never means safe.
+         */
+        MissingInput: {
+            /** Critical */
+            critical: boolean;
+            /** Field */
+            field: string;
+            /** Reason */
+            reason: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+        };
         /** NavigateStep */
         NavigateStep: {
             /**
@@ -273,6 +982,22 @@ export interface components {
             action: "navigate";
             /** Path */
             path: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+        };
+        /** NodeRef */
+        NodeRef: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "document_chunk" | "memory" | "decision" | "tool_event" | "model_version" | "prompt_version" | "policy_version";
+            /** Node Id */
+            node_id: string;
             /**
              * Schema Version
              * @default 1.0
@@ -311,6 +1036,117 @@ export interface components {
              */
             schema_version: "1.0";
         };
+        /**
+         * Provenance
+         * @description Which provider produced an artifact. `live=False` must be shown as OFFLINE in the UI.
+         */
+        Provenance: {
+            /** Label */
+            label: string;
+            /** Live */
+            live: boolean;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "offline_recording" | "offline_fixture" | "offline_synthetic" | "live";
+            /** Provider */
+            provider: string;
+        };
+        /**
+         * RecallClassification
+         * @enum {string}
+         */
+        RecallClassification: "audit_violation" | "audit_clear" | "tainted" | "cleared" | "inconclusive" | "not_replayable";
+        /** RecallVerdict */
+        RecallVerdict: {
+            classification: components["schemas"]["RecallClassification"];
+            /** Control Matches */
+            control_matches?: boolean | null;
+            /** Criterion Version */
+            criterion_version: string;
+            /** Decision Id */
+            decision_id?: string | null;
+            /**
+             * Evidence Ids
+             * @default []
+             */
+            evidence_ids: string[];
+            /**
+             * Limitations
+             * @default []
+             */
+            limitations: string[];
+            /** Material Change */
+            material_change?: boolean | null;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "event_audit" | "decision_counterfactual";
+            /** Rationale */
+            rationale: string;
+            /** Recall Id */
+            recall_id: string;
+            /**
+             * Replay Ids
+             * @default []
+             */
+            replay_ids: string[];
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /** Tool Event Id */
+            tool_event_id?: string | null;
+            /** Verdict Id */
+            verdict_id: string;
+        };
+        /** RemediationProposal */
+        RemediationProposal: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "reverse_transaction_review" | "customer_contact_review" | "collect_missing_evidence" | "policy_fix_review";
+            /**
+             * Affected Actor Refs
+             * @default []
+             */
+            affected_actor_refs: string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Evidence Ids
+             * @default []
+             */
+            evidence_ids: string[];
+            /** Proposal Id */
+            proposal_id: string;
+            /** Rationale */
+            rationale: string;
+            /** Recall Id */
+            recall_id: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /**
+             * Status
+             * @default draft
+             * @enum {string}
+             */
+            status: "draft" | "approved_for_review" | "dismissed";
+            /** Verdict Ids */
+            verdict_ids: string[];
+        };
         /** ResizeStep */
         ResizeStep: {
             /**
@@ -328,6 +1164,33 @@ export interface components {
             schema_version: "1.0";
             /** Width */
             width: number;
+        };
+        /** ReviewItem */
+        ReviewItem: {
+            /** Approval Id */
+            approval_id: string | null;
+            /** Classification */
+            classification: string;
+            /** Item Id */
+            item_id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "remediation_proposal" | "counterfactual_case";
+            /** Plan Sha256 */
+            plan_sha256: string;
+            /** Rationale */
+            rationale: string;
+            /** Recall Id */
+            recall_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "approved_for_review" | "dismissed";
+            /** Title */
+            title: string;
         };
         /** RunEvent */
         RunEvent: {
@@ -381,6 +1244,11 @@ export interface components {
             /** Target */
             target?: string | null;
         };
+        /**
+         * Severity
+         * @enum {string}
+         */
+        Severity: "critical" | "high" | "medium" | "low" | "info";
         /** SourceRef */
         SourceRef: {
             /** Content Hash */
@@ -400,6 +1268,78 @@ export interface components {
             /** Start Line */
             start_line: number;
         };
+        /** SponsorStatus */
+        SponsorStatus: {
+            /** Adapter */
+            adapter: string;
+            /** Configured */
+            configured: boolean;
+            /** Live Command */
+            live_command: string;
+            /** Missing Env */
+            missing_env: string[];
+            /** Notes */
+            notes: string;
+            /** Produces */
+            produces: string[];
+            /** Sponsor */
+            sponsor: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "offline-tested, live NOT RUN" | "live verified";
+        };
+        /** StartGateRun */
+        StartGateRun: {
+            /**
+             * Change Id
+             * @default help-button
+             * @enum {string}
+             */
+            change_id: "help-button" | "refund-tool" | "clean";
+        };
+        /**
+         * ToolEvent
+         * @description One recorded tool operation. `outcome='unknown'` is never treated as success or failure.
+         */
+        ToolEvent: {
+            /** Actor Ref */
+            actor_ref: string;
+            /** Arguments Hash */
+            arguments_hash: string;
+            /** Decision Id */
+            decision_id?: string | null;
+            /** Event Id */
+            event_id: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "succeeded" | "failed" | "unknown";
+            /** Result Hash */
+            result_hash?: string | null;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /**
+             * Side Effect Ids
+             * @default []
+             */
+            side_effect_ids: string[];
+            /** Target Id */
+            target_id: string;
+            /** Tool Name */
+            tool_name: string;
+        };
         /** TypeStep */
         TypeStep: {
             /**
@@ -418,6 +1358,47 @@ export interface components {
             /** Value */
             value: string;
         };
+        /** ValidationError */
+        ValidationError: {
+            /** Context */
+            ctx?: Record<string, never>;
+            /** Input */
+            input?: unknown;
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+        };
+        /**
+         * VoiceBriefing
+         * @description Built only from persisted findings; `source_event_sequence` ties it to the event log.
+         */
+        VoiceBriefing: {
+            /** Confirmed */
+            confirmed: number;
+            /** Coverage Gaps */
+            coverage_gaps: number;
+            /** Findings */
+            findings: components["schemas"]["BriefFinding"][];
+            /** Not Tested */
+            not_tested: number;
+            /** Run Id */
+            run_id: string;
+            /**
+             * Schema Version
+             * @default 1.0
+             * @constant
+             */
+            schema_version: "1.0";
+            /** Source Event Sequence */
+            source_event_sequence: number;
+            /** Spoken Summary */
+            spoken_summary: string;
+            /** Suspected */
+            suspected: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -427,6 +1408,61 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    list_approvals_approvals_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalRecord"][];
+                };
+            };
+        };
+    };
+    record_approval_approvals_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApprovalRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     fake_run_page_fake_run_get: {
         parameters: {
             query?: never;
@@ -447,6 +1483,141 @@ export interface operations {
             };
         };
     };
+    list_changes_gate_changes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChangeOption"][];
+                };
+            };
+        };
+    };
+    list_gate_runs_gate_runs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateRunSummary"][];
+                };
+            };
+        };
+    };
+    start_gate_run_gate_runs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartGateRun"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateRunView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_gate_run_gate_runs__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateRunView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_gate_briefing_gate_runs__run_id__briefing_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BriefingView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     health_health_get: {
         parameters: {
             query?: never;
@@ -463,6 +1634,128 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    recall_audit_recall_audit_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditView"];
+                };
+            };
+        };
+    };
+    recall_counterfactual_recall_counterfactual_get: {
+        parameters: {
+            query?: {
+                trigger?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CounterfactualView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    recall_lineage_recall_lineage__decision_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                decision_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LineageView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    recall_review_queue_recall_review_queue_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewItem"][];
+                };
+            };
+        };
+    };
+    recall_timeline_recall_timeline_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionView"][];
                 };
             };
         };
@@ -503,6 +1796,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OfflineGateResponse"];
+                };
+            };
+        };
+    };
+    list_sponsors_sponsors_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SponsorStatus"][];
                 };
             };
         };
