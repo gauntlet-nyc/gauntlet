@@ -1,6 +1,7 @@
 from dataclasses import replace
 from pathlib import Path
 
+import pytest
 from test_s1_repair import approve, scenario
 
 from gauntlet.application.gate.repair import CheckResult, ReleaseVerdict
@@ -31,3 +32,41 @@ def test_feature_checks_can_reject_an_otherwise_passing_repair(tmp_path: Path) -
         assert report.checks[-1].name == "help_dialog"
 
     scenario(tmp_path, run)
+
+
+def test_configured_ui_run_has_executable_plan_but_requires_approval(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from fastapi.testclient import TestClient
+
+    from gauntlet.api.container import get_container
+    from gauntlet.api.main import app
+    from gauntlet.api.settings import get_settings
+
+    modules = tmp_path / "node_modules"
+    cli = modules / "next/dist/bin/next"
+    cli.parent.mkdir(parents=True)
+    cli.write_text("// no execution before approval")
+    monkeypatch.setenv("GAUNTLET_UI_REPAIR_NODE_MODULES", str(modules))
+    monkeypatch.setenv("RUN_LIVE_INTEGRATIONS", "0")
+    monkeypatch.setenv("GAUNTLET_MODEL_PROVIDER", "scripted")
+    monkeypatch.setenv("GAUNTLET_REVIEWER_TOKENS", "reviewer:test-token-1234567890")
+    get_container.cache_clear()
+    get_settings.cache_clear()
+    try:
+        with TestClient(app) as client:
+            result = client.post("/gate/runs", json={"change_id": "help-button"})
+            assert result.status_code == 201
+            run = result.json()
+            assert run["status"] == "confirmed_regression"
+            assert run["fix_plan"]["repairable"] is True
+            assert "+  bottom: 96px;" in run["fix_plan"]["plan"]["unified_diff"]
+            denied = client.post(
+                f"/gate/runs/{run['run_id']}/repair",
+                headers={"Authorization": "Bearer test-token-1234567890"},
+            )
+            assert denied.status_code == 409
+            assert "approve the fix plan hash" in denied.json()["detail"]
+    finally:
+        get_container.cache_clear()
+        get_settings.cache_clear()
