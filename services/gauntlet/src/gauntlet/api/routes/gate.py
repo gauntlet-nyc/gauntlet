@@ -126,7 +126,7 @@ async def get_gate_briefing_audio(run_id: str) -> Response:
 @router.get(
     "/runs/{run_id}/artifacts/{artifact_id}",
     response_class=Response,
-    responses={200: {"content": {"image/png": {}, "application/json": {}}}},
+    responses={200: {"content": {"image/png": {}, "image/jpeg": {}, "application/json": {}}}},
 )
 async def get_gate_artifact(run_id: str, artifact_id: str) -> Response:
     """Serves stored evidence bytes only by exact run and artifact ID."""

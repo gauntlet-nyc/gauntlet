@@ -2036,6 +2036,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                    "image/jpeg": unknown;
                     "image/png": unknown;
                 };
             };

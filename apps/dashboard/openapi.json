@@ -4080,6 +4080,7 @@
           "200": {
             "content": {
               "application/json": {},
+              "image/jpeg": {},
               "image/png": {}
             },
             "description": "Successful Response"
