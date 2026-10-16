@@ -804,3 +804,24 @@ This proves saved-plan transport through the real local browser/oracle path. It
 does not establish blind model proposal quality, hosted fixture attestation,
 restrictive proxy policy, or a final paired Gate classification. Both reports
 retain `gate_status=not_tested`. Servers were stopped after the probes.
+
+### Azure OpenAI planner stand-in (2026-10-16)
+
+Decision (A, owner): use Azure OpenAI as a **development stand-in** for the
+planner's model port until Bedrock access exists. `integrations/azure_openai.py`
+calls the chat-completions REST API with the existing `httpx` dependency, so no
+new SDK was added. One attempt, 5 s connect / 60 s read, no redirects or proxy
+environment, JSON response format, bounded input/output, and provider error text
+never surfaced. Output goes through the same plan validator and freeze as
+Bedrock. Probe reports carry `provider: azure` and `sponsor_evidence: false`.
+
+Run: put `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_DEPLOYMENT`, `AZURE_OPENAI_API_KEY`
+(optional `AZURE_OPENAI_API_VERSION`, `AZURE_OPENAI_REASONING_MODEL=1` for
+o-series) in `.env.local`, then
+`set -a; source .env.local; set +a; RUN_LIVE_INTEGRATIONS=1 uv run python
+scripts/probe_p1_model_plan.py --provider azure --repository <fixture-repo>
+--change-request <change.json> --output <new-file> --execute --authorize-spend`.
+
+Offline only so far: request shape and failure handling are checked with an
+`httpx` mock transport. **Live Azure result: NOT RUN.** Bedrock remains the
+sponsor integration and still needs its own live run.
