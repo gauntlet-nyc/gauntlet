@@ -120,6 +120,17 @@ class SdkAnchorRuntime:
             require_proxy=require_proxy,
         )
 
+    @classmethod
+    def without_proxy(cls, *, api_key: str) -> "SdkAnchorRuntime":
+        """GAUNTLET_ANCHOR_REQUIRE_PROXY=0 path: no egress proxy, weaker isolation (logged)."""
+        return cls.from_credentials(
+            api_key=api_key,
+            proxy_server=None,
+            proxy_username=None,
+            proxy_password=None,
+            require_proxy=False,
+        )
+
     async def open(self) -> SdkAnchorConnection:
         if os.environ.get("RUN_LIVE_INTEGRATIONS") != "1":
             raise EnvironmentUnavailableError("live Anchor integration is not enabled")

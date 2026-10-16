@@ -1,73 +1,182 @@
-"""The one typed settings module. Every environment variable Gauntlet reads is declared here.
+"""The one typed settings module. Every setting and key is read from environment variables here.
 
-Rules:
-- Values come only from the process environment (or a Mapping passed in tests).
-- Errors and reports name variables, never values. Secrets are wrapped in `Secret`, whose
-  repr/str are masked; call `.reveal()` only at the adapter boundary.
-- Placeholder values from `.env.example` (containing `REPLACE_`) count as unset.
-- An unset integration is `None`; `require(...)` raises `MissingSettingError("missing KEY")`.
+Rules: secrets are wrapped so they never print; a missing key raises ``MissingSettingError``
+naming only the variable (never a value); callers choose a labeled offline fallback instead of
+silently mocking a live provider.
 """
-
-from __future__ import annotations
 
 import os
 from collections.abc import Mapping
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, field, fields
 from pathlib import Path
-from typing import Final, Literal
+from typing import Final, Literal, get_args
 from urllib.parse import urlsplit
 
-ModelProvider = Literal["azure", "bedrock"]
+ModelProvider = Literal["scripted", "azure", "bedrock"]
+SandboxKind = Literal["fake", "local", "daytona"]
+BrowserKind = Literal["fake", "local", "anchor"]
+
+_TRUE: Final = frozenset({"1", "true", "yes", "on"})
+_FALSE: Final = frozenset({"0", "false", "no", "off", ""})
+_PLACEHOLDER_MARKERS: Final = ("REPLACE_", "REPLACE-", "CHANGE_ME", "CHANGEME")
 
 
 class SettingsError(ValueError):
-    """Invalid configuration. The message names variables only."""
+    """Invalid configuration. The message names variables, never values."""
 
 
-class MissingSettingError(SettingsError):
+class MissingSettingError(SettingsError, RuntimeError):
+    """Required environment variable(s) unset. The message names the variables only."""
+
     def __init__(self, *names: str) -> None:
-        self.names = names
         super().__init__("missing " + ", ".join(names))
+        self.name = names[0] if len(names) == 1 else ", ".join(names)
+        self.names = names
 
 
+class InvalidSettingError(SettingsError):
+    def __init__(self, name: str, expected: str) -> None:
+        super().__init__(f"invalid {name}: expected {expected}")
+        self.name = name
+
+
+@dataclass(frozen=True)
 class Secret:
-    """A credential that never prints. Equality is deliberately identity-free of value leaks."""
+    """Opaque secret value. ``str()``/``repr()`` never reveal it; call ``reveal()`` at use."""
 
-    __slots__ = ("_value",)
-
-    def __init__(self, value: str) -> None:
-        self._value = value
+    _value: str = field(repr=False)
 
     def reveal(self) -> str:
         return self._value
 
-    def __repr__(self) -> str:
-        return "Secret('***')"
+    def __str__(self) -> str:
+        return "Secret(**********)"
 
-    __str__ = __repr__
-
-    def __eq__(self, other: object) -> bool:
-        return isinstance(other, Secret) and other._value == self._value
-
-    def __hash__(self) -> int:
-        return hash(("secret", self._value))
+    __repr__ = __str__
 
 
-_PLACEHOLDER_MARKERS: Final = ("REPLACE_", "REPLACE-", "CHANGE_ME", "CHANGEME")
+def _read(env: Mapping[str, str], name: str) -> str | None:
+    value = env.get(name)
+    if value is None:
+        return None
+    value = value.strip()
+    # Template placeholders from .env.example count as unset.
+    if not value or any(marker in value.upper() for marker in _PLACEHOLDER_MARKERS):
+        return None
+    return value
 
+
+def _flag(env: Mapping[str, str], name: str, default: bool) -> bool:
+    raw = env.get(name)
+    if raw is None:
+        return default
+    lowered = raw.strip().lower()
+    if lowered in _TRUE:
+        return True
+    if lowered in _FALSE:
+        return False
+    raise InvalidSettingError(name, "0 or 1")
+
+
+def _choice[T: str](env: Mapping[str, str], name: str, options: tuple[T, ...], default: T) -> T:
+    raw = _read(env, name)
+    if raw is None:
+        return default
+    for option in options:
+        if raw == option:
+            return option
+    raise InvalidSettingError(name, " | ".join(options))
+
+
+def _int(env: Mapping[str, str], name: str, default: int, *, low: int, high: int) -> int:
+    raw = _read(env, name)
+    if raw is None:
+        return default
+    try:
+        value = int(raw)
+    except ValueError:
+        raise InvalidSettingError(name, f"integer {low}..{high}") from None
+    if not low <= value <= high:
+        raise InvalidSettingError(name, f"integer {low}..{high}")
+    return value
+
+
+@dataclass(frozen=True)
+class Settings:
+    env: Mapping[str, str] = field(repr=False)
+    model_provider: ModelProvider
+    run_live_integrations: bool
+    artifact_dir: Path
+    max_run_seconds: int
+    anchor_require_proxy: bool
+
+    @classmethod
+    def from_env(cls, env: Mapping[str, str] | None = None) -> "Settings":
+        source = dict(os.environ if env is None else env)
+        return cls(
+            env=source,
+            model_provider=_choice(
+                source, "GAUNTLET_MODEL_PROVIDER", get_args(ModelProvider), "scripted"
+            ),
+            run_live_integrations=_flag(source, "RUN_LIVE_INTEGRATIONS", False),
+            artifact_dir=Path(_read(source, "GAUNTLET_ARTIFACT_DIR") or "./artifacts"),
+            max_run_seconds=_int(source, "GAUNTLET_MAX_RUN_SECONDS", 1800, low=60, high=7200),
+            # Default is the safer setting; the demo sets 0 explicitly (weaker isolation).
+            anchor_require_proxy=_flag(source, "GAUNTLET_ANCHOR_REQUIRE_PROXY", True),
+        )
+
+    # -- plain values ------------------------------------------------------------------------
+
+    def optional(self, name: str) -> str | None:
+        return _read(self.env, name)
+
+    def require(self, name: str) -> str:
+        value = _read(self.env, name)
+        if value is None:
+            raise MissingSettingError(name)
+        return value
+
+    def secret(self, name: str) -> Secret:
+        return Secret(self.require(name))
+
+    def flag(self, name: str, default: bool = False) -> bool:
+        return _flag(self.env, name, default)
+
+    def missing(self, *names: str) -> tuple[str, ...]:
+        """Names of unset variables, for a readiness report. Never returns values."""
+        return tuple(name for name in names if _read(self.env, name) is None)
+
+    def integrations(self) -> "IntegrationSettings":
+        """Every provider section, validated (see `load_settings`)."""
+        return load_settings(self.env)
+
+    def require_live(self, provider: str) -> None:
+        if not self.run_live_integrations:
+            raise MissingSettingError(f"RUN_LIVE_INTEGRATIONS=1 (required for live {provider})")
+
+
+AZURE_KEYS: Final = ("AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_DEPLOYMENT", "AZURE_OPENAI_API_KEY")
+BEDROCK_KEYS: Final = ("BEDROCK_MODEL_ID", "AWS_REGION")
+DAYTONA_KEYS: Final = ("DAYTONA_API_KEY", "DAYTONA_TARGET")
+ANCHOR_KEYS: Final = ("ANCHOR_API_KEY",)
+ANCHOR_PROXY_KEYS: Final = ("ANCHOR_PROXY_SERVER", "ANCHOR_PROXY_USERNAME", "ANCHOR_PROXY_PASSWORD")
+LOCAL_ORIGIN_KEYS: Final = ("CARTWHEEL_BASE_ORIGIN", "CARTWHEEL_HEAD_ORIGIN")
+
+
+# ---- Typed provider sections (Session 2) ----------------------------------------
 
 class _Env:
+    """Typed reads for the provider sections; same placeholder rules as `_read`."""
+
     def __init__(self, environ: Mapping[str, str]) -> None:
         self._environ = environ
 
+    @property
+    def environ(self) -> Mapping[str, str]:
+        return self._environ
+
     def get(self, name: str) -> str | None:
-        raw = self._environ.get(name)
-        if raw is None:
-            return None
-        value = raw.strip()
-        if not value or any(marker in value.upper() for marker in _PLACEHOLDER_MARKERS):
-            return None
-        return value
+        return _read(self._environ, name)
 
     def flag(self, name: str, default: bool) -> bool:
         value = self.get(name)
@@ -225,7 +334,7 @@ DEFAULT_ARIZE_OTLP_ENDPOINT: Final = "https://otlp.arize.com/v1/traces"
 
 
 @dataclass(frozen=True)
-class Settings:
+class IntegrationSettings:
     core: CoreSettings
     model_provider: ModelProvider
     azure_openai: AzureOpenAISettings | None
@@ -328,7 +437,7 @@ def _load_reviewers(env: _Env) -> ReviewerSettings | None:
     return ReviewerSettings(tokens=tuple(tokens))
 
 
-def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
+def load_settings(environ: Mapping[str, str] | None = None) -> IntegrationSettings:
     """Validate every variable once. Raises `SettingsError` naming the bad variables."""
     env = _Env(os.environ if environ is None else environ)
     core = CoreSettings(
@@ -354,9 +463,9 @@ def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
     if core.log_level not in {"DEBUG", "INFO", "WARNING", "ERROR"}:
         raise SettingsError("GAUNTLET_LOG_LEVEL must be DEBUG, INFO, WARNING or ERROR")
 
-    provider = (env.get("GAUNTLET_MODEL_PROVIDER") or "azure").lower()
-    if provider not in {"azure", "bedrock"}:
-        raise SettingsError("GAUNTLET_MODEL_PROVIDER must be azure or bedrock")
+    provider = _choice(
+        env.environ, "GAUNTLET_MODEL_PROVIDER", get_args(ModelProvider), "scripted"
+    )
 
     azure = None
     azure_values = {
@@ -474,9 +583,9 @@ def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
             webhook_proxy_url=env.url("GITHUB_WEBHOOK_PROXY_URL", schemes=frozenset({"https"})),
         )
 
-    settings = Settings(
+    settings = IntegrationSettings(
         core=core,
-        model_provider="bedrock" if provider == "bedrock" else "azure",
+        model_provider=provider,
         azure_openai=azure,
         bedrock=bedrock,
         daytona=daytona,
@@ -491,6 +600,6 @@ def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
     return settings
 
 
-def require_live(settings: Settings) -> None:
+def require_live(settings: IntegrationSettings) -> None:
     if not settings.core.run_live_integrations:
         raise MissingSettingError("RUN_LIVE_INTEGRATIONS=1")

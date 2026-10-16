@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from gauntlet.application.gate.pair_verdict import (
+    AttemptRejection,
     GateAttempt,
     PairedGateVerdict,
     adjudicate_ui_pair,
@@ -273,3 +274,45 @@ def test_absent_head_is_not_tested() -> None:
 def test_absent_head_with_base_failures_is_still_not_tested() -> None:
     base = (attempt("base", 1, OracleOutcome.FAIL), attempt("base", 2, OracleOutcome.FAIL))
     assert pair((), base).verdict.status is GateStatus.NOT_TESTED
+
+
+def test_attack_citing_a_base_line_is_adjudicated_not_rejected() -> None:
+    # The plan validator accepts base citations (e.g. a removed guard line).
+    cited_base = ATTACK.model_copy(
+        update={"source_refs": (ATTACK.source_refs[0].model_copy(update={"sha": BASE}),)}
+    )
+    result = adjudicate_ui_pair(
+        change=CHANGE,
+        attack=cited_base,
+        run_id="run-pair",
+        fixture_checksum=CHECKSUM,
+        head=(attempt("head", 1, OracleOutcome.FAIL), attempt("head", 2, OracleOutcome.FAIL)),
+        base=(attempt("base", 1, OracleOutcome.PASS), attempt("base", 2, OracleOutcome.PASS)),
+    )
+    assert result.verdict.status is GateStatus.CONFIRMED_REGRESSION
+
+
+def test_attack_citing_an_unrelated_revision_is_rejected() -> None:
+    foreign = ATTACK.model_copy(
+        update={"source_refs": (ATTACK.source_refs[0].model_copy(update={"sha": "d" * 40}),)}
+    )
+    with pytest.raises(ValueError, match="base or head"):
+        adjudicate_ui_pair(
+            change=CHANGE,
+            attack=foreign,
+            run_id="run-pair",
+            fixture_checksum=CHECKSUM,
+            head=(),
+            base=(),
+        )
+
+
+def test_environment_classification_uses_typed_reasons() -> None:
+    assert AttemptRejection.IDENTITY_MISMATCH.is_environment_problem
+    assert AttemptRejection.ENVIRONMENT_ERROR.is_environment_problem
+    assert not any(
+        reason.is_environment_problem
+        for reason in AttemptRejection
+        if reason
+        not in {AttemptRejection.IDENTITY_MISMATCH, AttemptRejection.ENVIRONMENT_ERROR}
+    )

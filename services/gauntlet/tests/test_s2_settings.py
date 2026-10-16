@@ -24,7 +24,7 @@ SECRET_VALUE = "synthetic-test-value-0123456789"
 def test_empty_environment_loads_with_everything_unset() -> None:
     settings = load_settings({})
     assert settings.core.run_live_integrations is False
-    assert settings.model_provider == "azure"
+    assert settings.model_provider == "scripted"
     assert settings.readiness()["arize"] == "unset"
     with pytest.raises(MissingSettingError, match="missing ARIZE_API_KEY, ARIZE_SPACE_ID"):
         require("arize", settings.arize)
@@ -50,7 +50,7 @@ def test_secrets_never_print() -> None:
     assert SECRET_VALUE not in repr(settings)
     assert SECRET_VALUE not in str(settings.readiness())
     assert settings.arize.api_key.reveal() == SECRET_VALUE
-    assert repr(Secret("x")) == "Secret('***')"
+    assert "x" not in repr(Secret("x"))
 
 
 def test_partial_section_is_an_error_naming_keys_only() -> None:
@@ -65,7 +65,7 @@ def test_partial_section_is_an_error_naming_keys_only() -> None:
     [
         ("GAUNTLET_MAX_RUN_SECONDS", "abc"),
         ("RUN_LIVE_INTEGRATIONS", "maybe"),
-        ("GAUNTLET_MODEL_PROVIDER", "openai"),
+        ("GAUNTLET_MODEL_PROVIDER", "openai-x"),
         ("GAUNTLET_ANCHOR_REQUIRE_PROXY", "2"),
     ],
 )

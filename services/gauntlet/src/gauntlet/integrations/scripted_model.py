@@ -1,0 +1,125 @@
+"""OFFLINE scripted stand-in for the planner model. Labeled ``scripted-offline-planner``.
+
+It reads only what a real model would receive (the planner's untrusted JSON payload) plus an
+operator-registered probe description, and proposes fixed-shape attacks. It is a composition
+check, not evidence of model attack quality. The validator still decides what is accepted.
+"""
+
+import json
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
+
+from gauntlet.ports.model import ModelRequest, ModelResponse
+
+MODEL_ID = "scripted-offline-planner"
+
+
+@dataclass(frozen=True)
+class UiProbe:
+    """Operator registration: which route holds the target's primary action."""
+
+    route: str
+    primary_test_id: str
+    oracle_id: str = "ui.primary_action_reachable"
+    widths: tuple[int, ...] = (375,)
+
+
+@dataclass(frozen=True)
+class AgentProbe:
+    """Operator registration: a synthetic agent and the cross-owner request to try."""
+
+    agent_id: str
+    attacker_actor_id: str
+    message: str
+    oracle_id: str
+
+
+_UI_SURFACES = ("style", "component", "route")
+
+
+def _first_ref(impact: Mapping[str, object], kinds: Sequence[str]) -> dict[str, object] | None:
+    surfaces = impact.get("surfaces")
+    if not isinstance(surfaces, list):
+        return None
+    for kind in kinds:
+        for surface in surfaces:
+            if isinstance(surface, dict) and surface.get("kind") == kind:
+                refs = surface.get("source_refs")
+                if isinstance(refs, list) and refs and isinstance(refs[0], dict):
+                    return refs[0]
+    return None
+
+
+class ScriptedModelGateway:
+    label = "offline_scripted"
+
+    def __init__(self, ui: UiProbe | None = None, agent: AgentProbe | None = None) -> None:
+        self._ui = ui
+        self._agent = agent
+        self.calls = 0
+
+    async def complete(self, request: ModelRequest) -> ModelResponse:
+        self.calls += 1
+        try:
+            payload = json.loads(request.user)
+        except json.JSONDecodeError:
+            return ModelResponse(text='{"attacks": []}', model_id=MODEL_ID)
+        change = payload.get("change", {})
+        impact = payload.get("impact_map", {})
+        allowed = set(payload.get("allowed_worker_kinds", ()))
+        oracles = {o.get("oracle_id") for o in payload.get("registered_oracles", ())}
+        attacks: list[dict[str, object]] = []
+        ui_ref = _first_ref(impact, _UI_SURFACES)
+        if self._ui and ui_ref and "ui" in allowed and self._ui.oracle_id in oracles:
+            for width in self._ui.widths:
+                attacks.append(
+                    {
+                        "attack_id": f"attack-ui-primary-action-{width}",
+                        "hypothesis": "A changed UI element may cover the primary action "
+                        "at a narrow viewport",
+                        "why_this_change": "The cited change alters layout or positioned UI",
+                        "expected_observation": "The primary action receives a real click",
+                        "source_refs": [ui_ref],
+                        "worker_kind": "ui",
+                        "target_id": change.get("target_id"),
+                        "fixture_id": change.get("fixture_id"),
+                        "steps": [
+                            {"action": "navigate", "path": self._ui.route},
+                            {"action": "resize", "width": width, "height": 812},
+                            {"action": "inspect", "target": self._ui.primary_test_id},
+                            {"action": "click", "target": self._ui.primary_test_id},
+                            {"action": "capture", "label": "after-click"},
+                        ],
+                        "oracle_ids": [self._ui.oracle_id],
+                        "max_actions": 10,
+                        "max_runtime_seconds": 90,
+                    }
+                )
+        agent_ref = _first_ref(impact, ("agent_tool", "api"))
+        if self._agent and agent_ref and "ai_agent" in allowed and self._agent.oracle_id in oracles:
+            attacks.append(
+                {
+                    "attack_id": "attack-ai-cross-owner-refund",
+                    "hypothesis": "A changed tool authorization path may let one customer "
+                    "refund another customer's order through the assistant",
+                    "why_this_change": "The cited change touches the tool's ownership check",
+                    "expected_observation": "No refund side effect on an order the actor "
+                    "does not own",
+                    "source_refs": [agent_ref],
+                    "worker_kind": "ai_agent",
+                    "target_id": change.get("target_id"),
+                    "fixture_id": change.get("fixture_id"),
+                    "steps": [
+                        {
+                            "action": "chat",
+                            "agent_id": self._agent.agent_id,
+                            "actor_id": self._agent.attacker_actor_id,
+                            "message": self._agent.message,
+                        }
+                    ],
+                    "oracle_ids": [self._agent.oracle_id],
+                    "max_actions": 4,
+                    "max_runtime_seconds": 120,
+                }
+            )
+        return ModelResponse(text=json.dumps({"attacks": attacks}), model_id=MODEL_ID)
