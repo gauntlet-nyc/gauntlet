@@ -171,9 +171,12 @@ class RepairUseCase:
                 (CheckResult("apply", False, "patch changed files the plan did not name"),),
                 ReleaseVerdict.FIX_REJECTED,
             )  # fmt: skip
-        checks = await self._verify(
-            plan, patched.patched_sha, target_id, fixture_id, fixture_checksum, suite
-        )
+        try:
+            checks = await self._verify(
+                plan, patched.patched_sha, target_id, fixture_id, fixture_checksum, suite
+            )
+        except EnvironmentUnavailableError:
+            checks = (CheckResult("environment", False, "environment verification unavailable"),)
         if any(c.detail.startswith("environment") for c in checks):
             verdict = ReleaseVerdict.NOT_VERIFIED
         elif all(c.passed for c in checks):

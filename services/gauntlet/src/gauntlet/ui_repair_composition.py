@@ -23,7 +23,12 @@ from gauntlet.integrations.local_browser import LocalBrowserProvider, Playwright
 from gauntlet.integrations.patch_runner import GitWorktreePatchRunner
 from gauntlet.integrations.ui_repair_checks import check_ui_features
 from gauntlet.integrations.ui_repair_sandbox import LocalUIRepairSandbox
-from gauntlet.ports import ArtifactStore, EnvironmentHandle, SandboxProvider
+from gauntlet.ports import (
+    ArtifactStore,
+    EnvironmentHandle,
+    EnvironmentUnavailableError,
+    SandboxProvider,
+)
 from gauntlet.settings import ModelProvider, Settings
 from gauntlet.verification.registry import RegisteredOracleRegistry
 from gauntlet.verification.stored_browser import StoredBrowserOracle
@@ -43,10 +48,13 @@ class LocalRepairExecutor:
     async def attempt(
         self, attack: AttackSpec, environment: EnvironmentHandle, subject: EvidenceSubject
     ) -> GateAttempt:
-        from playwright.async_api import async_playwright
+        from playwright.async_api import Error, async_playwright
 
         async with async_playwright() as pw:
-            browser = await pw.chromium.launch(executable_path=self.chromium, headless=True)
+            try:
+                browser = await pw.chromium.launch(executable_path=self.chromium, headless=True)
+            except Error as exc:
+                raise EnvironmentUnavailableError("local repair browser unavailable") from exc
             try:
                 provider = LocalBrowserProvider(
                     cast(PlaywrightBrowser, browser), BrowserEvidenceCollector(self.artifacts)

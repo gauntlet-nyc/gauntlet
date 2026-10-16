@@ -70,3 +70,32 @@ def test_configured_ui_run_has_executable_plan_but_requires_approval(
     finally:
         get_container.cache_clear()
         get_settings.cache_clear()
+
+
+def test_executor_environment_failure_returns_not_verified(tmp_path: Path) -> None:
+    from gauntlet.application.gate.repair import RepairUseCase
+    from gauntlet.ports import EnvironmentUnavailableError
+
+    async def run(
+        repair: RepairRuntime, plan: FixPlan, plan_hash: str, attack: AttackSpec, target: GateTarget
+    ) -> None:
+        class UnavailableExecutor:
+            collector = "browser_collector"
+
+            async def attempt(self, *args: object) -> None:
+                raise EnvironmentUnavailableError("browser unavailable")
+
+        use_case = RepairUseCase(replace(repair.use_case._deps, executor=UnavailableExecutor()))
+        approval_id = await approve(repair, plan, plan_hash, target)
+        report = await use_case.execute(
+            approval_id,
+            plan,
+            target_id=target.target_id,
+            fixture_id=target.fixture_id,
+            fixture_checksum=target.fixture_checksum,
+            suite=refund_verification_suite(target, attack),
+        )
+        assert report.verdict is ReleaseVerdict.NOT_VERIFIED
+        assert report.checks[0].detail.startswith("environment")
+
+    scenario(tmp_path, run)

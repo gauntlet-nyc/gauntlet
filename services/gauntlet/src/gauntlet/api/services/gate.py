@@ -467,11 +467,16 @@ class GateService:
             memory=self.memory,
         )
         keep_open = False
+        proposal_error: str | None = None
         try:
             report = await runtime.use_case.execute(
                 run_id, execution_change, target.fixture_checksum
             )
-            keep_open = await self._prepare_repair(record, runtime, target, report, core, model)
+            try:
+                keep_open = await self._prepare_repair(record, runtime, target, report, core, model)
+            except (MissingSettingError, RuntimeError, ValueError, ImportError, PortError) as exc:
+                # A repair proposal is optional; never discard verified Gate evidence.
+                proposal_error = type(exc).__name__
         finally:
             if not keep_open:
                 await runtime.aclose()
@@ -564,7 +569,19 @@ class GateService:
                 "fix_plan": fix_view,
                 "memory_fact_ids_used": [f for f in used.split(",") if f],
                 "memory_facts_written": written,
-                "events": list(report.events),
+                "events": list(report.events)
+                + (
+                    [
+                        _event(
+                            run_id,
+                            len(report.events) + 1,
+                            "fix_proposal_unavailable",
+                            {"error_type": proposal_error},
+                        )
+                    ]
+                    if proposal_error
+                    else []
+                ),
                 "provenance": provenance,
             }
         )
@@ -593,7 +610,16 @@ class GateService:
         if "ai_agent" not in runtime.routes and not ui_repair:
             return False
         confirmed = [
-            o for o in report.outcomes if o.finding.status is GateStatus.CONFIRMED_REGRESSION
+            o
+            for o in report.outcomes
+            if o.finding.status is GateStatus.CONFIRMED_REGRESSION
+            and (
+                not ui_repair
+                or (
+                    o.attack.worker_kind == "ui"
+                    and o.attack.oracle_ids == ("ui.primary_action_reachable",)
+                )
+            )
         ]
         if not confirmed:
             return False
