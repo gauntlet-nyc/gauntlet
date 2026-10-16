@@ -311,6 +311,7 @@ class ElevenLabsSettings:
     agent_id: str
     webhook_secret: Secret
     public_base_url: str | None
+    voice_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -560,6 +561,7 @@ def load_settings(environ: Mapping[str, str] | None = None) -> IntegrationSettin
             agent_id=str(eleven_values["ELEVENLABS_AGENT_ID"]),
             webhook_secret=env.secret("VOICE_WEBHOOK_SECRET") or Secret(""),
             public_base_url=env.url("PUBLIC_BASE_URL", schemes=frozenset({"https"})),
+            voice_id=env.get("ELEVENLABS_VOICE_ID"),
         )
 
     github = None
