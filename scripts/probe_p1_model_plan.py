@@ -2,6 +2,7 @@
 
 import argparse
 import asyncio
+import hashlib
 import importlib.metadata
 import json
 import os
@@ -15,7 +16,7 @@ from gauntlet.application.gate import PlanChangeDependencies, PlanChangeUseCase
 from gauntlet.contracts import ChangeRequest, RunEvent
 from gauntlet.integrations.bedrock import create_bedrock_gateway
 from gauntlet.integrations.fake.storage import FakeRunStore
-from gauntlet.planning import AttackPlanner, FrozenPlan, PlanningLimits
+from gauntlet.planning import AttackPlanner, FrozenPlan, PlanningLimits, serialize_frozen_plan
 from gauntlet.ports.errors import EnvironmentUnavailableError
 from gauntlet.ports.model import ModelGateway
 from gauntlet.verification.registry import RegisteredOracleRegistry
@@ -128,8 +129,9 @@ def main(argv: list[str] | None = None) -> int:
     error_type: str | None = None
     try:
         gateway = create_bedrock_gateway(model_id=args.model_id, region=args.region)
+        instructions = INSTRUCTIONS.read_text()
         frozen, events = asyncio.run(
-            freeze_live_plan(args.repository, change, gateway, INSTRUCTIONS.read_text())
+            freeze_live_plan(args.repository, change, gateway, instructions)
         )
     except Exception as exc:
         error_type = type(exc).__name__
@@ -167,6 +169,11 @@ def main(argv: list[str] | None = None) -> int:
     published = False
     temp_path: Path | None = None
     try:
+        report["frozen_plan"] = json.loads(
+            serialize_frozen_plan(
+                frozen, prompt_sha256=hashlib.sha256(instructions.encode("utf-8")).hexdigest()
+            )
+        )
         with tempfile.NamedTemporaryFile(
             mode="w", encoding="utf-8", dir=args.output.parent, delete=False
         ) as temp:
@@ -179,7 +186,15 @@ def main(argv: list[str] | None = None) -> int:
         published = True
     except Exception as exc:
         report.update(status="environment_error", error_type=type(exc).__name__)
-        print(json.dumps({key: value for key, value in report.items() if key != "attacks"}))
+        print(
+            json.dumps(
+                {
+                    key: value
+                    for key, value in report.items()
+                    if key not in {"attacks", "frozen_plan"}
+                }
+            )
+        )
         return 1
     finally:
         try:
@@ -189,7 +204,8 @@ def main(argv: list[str] | None = None) -> int:
             _release_reservation(args.output, reservation, published=published)
     print(
         json.dumps(
-            {key: value for key, value in report.items() if key != "attacks"}, sort_keys=True
+            {key: value for key, value in report.items() if key not in {"attacks", "frozen_plan"}},
+            sort_keys=True,
         )
     )
     return 0
