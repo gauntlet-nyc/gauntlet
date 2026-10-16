@@ -15,7 +15,7 @@ import {
   type Node,
   type NodeProps,
 } from "@xyflow/react";
-import { Brain, FileText, Scale } from "lucide-react";
+import { Brain, FileText } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 
 import { TONE_CLASSES, toneOf } from "@/components/shared";
@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 import { EXPOSURE_LABEL, NODE_KIND_LABELS } from "./model";
 
 const COL_X = { trigger: 0, memory: 330, decision: 700 } as const;
-const ROW_H = 88;
+const ROW_H = 72;
 const GROUP_GAP = 28;
 const FIT_PADDING = 0.12;
 const EDGE_COLOR = { neutral: "oklch(1 0 0 / 22%)", tainted: "var(--regression)" } as const;
@@ -73,20 +73,13 @@ function DecisionNodeView({ data }: NodeProps<DecisionNode>) {
   return (
     <div
       className={cn(
-        "bg-card w-[200px] cursor-pointer rounded-lg border px-3 py-2.5 shadow-sm transition-colors",
+        "bg-card w-[176px] cursor-pointer rounded-lg border px-3 py-2 shadow-sm transition-colors",
         "hover:bg-accent",
         data.selected ? "border-foreground/60 ring-foreground/20 ring-2" : tone.border,
       )}
     >
       <Handle type="target" position={Position.Left} className={HIDDEN_HANDLE} />
-      <div className="text-muted-foreground flex items-center justify-between text-[10px] font-medium tracking-wide uppercase">
-        <span className="flex items-center gap-1.5">
-          <Scale className="size-3" aria-hidden />
-          Decision
-        </span>
-        <span>{data.exposure}</span>
-      </div>
-      <div className="mt-1 font-mono text-sm font-medium">{data.id}</div>
+      <div className="font-mono text-sm font-medium">{data.id}</div>
       <div className={cn("mt-0.5 flex items-center gap-1.5 text-[11px] font-medium", tone.text)}>
         <span className={cn("size-1.5 rounded-full", tone.dot)} aria-hidden />
         {data.classification.replaceAll("_", " ")}
@@ -190,7 +183,7 @@ function Graph({
   }, [fitView]);
 
   return (
-    <div ref={box} className="h-[460px] w-full min-w-[720px] sm:h-[560px]">
+    <div ref={box} className="h-[340px] w-full min-w-[720px] sm:h-[480px]">
       <ReactFlow
         nodes={nodes}
         edges={edges}

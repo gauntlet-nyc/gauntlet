@@ -53,8 +53,7 @@ function flowFor(runs: readonly MemoryRun[], facts: ReadonlyMap<string, MemoryFa
     {
       icon: "oracle",
       eyebrow: "Oracle decides",
-      title: "Verdict",
-      detail: "Decided by the oracle, independent of memory",
+      detail: "Independent of memory",
       status: reader.status,
     },
   );
@@ -81,7 +80,6 @@ export default async function MemoryPage() {
         description="Confirmed findings become cited facts that later plans can use. Memory is evidence for planning, never the oracle."
         actions={<OfflineBadge provenance={[view.provenance]} />}
       />
-
 
       {flow && (
         <div className="mt-2">

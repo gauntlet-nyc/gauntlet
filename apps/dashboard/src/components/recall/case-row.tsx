@@ -73,7 +73,7 @@ export function CaseRow({
           <span className="text-muted-foreground col-start-2 col-end-4 truncate text-sm sm:col-auto">{result}</span>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="grid gap-5 px-4 pt-1 pb-5 pl-11 sm:grid-cols-[1fr_1fr_1.4fr]">
+          <div className="grid gap-5 px-4 pt-1 pb-5 pl-12 sm:grid-cols-[1fr_1fr_1.4fr]">
             <OutcomeColumn label="Original (recorded)" outcome={original} />
             <OutcomeColumn
               label={`Without ${trigger}`}

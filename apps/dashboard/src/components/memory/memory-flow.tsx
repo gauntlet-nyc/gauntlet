@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 export interface FlowStep {
   icon: "run" | "fact" | "plan" | "oracle";
   eyebrow: string;
-  title: ReactNode;
+  title?: ReactNode;
   detail: ReactNode;
   status?: string;
   emphasis?: boolean;
@@ -66,13 +66,13 @@ export function MemoryFlow({ steps, links }: { steps: readonly FlowStep[]; links
                   {s.eyebrow}
                 </span>
               </div>
-              <div className="mt-1.5 truncate font-mono text-sm font-medium">{s.title}</div>
-              <div className="text-muted-foreground mt-0.5 text-xs">{s.detail}</div>
+              {s.title && <div className="mt-1.5 truncate font-mono text-sm font-medium">{s.title}</div>}
               {s.status && (
-                <div className="mt-2">
+                <div className="mt-1.5">
                   <StatusPill value={s.status} />
                 </div>
               )}
+              <div className="text-muted-foreground mt-0.5 text-xs">{s.detail}</div>
             </motion.div>
           </div>
         );

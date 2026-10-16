@@ -33,7 +33,7 @@ export function RecallSummary({
     { value: notReplayable, label: "not replayable", tone: "unknown" },
   ];
   return (
-    <div className="flex flex-col gap-4 border-y py-4 md:flex-row md:items-baseline md:justify-between">
+    <div className="flex flex-col gap-3 border-b pb-5 md:flex-row md:items-baseline md:justify-between">
       <div className="grid grid-cols-2 gap-x-8 gap-y-3 sm:flex sm:items-baseline sm:gap-0 sm:divide-x">
         {figures.map((f) => (
           <div key={f.label} className="flex items-baseline gap-2 sm:px-6 sm:first:pl-0">
@@ -42,7 +42,7 @@ export function RecallSummary({
             </span>
             <span className="text-muted-foreground text-sm">
               {f.label}
-              {f.detail && <span className="block text-xs">{f.detail}</span>}
+              {f.detail && <span className="text-muted-foreground/80 block text-xs sm:ml-1.5 sm:inline">({f.detail})</span>}
             </span>
           </div>
         ))}

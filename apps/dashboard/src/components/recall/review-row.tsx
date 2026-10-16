@@ -109,7 +109,7 @@ export function ReviewRow({
           <div className="flex shrink-0 items-center gap-2 pl-14 md:pl-0">
             {pending ? (
               <>
-                <Button type="submit" name="decision" value="approved" size="sm">
+                <Button type="submit" name="decision" value="approved" size="sm" variant="outline">
                   <ShieldCheck aria-hidden />
                   {APPROVE_LABEL}
                 </Button>
@@ -123,7 +123,7 @@ export function ReviewRow({
           </div>
         </div>
 
-        <div id={detailId} hidden={!open} className="space-y-3 px-4 pb-4 pl-[3.25rem] text-xs">
+        <div id={detailId} hidden={!open} className="space-y-3 px-4 pb-4 pl-[4.5rem] text-xs">
           <p className="text-sm">{WOULD_CHANGE[item.classification] ?? "Records a human decision. Nothing is executed."}</p>
           <div className="text-muted-foreground space-y-1">
             {evidence.decisions.length > 0 && (

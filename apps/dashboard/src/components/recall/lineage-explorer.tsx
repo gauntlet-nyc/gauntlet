@@ -67,7 +67,7 @@ export function LineageExplorer({
         <LineageGraph cases={cases.map((v) => v.c)} trigger={trigger} selected={open} onSelect={select} />
       </div>
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)} className="mt-10 gap-4">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)} className="mt-8 gap-4">
         <TabsList variant="line" className="h-9 gap-4 border-b w-full justify-start rounded-none p-0">
           <TabsTrigger value={TAB.cases} className="flex-none px-0">
             Cases <span className="text-muted-foreground tabular-nums">{cases.length}</span>
