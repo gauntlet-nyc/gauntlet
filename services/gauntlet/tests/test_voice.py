@@ -6,6 +6,8 @@ from datetime import timedelta
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
+
 from gauntlet.application.gate import AuthenticatedReviewer
 from gauntlet.application.voice import (
     REPLAY_REQUEST_TTL,
@@ -15,7 +17,6 @@ from gauntlet.application.voice import (
     open_replay_request,
 )
 from gauntlet.contracts import Finding, VoiceReplayRequest, VoiceToolCall
-from pydantic import ValidationError
 
 EXAMPLES = Path(__file__).resolve().parents[3] / "docs" / "contracts" / "examples"
 OPERATOR = AuthenticatedReviewer(reviewer_id="reviewer-rudra", channel="dashboard")
