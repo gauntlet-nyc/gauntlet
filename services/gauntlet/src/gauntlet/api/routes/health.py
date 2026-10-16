@@ -13,5 +13,5 @@ class HealthResponse(BaseModel):
 @router.get("/health")
 async def health() -> HealthResponse:
     return HealthResponse(
-        status="ok", mode="scaffold-only", provider_integrations="not-implemented"
+        status="ok", mode="offline-demo", provider_integrations="offline-tested, live NOT RUN"
     )

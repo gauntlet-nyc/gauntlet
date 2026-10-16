@@ -18,10 +18,10 @@ def test_packaged_offline_fixtures_match_canonical_goldens(name: str) -> None:
     assert packaged == (GOLDENS / name).read_bytes()
 
 
-def test_health_is_explicit_about_scaffold_state() -> None:
+def test_health_is_explicit_that_nothing_ran_live() -> None:
     resp = client.get("/health")
     assert resp.status_code == 200
-    assert resp.json()["provider_integrations"] == "not-implemented"
+    assert resp.json()["provider_integrations"] == "offline-tested, live NOT RUN"
 
 
 def test_fake_run_serves_frozen_golden_plan() -> None:
