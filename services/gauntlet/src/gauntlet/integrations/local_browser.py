@@ -85,6 +85,8 @@ class _Locator(Protocol):
 
     async def scroll_into_view_if_needed(self) -> None: ...
 
+    async def wait_for(self, *, state: str, timeout: float) -> None: ...
+
 
 class _Page(BrowserPage, Protocol):
     url: str
@@ -260,6 +262,9 @@ class ScopedPlaywrightProvider:
                 await page.set_viewport_size({"width": step.width, "height": step.height})
                 record = ActionRecord(step_index=step_index, action="resize", outcome="ok")
             elif isinstance(step, InspectStep):
+                # Completion markers may appear after an asynchronous form request.
+                # This wait is bounded and the worker's outer runtime budget still applies.
+                await page.get_by_test_id(step.target).wait_for(state="visible", timeout=1500)
                 record = await self._collector.inspect(
                     page, step.target, session.subject, step_index
                 )

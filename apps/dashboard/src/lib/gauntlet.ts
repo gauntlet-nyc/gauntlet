@@ -50,9 +50,47 @@ export function parseWithProvenance<T>(data: unknown): T {
   return withProvenance.parse(data) as unknown as T;
 }
 
-/** True when anything shown came from fakes, recordings or fixtures rather than a live run. */
-export function isOffline(provenance: readonly Provenance[]): boolean {
-  return provenance.length === 0 || provenance.some((p) => !p.live);
+export type ProvenanceMode = "offline" | "mixed" | "live" | "unknown";
+
+/** Classify the evidence supplied to this view, without inferring unlisted providers. */
+export function provenanceMode(provenance: readonly Provenance[]): ProvenanceMode {
+  if (provenance.length === 0) return "unknown";
+  const hasLive = provenance.some((p) => p.live);
+  const hasOffline = provenance.some((p) => !p.live);
+  if (hasLive && hasOffline) return "mixed";
+  return hasLive ? "live" : "offline";
+}
+
+export function provenanceBadge(provenance: readonly Provenance[]): { text: string; title: string } {
+  switch (provenanceMode(provenance)) {
+    case "offline":
+      return {
+        text: "OFFLINE / live NOT RUN",
+        title: "Data on this page comes from recordings, fixtures or fakes; no provider was contacted.",
+      };
+    case "mixed":
+      return {
+        text: "MIXED EVIDENCE",
+        title: "This view includes live and offline provider evidence. Check the provenance list for each source.",
+      };
+    case "live":
+      return {
+        text: "LIVE EVIDENCE",
+        title: "The listed provenance entries are live. Check the provenance list for their scope.",
+      };
+    case "unknown":
+      return { text: "PROVENANCE UNKNOWN", title: "No provider provenance was supplied for this view." };
+  }
+}
+
+/** Gate's static fixture diff is report context, not an execution adapter. */
+export function executionProvenance(provenance: readonly Provenance[]): Provenance[] {
+  return provenance.filter((p) => p.provider !== "cartwheel-templates");
+}
+
+/** The summary boolean covers offline and missing adapters, so it is not a live/offline verdict. */
+export function gateSummaryEvidence(offline: boolean): string {
+  return offline ? "Offline or unreported evidence" : "No offline execution reported";
 }
 
 export function shortSha(sha: string): string {

@@ -25,7 +25,13 @@ export default async function OfflineGatePage() {
         icon={FlaskConical}
         title="Offline gate (P0)"
         description="The first end-to-end gate: replayed golden observations judged by the real oracle path. No browser or sandbox runs here."
-        actions={<OfflineBadge provenance={[]} />}
+        actions={
+          <OfflineBadge
+            provenance={gate.execution_mode === "offline_recording"
+              ? [{ provider: "golden-recording", mode: "offline_recording", live: false, label: "Recorded golden observations" }]
+              : []}
+          />
+        }
       />
       <Reveal>
         <Card tone={gate.status}>

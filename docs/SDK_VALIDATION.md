@@ -1204,3 +1204,28 @@ creates; oracle/worker pairing), three consecutive runs each planned attacks on 
 the changed 900px breakpoint and returned `confirmed_regression` (below: head 2/2, base 0/2) and
 `passed` (at/above). One earlier run before the coverage rule planned desktop only and passed,
 so planner variance is real. Daytona/Anchor hosted Gate execution: in progress.
+
+### P9 browser workflow evidence (2026-10-16)
+
+`workflow.completion_marker_visible` is registered for the known Cartwheel checkout
+only when Gate uses a real local or Anchor browser. The trusted submit selector is
+`checkout-primary-action`; the source-reviewed completion marker is
+`order-receipt`. A blocked click stops the workflow and the hard oracle reads the
+bound click receipt and screenshot before returning `FAIL`. A visible completion
+marker after a received click returns `PASS`. Missing or corrupt artifacts remain
+`INCONCLUSIVE`. A missing asynchronous receipt currently produces an execution
+error/inconclusive result, not a confirmed completion failure.
+
+Headless local Chrome tests executed a successful synthetic checkout flow, an
+overlaid/blocked submit, and a delayed order receipt. The combined demo rehearsal
+passed offline. These tests do not establish a full live Cartwheel base/head
+workflow or an Anchor browser run on this branch.
+
+### Bedrock reasoning-model probe handoff (2026-10-16)
+
+The P1 opt-in planner probe now forwards the validated `BEDROCK_REASONING_MODEL`
+setting to `create_bedrock_gateway`, matching Gate composition. A local test using
+the real gateway code and synthetic Bedrock response confirmed reasoning blocks
+are skipped and no temperature is sent. Invalid settings stop before client
+construction. **Live Bedrock probe NOT RUN here:** the local AWS profile is not
+available (`ProfileNotFound`).

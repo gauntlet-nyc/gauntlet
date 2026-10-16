@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card as UiCard, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { classificationTone, isOffline, type Provenance } from "@/lib/gauntlet";
+import { classificationTone, provenanceBadge, type Provenance } from "@/lib/gauntlet";
 import { cn } from "@/lib/utils";
 
 export type Tone = "bad" | "good" | "unknown";
@@ -60,18 +60,18 @@ export function ToneIcon({ value, className }: { value: string; className?: stri
   return <Icon className={cn("size-4", TONE_CLASSES[tone].text, className)} aria-hidden />;
 }
 
-/** Shown whenever any data on the page came from fakes, recordings or fixtures. Compact by design. */
+/** Evidence scope remains visible for live, offline, mixed and unknown views. */
 export function OfflineBadge({ provenance }: { provenance: readonly Provenance[] }) {
-  if (!isOffline(provenance)) return null;
+  const badge = provenanceBadge(provenance);
   return (
     <span
       role="status"
       data-testid="offline-badge"
-      title="Data on this page comes from recordings, fixtures or fakes; no provider was contacted."
+      title={badge.title}
       className="border-inconclusive/25 bg-inconclusive/[0.06] text-inconclusive inline-flex h-6 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium whitespace-nowrap"
     >
       <FlaskConical className="size-3" aria-hidden />
-      OFFLINE / live NOT RUN
+      {badge.text}
     </span>
   );
 }

@@ -26,6 +26,7 @@ from gauntlet.planning import AttackPlanner, FrozenPlan, PlanningLimits, seriali
 from gauntlet.ports import TargetCatalog
 from gauntlet.ports.errors import EnvironmentUnavailableError
 from gauntlet.ports.model import ModelGateway
+from gauntlet.settings import Settings, SettingsError
 from gauntlet.verification.registry import RegisteredOracleRegistry
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -111,7 +112,14 @@ def main(argv: list[str] | None = None) -> int:
         "--output": args.output is not None,
         "unused --output": args.output is None or not os.path.lexists(args.output),
     }
+    reasoning_model = False
     if args.provider == "bedrock":
+        try:
+            reasoning_model = Settings.from_env(
+                {"BEDROCK_REASONING_MODEL": os.environ.get("BEDROCK_REASONING_MODEL", "0")}
+            ).flag("BEDROCK_REASONING_MODEL")
+        except SettingsError:
+            required["valid BEDROCK_REASONING_MODEL"] = False
         required.update(
             {
                 "--model-id": bool(args.model_id),
@@ -165,15 +173,17 @@ def main(argv: list[str] | None = None) -> int:
     error_type: str | None = None
     try:
         gateway = (
-            create_bedrock_gateway(model_id=args.model_id, region=args.region)
+            create_bedrock_gateway(
+                model_id=args.model_id,
+                region=args.region,
+                reasoning_model=reasoning_model,
+            )
             if args.provider == "bedrock"
             else create_azure_openai_gateway(os.environ)
         )
         instructions = INSTRUCTIONS.read_text()
         frozen, events = asyncio.run(
-            freeze_live_plan(
-                args.repository, change, gateway, instructions, _cartwheel_catalog()
-            )
+            freeze_live_plan(args.repository, change, gateway, instructions, _cartwheel_catalog())
         )
     except Exception as exc:
         error_type = type(exc).__name__

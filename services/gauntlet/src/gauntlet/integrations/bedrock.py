@@ -25,10 +25,15 @@ def _validate_model_id(model_id: str) -> None:
 class BedrockConverseGateway:
     """SDK connect/read limits and one attempt; no total wall-clock deadline."""
 
-    def __init__(self, client: ConverseClient, model_id: str) -> None:
+    def __init__(
+        self, client: ConverseClient, model_id: str, *, reasoning_model: bool = False
+    ) -> None:
         _validate_model_id(model_id)
         self._client = client
         self._model_id = model_id
+        # Reasoning models (e.g. OpenAI GPT on Bedrock) reject `temperature` and return
+        # `reasoningContent` blocks before the answer text.
+        self._reasoning = reasoning_model
 
     async def complete(self, request: ModelRequest) -> ModelResponse:
         if not 1 <= request.max_output_tokens <= 8192 or not 0 <= request.temperature <= 1:
@@ -40,16 +45,16 @@ class BedrockConverseGateway:
             or len(request.user) > 128_000
         ):
             raise ValueError("Bedrock input exceeds configured bounds")
+        inference: dict[str, object] = {"maxTokens": request.max_output_tokens}
+        if not self._reasoning:
+            inference["temperature"] = request.temperature
         try:
             raw = await asyncio.to_thread(
                 self._client.converse,
                 modelId=self._model_id,
                 system=[{"text": request.system}],
                 messages=[{"role": "user", "content": [{"text": request.user}]}],
-                inferenceConfig={
-                    "maxTokens": request.max_output_tokens,
-                    "temperature": request.temperature,
-                },
+                inferenceConfig=inference,
             )
         except Exception:
             # Provider exception strings can include prompt text, endpoints or credentials.
@@ -67,6 +72,12 @@ class BedrockConverseGateway:
             raise EnvironmentUnavailableError("Bedrock Converse response unusable")
         texts: list[str] = []
         for block in blocks:
+            if (
+                self._reasoning
+                and isinstance(block, Mapping)
+                and set(block) == {"reasoningContent"}
+            ):
+                continue  # Model reasoning is not the answer; only text blocks are returned.
             if not isinstance(block, Mapping) or set(block) != {"text"}:
                 raise EnvironmentUnavailableError("Bedrock Converse response unusable")
             text = block.get("text")
@@ -94,7 +105,9 @@ class BedrockConverseGateway:
                 raise EnvironmentUnavailableError("Bedrock client close failed") from None
 
 
-def create_bedrock_gateway(*, model_id: str, region: str) -> BedrockConverseGateway:
+def create_bedrock_gateway(
+    *, model_id: str, region: str, reasoning_model: bool = False
+) -> BedrockConverseGateway:
     """Construct the optional SDK client only after the caller's spend preflight."""
     _validate_model_id(model_id)
     if not region or not re.fullmatch(r"[a-z]{2}(?:-gov)?-[a-z]+-\d", region):
@@ -110,4 +123,6 @@ def create_bedrock_gateway(*, model_id: str, region: str) -> BedrockConverseGate
         retries={"total_max_attempts": 1, "mode": "standard"},
     )
     client = boto3.client("bedrock-runtime", region_name=region, config=config)
-    return BedrockConverseGateway(cast(ConverseClient, client), model_id)
+    return BedrockConverseGateway(
+        cast(ConverseClient, client), model_id, reasoning_model=reasoning_model
+    )

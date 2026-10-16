@@ -4,7 +4,7 @@ import Link from "next/link";
 import { humanize, runIndex } from "@/components/gate/copy";
 import { StatusPill } from "@/components/shared";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { ChangeOption, GateRunSummary } from "@/lib/gauntlet";
+import { gateSummaryEvidence, type ChangeOption, type GateRunSummary } from "@/lib/gauntlet";
 
 export function RunsTable({ runs, changes }: { runs: GateRunSummary[]; changes: ChangeOption[] }) {
   const intentOf = new Map(changes.map((c) => [c.change_id, c.feature_intent]));
@@ -40,7 +40,7 @@ export function RunsTable({ runs, changes }: { runs: GateRunSummary[]; changes: 
                   {r.attribution !== "unknown" && <span className="text-muted-foreground ml-2 hidden text-xs md:inline">{humanize(r.attribution)}</span>}
                 </TableCell>
                 <TableCell className="hidden sm:table-cell">
-                  <span className="text-muted-foreground text-xs">{r.offline ? "Offline" : "Live"}</span>
+                  <span className="text-muted-foreground text-xs">{gateSummaryEvidence(r.offline)}</span>
                 </TableCell>
                 <TableCell className="pr-5 text-right">
                   <ChevronRight className="text-muted-foreground/50 group-hover:text-foreground ml-auto size-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
