@@ -29,6 +29,9 @@ from gauntlet.contracts import (
     StrictDTO,
     TemporalMemoryFact,
     ToolEvent,
+    VoiceBriefing,
+    VoiceReplayRequest,
+    VoiceToolCall,
 )
 
 EXAMPLES_DIR = Path(__file__).resolve().parents[3] / "docs" / "contracts" / "examples"
@@ -59,6 +62,9 @@ GOLDENS: dict[str, type[StrictDTO]] = {
     "temporal-memory-fact.v1.json": TemporalMemoryFact,
     "tool-event.v1.json": ToolEvent,
     "ui-plan.v1.json": AttackSpec,
+    "voice-briefing.v1.json": VoiceBriefing,
+    "voice-replay-request.v1.json": VoiceReplayRequest,
+    "voice-tool-call.v1.json": VoiceToolCall,
 }
 
 

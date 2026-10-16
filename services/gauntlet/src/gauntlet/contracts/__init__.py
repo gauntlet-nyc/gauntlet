@@ -59,6 +59,13 @@ from .memory import (
 from .recall import HistoricalDecision, RecallMode, RecallTrigger, RecallVerdict
 from .remediation import AuditSummary, RemediationAction, RemediationProposal
 from .replay import ReplayMode, ReplayResult, ReplaySpec
+from .voice import (
+    BriefFinding,
+    VoiceBriefing,
+    VoiceIntent,
+    VoiceReplayRequest,
+    VoiceToolCall,
+)
 
 __all__ = [
     "EVIDENCE_MEDIA_TYPES",
@@ -72,6 +79,7 @@ __all__ = [
     "ApiRequestStep",
     "AttackSpec",
     "AuditSummary",
+    "BriefFinding",
     "CaptureStep",
     "ChangeImpactMap",
     "ChangeRequest",
@@ -119,5 +127,9 @@ __all__ = [
     "ToolCallRecord",
     "ToolEvent",
     "TypeStep",
+    "VoiceBriefing",
+    "VoiceIntent",
+    "VoiceReplayRequest",
+    "VoiceToolCall",
     "WorkerKind",
 ]

@@ -13,6 +13,7 @@ from .memory import TemporalMemoryFact
 from .recall import HistoricalDecision, RecallTrigger, RecallVerdict
 from .remediation import AuditSummary, RemediationProposal
 from .replay import ReplayResult, ReplaySpec
+from .voice import VoiceBriefing, VoiceReplayRequest, VoiceToolCall
 
 SCHEMA_VERSION_SUFFIX: Final = "v1"
 
@@ -39,6 +40,9 @@ EXPORTED_MODELS: Final[dict[str, type[StrictDTO]]] = {
     "run-event": RunEvent,
     "temporal-memory-fact": TemporalMemoryFact,
     "tool-event": ToolEvent,
+    "voice-briefing": VoiceBriefing,
+    "voice-replay-request": VoiceReplayRequest,
+    "voice-tool-call": VoiceToolCall,
 }
 
 
