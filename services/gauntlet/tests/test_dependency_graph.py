@@ -5,6 +5,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+
 from gauntlet.analysis import (
     GitLimits,
     GitRepositoryInspector,

@@ -6,6 +6,8 @@ from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from pydantic import ValidationError
+
 from gauntlet.application.recall import RecallScoper, ScopeLimits, assess_readiness
 from gauntlet.contracts import (
     ExposureRecord,
@@ -16,7 +18,6 @@ from gauntlet.contracts import (
     RecallTrigger,
     ToolEvent,
 )
-from pydantic import ValidationError
 
 DAY = datetime(2026, 10, 5, 10, 0, tzinfo=UTC)
 HASH = "ab" * 32

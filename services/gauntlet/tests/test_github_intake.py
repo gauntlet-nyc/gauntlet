@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+
 from gauntlet.contracts import Finding
 from gauntlet.intake import (
     EventIgnored,
