@@ -13,9 +13,9 @@ import json
 import os
 import sys
 
-from gauntlet.execution.go_live import exit_code, render, run_check
+from gauntlet.execution.go_live import exit_code, render, run_environment_check
 from gauntlet.execution.go_live_probes import PROBES
-from gauntlet.settings import SettingsError, load_settings
+from gauntlet.settings import SettingsError
 
 
 def main() -> int:
@@ -24,11 +24,10 @@ def main() -> int:
     parser.add_argument("--json", action="store_true", help="machine-readable output")
     args = parser.parse_args()
     try:
-        settings = load_settings()
+        results = asyncio.run(run_environment_check(os.environ, probe=args.probe, probes=PROBES))
     except SettingsError as exc:
         print(f"invalid settings: {exc}", file=sys.stderr)
         return 2
-    results = asyncio.run(run_check(os.environ, settings, probe=args.probe, probes=PROBES))
     if args.json:
         print(json.dumps([vars(item) for item in results], indent=2))
     else:

@@ -63,6 +63,11 @@ class RecallService:
         self._cf: CounterfactualView | None = None
 
     @property
+    def uses_live_provider(self) -> bool:
+        """Use the composed runtime, not mutable environment settings, for authorization."""
+        return any(label.startswith("live_") for label in self._runtime.labels.values())
+
+    @property
     def window(self) -> tuple[datetime, datetime]:
         start = datetime.fromisoformat(self._archive.manifest["window_start"])
         end = datetime.fromisoformat(self._archive.manifest["window_end"])

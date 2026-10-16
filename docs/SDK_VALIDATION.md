@@ -1170,3 +1170,21 @@ assistant. The model only returns `{"tool_order_id", "reply"}`; the id must matc
 `ord-NNNN` or no tool call happens; the fixed harness runs the target's tool code and the
 ledger oracle decides. Offline-tested with scripted model answers; **live NOT RUN**:
 `RUN_LIVE_INTEGRATIONS=1 uv run python scripts/run_gate.py --change refund-tool --agent azure`.
+
+### Post-pull provider readiness and Recall authorization refresh (2026-10-16)
+
+Validated against Daytona 0.224.1, Anchor 1.0.1 and httpx 0.28.1.
+Configuration-only readiness with the local environment now reports each sponsor
+independently: Daytona ready; Anchor blocked by missing proxy settings; remaining
+sponsors missing credentials. Strict execution settings are unchanged.
+A genuine read-only `probe_daytona(load_settings(daytona_environment))` returned
+`15 snapshots visible`; no resources were created by this check.
+
+Gate now registers Daytona and Anchor client closure on its execution stack.
+Normal closure, setup failure and cancellation are covered by three synthetic
+lifecycle tests. Anchor probe creation/deletion cancellation and cleanup failures
+are covered by focused tests; **live Anchor NOT RUN** (proxy credentials missing).
+Replay-triggering Recall reads require reviewer authentication when the composed
+runtime uses live providers. The combined API/dashboard passed the 12-step
+headless Chrome demo, including public offline Recall and reviewer login.
+No full live model/Daytona/Anchor Gate is claimed by these checks.

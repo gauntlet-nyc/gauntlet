@@ -1,6 +1,8 @@
+import { redirect } from "next/navigation";
 import { decide } from "@/app/actions";
 import { Banner, Card, DecideForm, ErrorPanel, OfflineBadge, Section, StatusPill } from "@/components/ui";
-import { api } from "@/lib/gauntlet";
+
+import { recallApi, ReviewerAuthRequired } from "@/lib/recall-api";
 
 export const dynamic = "force-dynamic";
 
@@ -8,8 +10,9 @@ export default async function ReviewQueuePage({ searchParams }: { searchParams: 
   const query = await searchParams;
   let items, audit, cf;
   try {
-    [items, audit, cf] = await Promise.all([api.reviewQueue(), api.audit(), api.counterfactual()]);
+    [items, audit, cf] = await Promise.all([recallApi.reviewQueue(), recallApi.audit(), recallApi.counterfactual()]);
   } catch (err) {
+    if (err instanceof ReviewerAuthRequired) redirect("/login?next=/recall/review");
     return <ErrorPanel what="Review queue" error={err} />;
   }
   return (
