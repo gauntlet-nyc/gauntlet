@@ -995,3 +995,33 @@ scripts/probe_p1_model_plan.py --provider azure --repository <fixture-repo>
 Offline only so far: request shape and failure handling are checked with an
 `httpx` mock transport. **Live Azure result: NOT RUN.** Bedrock remains the
 sponsor integration and still needs its own live run.
+
+### Session 1: Gate pipeline composition root (2026-10-16)
+
+`scripts/run_gate.py` runs `RunGateUseCase` (plan freeze -> base/head environment
+pair -> UI worker x2 per side -> stored-evidence oracle -> `adjudicate_ui_pair`).
+`gauntlet/composition.py` picks adapters; `gauntlet/settings.py` is the only
+place that reads environment variables. Every report carries an `adapters`
+block, and `mode` is `offline` only when model, sandbox and browser are all
+offline.
+
+| Adapter | Flag | Status | Exact live command |
+|---|---|---|---|
+| Scripted planner | `--model scripted` (default) | offline only, by design | n/a |
+| Fake sandbox + simulated layout | `--sandbox fake --browser fake` (default) | offline only, by design | n/a |
+| Azure OpenAI planner | `--model azure` | offline-tested, **live NOT RUN** | `RUN_LIVE_INTEGRATIONS=1 uv run python scripts/run_gate.py --model azure` |
+| Bedrock planner | `--model bedrock` | offline-tested, **live NOT RUN** (no AWS account) | `RUN_LIVE_INTEGRATIONS=1 uv run --group live-providers python scripts/run_gate.py --model bedrock` |
+| Local pre-started servers + local Chromium | `--sandbox local --browser local` | see the local run note below | `CARTWHEEL_BASE_ORIGIN=http://127.0.0.1:3101 CARTWHEEL_HEAD_ORIGIN=http://127.0.0.1:3102 uv run --group live-providers python scripts/run_gate.py --sandbox local --browser local` |
+| Daytona + Anchor | `--sandbox daytona --browser anchor` | offline-tested, **live NOT RUN** | `RUN_LIVE_INTEGRATIONS=1 GAUNTLET_DAYTONA_REGISTRATION=<registration.json> GAUNTLET_ANCHOR_REQUIRE_PROXY=0 uv run --group live-providers python scripts/run_gate.py --model azure --sandbox daytona --browser anchor` |
+
+Missing keys stop the run with `{"overall_status": "not_tested", "error":
+"missing NAME"}`; the report's `live_readiness_missing` lists unset variable
+names only. `GAUNTLET_ANCHOR_REQUIRE_PROXY=0` is weaker isolation (no egress
+proxy); it needs an Anchor adapter with a proxy-less constructor
+(`SdkAnchorRuntime.without_proxy`), otherwise the run refuses to start.
+
+Offline result (`uv run python scripts/run_gate.py`): `confirmed_regression`,
+attribution `introduced`, head 2/2 failures, base 0/2, plan frozen before
+`environments_ready`. `--clean`: `passed` (0/2 head, 0/2 base). These are
+**simulated-layout** results (box model transcribed from the fixture CSS), not
+browser results.

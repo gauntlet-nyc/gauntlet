@@ -60,8 +60,16 @@ class RegisteredOracleRegistry:
             kind=OracleKind.HARD,
             criterion_version="1.0",
             worker_kinds=frozenset({"ui"}),
-            description="Checks whether the registered primary action receives a click",
+            description=self._description(),
         )
+
+    def _description(self) -> str:
+        text = "Checks whether the registered primary action receives a click"
+        if not self._targets:
+            return text
+        actions = ", ".join(f"{t}: data-testid={a}" for t, a in sorted(self._targets.items()))
+        # Authorized target context for the planner; still only an identifier, never logic.
+        return f"{text}. Registered primary actions ({actions})"
 
     def evaluate(self, oracle_id: str, observation: Observation) -> OracleVerdict:
         kind = self.descriptor(oracle_id).kind
