@@ -57,6 +57,7 @@ class ApiSettings:
     history_dir: Path
     refund_manifest: Path
     configured_env: frozenset[str]
+    github_repositories: tuple[str, ...]
     _reviewer_tokens: Mapping[str, ReviewerToken] = field(repr=False)
 
     def provider_configured(self, provider: str) -> bool:
@@ -103,6 +104,19 @@ def _reviewer_tokens(env: Mapping[str, str]) -> dict[str, ReviewerToken]:
     return tokens
 
 
+def _repositories(env: Mapping[str, str]) -> tuple[str, ...]:
+    """GAUNTLET_GITHUB_REPOSITORIES = "owner/name,..." allowed to start Gate runs by webhook."""
+    raw = (env.get("GAUNTLET_GITHUB_REPOSITORIES") or "").strip()
+    if not raw or raw.startswith("REPLACE"):
+        return ()
+    repos = tuple(r.strip() for r in raw.split(",") if r.strip())
+    for repo in repos:
+        owner, sep, name = repo.partition("/")
+        if not sep or not owner or not name or "/" in name:
+            raise SettingsError("GAUNTLET_GITHUB_REPOSITORIES must be owner/name pairs")
+    return repos
+
+
 def load_settings(env: Mapping[str, str] | None = None) -> ApiSettings:
     env = os.environ if env is None else env
     provider = env.get("GAUNTLET_MODEL_PROVIDER", "azure") or "azure"
@@ -118,6 +132,7 @@ def load_settings(env: Mapping[str, str] | None = None) -> ApiSettings:
             env.get("GAUNTLET_REFUND_MANIFEST")
             or REPO_ROOT / "apps/cartwheel/refund-fixture-manifest.v1.json"
         ),
+        github_repositories=_repositories(env),
         configured_env=frozenset(
             n for n in known if (env.get(n) or "").strip() and not env[n].startswith("REPLACE")
         ),

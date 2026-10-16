@@ -12,6 +12,7 @@ from .routes import (
     recall,
     sponsors,
     targets,
+    webhooks,
 )
 
 
@@ -26,6 +27,7 @@ def create_app() -> FastAPI:
     app.include_router(approvals.router)
     app.include_router(sponsors.router)
     app.include_router(onboarding.router)
+    app.include_router(webhooks.router)
     return app
 
 

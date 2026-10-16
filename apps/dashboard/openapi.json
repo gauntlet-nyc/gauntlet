@@ -3271,6 +3271,34 @@
         "title": "ValidationError",
         "type": "object"
       },
+      "VoiceAnswer": {
+        "properties": {
+          "intent": {
+            "title": "Intent",
+            "type": "string"
+          },
+          "replay_request": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VoiceReplayRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "spoken_text": {
+            "title": "Spoken Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "intent",
+          "spoken_text"
+        ],
+        "title": "VoiceAnswer",
+        "type": "object"
+      },
       "VoiceBriefing": {
         "additionalProperties": false,
         "description": "Built only from persisted findings; `source_event_sequence` ties it to the event log.",
@@ -3339,6 +3367,138 @@
           "spoken_summary"
         ],
         "title": "VoiceBriefing",
+        "type": "object"
+      },
+      "VoiceReplayRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "attack_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Attack Id",
+            "type": "string"
+          },
+          "confirmed_by": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmed By"
+          },
+          "confirmed_channel": {
+            "anyOf": [
+              {
+                "enum": [
+                  "dashboard",
+                  "api"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmed Channel"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "request_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "requested_at": {
+            "format": "date-time",
+            "title": "Requested At",
+            "type": "string"
+          },
+          "requested_by": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Requested By",
+            "type": "string"
+          },
+          "run_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending_operator_confirmation",
+              "confirmed",
+              "declined",
+              "expired"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "run_id",
+          "attack_id",
+          "requested_by",
+          "requested_at",
+          "expires_at",
+          "status"
+        ],
+        "title": "VoiceReplayRequest",
+        "type": "object"
+      },
+      "WebhookAccepted": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "status": {
+            "enum": [
+              "accepted",
+              "ignored"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "detail"
+        ],
+        "title": "WebhookAccepted",
         "type": "object"
       }
     }
@@ -4045,6 +4205,49 @@
           }
         },
         "summary": "Cartwheel Change Request"
+      }
+    },
+    "/webhooks/elevenlabs": {
+      "post": {
+        "description": "Voice can only read findings or ask for a replay; it can never approve anything.",
+        "operationId": "elevenlabs_webhook_webhooks_elevenlabs_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceAnswer"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Elevenlabs Webhook",
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/webhooks/github": {
+      "post": {
+        "operationId": "github_webhook_webhooks_github_post",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookAccepted"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Github Webhook",
+        "tags": [
+          "webhooks"
+        ]
       }
     }
   }

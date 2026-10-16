@@ -1,9 +1,11 @@
 """Session 3 API: Gate runs, Recall views, hash-bound approvals, sponsor status, settings."""
 
+import json
 import shutil
 from collections.abc import Iterator
 from pathlib import Path
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 
@@ -299,3 +301,117 @@ def test_ui_sample_fix_is_not_repairable(client: TestClient) -> None:
     assert run["fix_plan"]["repairable"] is False
     response = client.post(f"/gate/runs/{run['run_id']}/repair", headers=AUTH)
     assert response.status_code == 422
+
+
+def _webhook_client(monkeypatch: pytest.MonkeyPatch, **env: str) -> TestClient:
+    from gauntlet.api.routes import webhooks
+
+    for name, value in env.items():
+        monkeypatch.setenv(name, value)
+    monkeypatch.setattr(webhooks, "_STATE", webhooks._WebhookState())
+    get_settings.cache_clear()
+    get_container.cache_clear()
+    return TestClient(app)
+
+
+GH_SECRET = "github-webhook-secret-0123456789"
+
+
+def _github_post(
+    client: TestClient,
+    payload: dict,
+    delivery: str,
+    event: str = "pull_request",  # type: ignore[type-arg]
+) -> httpx.Response:
+    import hashlib
+    import hmac
+
+    body = json.dumps(payload).encode()
+    signature = "sha256=" + hmac.new(GH_SECRET.encode(), body, hashlib.sha256).hexdigest()
+    headers = {
+        "X-Hub-Signature-256": signature,
+        "X-GitHub-Delivery": delivery,
+        "X-GitHub-Event": event,
+        "content-type": "application/json",
+    }
+    return client.post("/webhooks/github", content=body, headers=headers)
+
+
+def _pr(repo: str, base: str, head: str) -> dict:  # type: ignore[type-arg]
+    return {
+        "action": "opened",
+        "pull_request": {
+            "number": 7,
+            "title": "Add a floating Help button",
+            "draft": False,
+            "base": {"sha": base},
+            "head": {"sha": head},
+        },
+        "repository": {"full_name": repo},
+    }
+
+
+def test_github_webhook_verifies_and_starts_only_registered_revisions(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    assert client.post("/webhooks/github", content=b"{}").status_code == 503
+    hook = _webhook_client(
+        monkeypatch,
+        GITHUB_WEBHOOK_SECRET=GH_SECRET,
+        GAUNTLET_GITHUB_REPOSITORIES="demo/cartwheel",
+    )
+    manifest = json.loads((REPO_ROOT / "apps/cartwheel/fixture-manifest.v1.json").read_text())
+    base, head = manifest["git_refs"]["base_sha"], manifest["git_refs"]["head_sha"]
+    bad = hook.post(
+        "/webhooks/github",
+        content=b"{}",
+        headers={"X-Hub-Signature-256": "sha256=00", "X-GitHub-Delivery": "deliv-0001"},
+    )
+    assert bad.status_code == 401
+    assert _github_post(hook, {}, "deliv-ping-01", "ping").json()["status"] == "ignored"
+    unbound = _github_post(hook, _pr("evil/repo", base, head), "deliv-0002")
+    assert unbound.json()["status"] == "ignored"
+    accepted = _github_post(hook, _pr("demo/cartwheel", base, head), "deliv-0003")
+    assert accepted.status_code == 202 and accepted.json()["status"] == "accepted"
+    assert _github_post(hook, _pr("demo/cartwheel", base, head), "deliv-0003").status_code == 401
+    runs = hook.get("/gate/runs").json()
+    assert runs and runs[0]["change_id"] == "help-button"
+    unknown = _github_post(hook, _pr("demo/cartwheel", "a" * 40, "b" * 40), "deliv-0004")
+    assert unknown.json()["status"] == "ignored"
+
+
+def test_elevenlabs_webhook_reads_findings_and_never_approves(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import time
+
+    from gauntlet.security.webhooks import elevenlabs_signature
+
+    secret = "voice-webhook-secret-0123456789"
+    hook = _webhook_client(
+        monkeypatch, VOICE_WEBHOOK_SECRET=secret, ELEVENLABS_AGENT_ID="agent_demo"
+    )
+    run = hook.post("/gate/runs", json={"change_id": "help-button"}).json()
+
+    def call(payload: dict) -> object:  # type: ignore[type-arg]
+        body = json.dumps(payload).encode()
+        signature = elevenlabs_signature(secret.encode(), int(time.time()), body)
+        return hook.post(
+            "/webhooks/elevenlabs", content=body, headers={"ElevenLabs-Signature": signature}
+        )
+
+    summary = call({"call_id": "c1", "intent": "run_summary", "run_id": run["run_id"]})
+    assert "1 confirmed" in summary.json()["spoken_text"]  # type: ignore[attr-defined]
+    approve = call({"call_id": "c2", "intent": "approve", "run_id": run["run_id"]})
+    assert approve.status_code == 401  # type: ignore[attr-defined]
+    replay = call(
+        {
+            "call_id": "c3",
+            "intent": "replay_request",
+            "run_id": run["run_id"],
+            "attack_id": run["attacks"][0]["attack_id"],
+        }
+    ).json()  # type: ignore[attr-defined]
+    assert replay["replay_request"]["status"] == "pending_operator_confirmation"
+    unsigned = hook.post("/webhooks/elevenlabs", content=b"{}")
+    assert unsigned.status_code == 401

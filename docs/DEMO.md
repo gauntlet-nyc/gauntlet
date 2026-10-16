@@ -90,6 +90,8 @@ into commands. First run `uv run python scripts/check_settings.py` — it prints
 | SurrealDB core | `SURREAL_URL`, `SURREAL_NS`, `SURREAL_DB`, `SURREAL_USER`, `SURREAL_PASS` | see the SurrealDB row in `docs/SDK_VALIDATION.md` | records visible in Surrealist |
 | SurrealDB Agent Memory | `SURREAL_MEMORY_ENDPOINT`, `SURREAL_MEMORY_CONTEXT`, `SURREAL_MEMORY_API_KEY` | see the Agent Memory row in `docs/SDK_VALIDATION.md` | `remember`/`recall as_of` round-trip |
 | ElevenLabs | `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID`, `VOICE_WEBHOOK_SECRET` | see the ElevenLabs row in `docs/SDK_VALIDATION.md` | briefing spoken by the agent |
+| GitHub App (check runs + webhook) | `GITHUB_APP_ID`, `GITHUB_INSTALLATION_ID`, `GITHUB_PRIVATE_KEY_PATH` (file outside the repo), `GITHUB_WEBHOOK_SECRET`, `GAUNTLET_GITHUB_REPOSITORIES=<owner/name>`; App webhook URL → `<public API>/webhooks/github` (or `GITHUB_WEBHOOK_PROXY_URL` smee channel) | `RUN_LIVE_INTEGRATIONS=1 uv run python scripts/smoke_adapters.py github --repo <owner/name> --sha <sha>` | neutral check run visible on that commit. A PR whose base/head are the registered fixture SHAs starts a Gate run and publishes its check run; other PRs are ignored as not tested |
+| ElevenLabs voice tool | `ELEVENLABS_AGENT_ID`, `VOICE_WEBHOOK_SECRET`; agent server tool → `<public API>/webhooks/elevenlabs` | ask the agent "summarise run <run_id>" | spoken summary from stored findings; "approve" is refused |
 | Recall with a model | Azure vars above | `RUN_LIVE_INTEGRATIONS=1 uv run python scripts/run_recall.py --model azure` | control replays must still match; any mismatch shows as inconclusive |
 
 After a sponsor's command really succeeds: record date, version, command and sanitized result
