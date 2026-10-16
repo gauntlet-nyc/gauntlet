@@ -23,7 +23,13 @@ def setup(tmp_path: Path) -> tuple[Path, Path, str, str]:
     git(repo, "init", "-q")
     git(repo, "config", "user.name", "Test")
     git(repo, "config", "user.email", "test@example.invalid")
-    for name in ("api/src/tools/request_refund.ts", "api/src/ledger.ts", CSS):
+    for name in (
+        "package.json",
+        "next.config.js",
+        "src/app/checkout/page.tsx",
+        "src/app/api/build-info/route.ts",
+        CSS,
+    ):
         path = repo / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("initial")
@@ -226,3 +232,39 @@ def test_missing_dependency_cache_is_explicit_environment_error(
             head_sha=setup[2],
             dependency_cache=tmp_path / "missing",
         )
+
+
+def test_real_cartwheel_ui_fixture_has_no_refund_tool_requirement(
+    setup: tuple[Path, Path, str, str], tmp_path: Path
+) -> None:
+    import runpy
+
+    project = Path(__file__).resolve().parents[3]
+    builder = runpy.run_path(str(project / "scripts/build_cartwheel_fixture.py"))
+    repository = tmp_path / "actual-cartwheel"
+    identity = builder["build"](repository)
+    assert not (repository / "api/src/tools/request_refund.ts").exists()
+    provider = LocalUIRepairSandbox(
+        repository,
+        target_id="cartwheel-fixture",
+        fixture_id="baseline-v1",
+        fixture_checksum=identity["fixture_checksum_sha256"],
+        head_sha=identity["head_sha"],
+        dependency_cache=setup[1],
+    )
+
+    async def run() -> None:
+        env = await provider.create(
+            target_id="cartwheel-fixture",
+            source_sha=identity["head_sha"],
+            fixture_id="baseline-v1",
+            mode="fix_regression",
+        )
+        try:
+            assert await provider.verify_fixture(
+                env.environment_id, identity["fixture_checksum_sha256"]
+            )
+        finally:
+            await provider.destroy(env.environment_id)
+
+    asyncio.run(run())

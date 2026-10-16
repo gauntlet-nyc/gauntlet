@@ -105,6 +105,13 @@ class LocalUIRepairSandbox:
             fixture_id=fixture_id,
             fixture_checksum=fixture_checksum,
             allowed_shas=frozenset({head_sha}),
+            required_paths=(
+                "package.json",
+                "next.config.js",
+                _CSS_PATH,
+                "src/app/checkout/page.tsx",
+                "src/app/api/build-info/route.ts",
+            ),
         )
         self._active: dict[str, _Active] = {}
         self._lock = asyncio.Lock()

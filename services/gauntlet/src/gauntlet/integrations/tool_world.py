@@ -73,7 +73,14 @@ class RevisionCheckoutSandbox:
         fixture_id: str,
         fixture_checksum: str,
         allowed_shas: frozenset[str],
+        required_paths: tuple[str, ...] = (_TOOL_PATH, _LEDGER_PATH),
     ) -> None:
+        if not required_paths or any(
+            not path or Path(path).is_absolute() or ".." in Path(path).parts
+            for path in required_paths
+        ):
+            raise ValueError("required fixture paths must be nonempty relative paths")
+        self._required_paths = required_paths
         self._repo = repository
         self._target_id = target_id
         self._fixture_id = fixture_id
@@ -113,9 +120,9 @@ class RevisionCheckoutSandbox:
             )
             with tarfile.open(fileobj=io.BytesIO(archive.stdout)) as tar:
                 tar.extractall(root, filter="data")
-            for required in (_TOOL_PATH, _LEDGER_PATH):
+            for required in self._required_paths:
                 if not (root / required).is_file():
-                    raise EnvironmentUnavailableError("revision lacks the registered tool")
+                    raise EnvironmentUnavailableError("revision lacks a registered fixture file")
         except (OSError, subprocess.SubprocessError, tarfile.TarError) as exc:
             shutil.rmtree(root, ignore_errors=True)
             raise EnvironmentUnavailableError("revision export failed") from exc
