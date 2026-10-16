@@ -26,10 +26,23 @@ class SdkSandbox:
         return str(result.result).strip()
 
     async def read_file(self, path: str) -> bytes:
-        content = await self._sandbox.fs.download_file(path, timeout=30)
+        content = await self._sandbox.fs.download_file(path)
         if not isinstance(content, bytes):
             raise EnvironmentUnavailableError("Daytona fixture state was not returned as bytes")
         return content
+
+    async def start_cartwheel(self, repo_path: str, port: int) -> None:
+        """Start the registered Cartwheel build after provider source attestation."""
+        if type(port) is not int or not 1 <= port <= 65535:
+            raise EnvironmentUnavailableError("Daytona registered startup port is invalid")
+        command = (
+            "test -s .next/BUILD_ID && test -x ./node_modules/.bin/next && "
+            f"(nohup ./node_modules/.bin/next start -p {port} "
+            ">/tmp/gauntlet-cartwheel-start.log 2>&1 </dev/null &)"
+        )
+        result = await self._sandbox.process.exec(command, cwd=repo_path, timeout=20)
+        if result.exit_code != 0:
+            raise EnvironmentUnavailableError("Daytona registered startup failed")
 
     async def signed_preview_origin(self, port: int, expires_in_seconds: int) -> str:
         preview = await self._sandbox.create_signed_preview_url(
