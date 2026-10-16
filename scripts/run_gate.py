@@ -74,6 +74,7 @@ async def run(args: argparse.Namespace) -> dict[str, object]:
         artifact_root=output / "evidence",
         memory=memory,
         accessibility_probe=args.a11y,
+        agent=args.agent,
     )
     runtime.labels["memory"] = memory_label
     try:
@@ -124,6 +125,12 @@ def main() -> int:
     parser.add_argument("--memory", choices=("none", "local", "surreal"), default="none")
     parser.add_argument("--learn", action="store_true", help="remember confirmed findings")
     parser.add_argument("--a11y", action="store_true", help="scripted planner adds a11y probe")
+    parser.add_argument(
+        "--agent",
+        choices=("synthetic", "azure", "bedrock"),
+        default="synthetic",
+        help="who plays the target's support assistant in --change refund-tool",
+    )
     parser.add_argument("--run-id")
     parser.add_argument("--output")
     args = parser.parse_args()

@@ -1159,3 +1159,11 @@ memory is a fixed rule (widen the viewport sweep), not model judgement.
 | `workflow`, `concurrency` | — | — | **not built** (selector allows them; planner proposals are reported `not_tested` with "no registered executor") |
 
 Local Chromium command: `CARTWHEEL_BASE_ORIGIN=http://127.0.0.1:3101 CARTWHEEL_HEAD_ORIGIN=http://127.0.0.1:3102 uv run --group live-providers python scripts/run_gate.py --sandbox local --browser local --a11y`.
+
+#### P2 model-played support agent (2026-10-16)
+
+`run_gate.py --change refund-tool --agent azure` lets a real model play the target's support
+assistant. The model only returns `{"tool_order_id", "reply"}`; the id must match
+`ord-NNNN` or no tool call happens; the fixed harness runs the target's tool code and the
+ledger oracle decides. Offline-tested with scripted model answers; **live NOT RUN**:
+`RUN_LIVE_INTEGRATIONS=1 uv run python scripts/run_gate.py --change refund-tool --agent azure`.

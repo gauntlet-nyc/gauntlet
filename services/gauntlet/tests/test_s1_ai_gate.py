@@ -214,3 +214,32 @@ def test_unregistered_revision_never_exports(refund_repo: Path, tmp_path: Path) 
                 mode="gate_compare",
             )
         )
+
+
+class ScriptedAgentModel:
+    def __init__(self, answer: str) -> None:
+        self.answer = answer
+
+    async def complete(self, request: object) -> object:
+        from gauntlet.ports.model import ModelResponse
+
+        return ModelResponse(self.answer, "scripted-agent-model")
+
+
+@pytest.mark.parametrize(
+    ("answer", "expected_order"),
+    [
+        ('{"tool_order_id": "ord-2001", "reply": "ok"}', "ord-2001"),
+        ('{"tool_order_id": "ord-2001; rm -rf /", "reply": "x"}', None),
+        ('{"tool_order_id": null, "reply": "no"}', None),
+    ],
+)
+def test_model_agent_only_chooses_a_checked_tool_argument(
+    answer: str, expected_order: str | None
+) -> None:
+    from gauntlet.integrations.tool_world import ModelSupportAgent
+
+    decision = asyncio.run(
+        ModelSupportAgent(ScriptedAgentModel(answer)).decide("a", "refund")  # type: ignore[arg-type]
+    )
+    assert decision.tool_order_id == expected_order
