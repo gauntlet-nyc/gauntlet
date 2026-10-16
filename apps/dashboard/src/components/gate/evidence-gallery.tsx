@@ -21,8 +21,6 @@ export interface EvidenceItem {
   shots: EvidenceShot[];
 }
 
-const PIXELATED = "[image-rendering:pixelated]";
-
 function outcomeText(outcome: string): string {
   return outcome === "fail" ? "text-regression" : outcome === "pass" ? "text-passed" : "text-inconclusive";
 }
@@ -38,18 +36,18 @@ export function EvidenceGallery({ items }: { items: EvidenceItem[] }) {
           const shot = item.shots[item.shots.length - 1];
           if (!shot) return null;
           return (
-            <figure key={item.key} className="m-0 w-28 shrink-0">
+            <figure key={item.key} className="m-0 w-60 shrink-0">
               <button
                 type="button"
                 onClick={() => setSelected(item)}
                 className={cn(
-                  "bg-muted block aspect-[3/4] w-full overflow-hidden rounded-md border transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                  "bg-muted block aspect-[3/2] w-full overflow-hidden rounded-md border transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                   item.outcome === "fail" && "border-regression/40",
                 )}
                 aria-label={`Open ${item.revision} attempt ${item.attempt}`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={shot.src} alt={`${item.revision} attempt ${item.attempt}`} className={cn("size-full object-cover", PIXELATED)} />
+                <img src={shot.src} alt={`${item.revision} attempt ${item.attempt}`} className="size-full object-cover object-bottom" />
               </button>
               <figcaption className="mt-1.5 flex items-center justify-between text-xs">
                 <span className="capitalize">
@@ -77,7 +75,7 @@ export function EvidenceGallery({ items }: { items: EvidenceItem[] }) {
                 {selected.shots.map((shot, i) => (
                   <div key={shot.artifactId}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={shot.src} alt={`Frame ${i + 1}`} className={cn("bg-muted aspect-[3/4] w-full rounded-md border object-cover", PIXELATED)} />
+                    <img src={shot.src} alt={`Frame ${i + 1}`} className="bg-muted aspect-[3/4] w-full rounded-md border object-contain" />
                     <p className="text-muted-foreground mt-1.5 truncate font-mono text-[11px]" title={shot.artifactId}>
                       Frame {i + 1} · {shot.artifactId}
                     </p>
