@@ -48,6 +48,18 @@ class LocalRepairExecutor:
     async def attempt(
         self, attack: AttackSpec, environment: EnvironmentHandle, subject: EvidenceSubject
     ) -> GateAttempt:
+        try:
+            from playwright.async_api import Error
+        except ImportError as exc:
+            raise EnvironmentUnavailableError("local repair requires Playwright") from exc
+        try:
+            return await self._browser_attempt(attack, environment, subject)
+        except (Error, OSError, ImportError) as exc:
+            raise EnvironmentUnavailableError("local repair browser lifecycle failed") from exc
+
+    async def _browser_attempt(
+        self, attack: AttackSpec, environment: EnvironmentHandle, subject: EvidenceSubject
+    ) -> GateAttempt:
         from playwright.async_api import Error, async_playwright
 
         async with async_playwright() as pw:

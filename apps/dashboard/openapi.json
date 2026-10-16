@@ -2768,6 +2768,13 @@
             "title": "Provenance",
             "type": "array"
           },
+          "screenshot_artifact_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Screenshot Artifact Ids",
+            "type": "array"
+          },
           "touched_paths": {
             "items": {
               "type": "string"

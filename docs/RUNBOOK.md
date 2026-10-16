@@ -260,3 +260,28 @@ Real browser, no cloud: build base/head with `scripts/build_cartwheel_fixture.py
 Live (needs keys + `RUN_LIVE_INTEGRATIONS=1`): `--model azure`, `--sandbox daytona --browser anchor`
 (`GAUNTLET_DAYTONA_REGISTRATION`, `GAUNTLET_ANCHOR_REQUIRE_PROXY=0`), `--memory surreal`,
 `run_recall.py --model azure`. See `docs/SDK_VALIDATION.md`; all are NOT RUN so far.
+
+## UI repair (P3 local verification)
+
+Set `GAUNTLET_UI_REPAIR_NODE_MODULES` to an existing trusted standalone Cartwheel
+fixture's `node_modules` directory (it must contain `next/dist/bin/next`). The
+runner copies these dependencies; it never installs packages or runs model shell.
+Build this dependency directory in the generated fixture using the local bootstrap
+above. Set `GAUNTLET_CHROMIUM_PATH` to the actual local Chrome executable. Node,
+Git and `cp` must be on PATH. UI patches are confined to the registered Help CSS.
+
+Optional `GAUNTLET_FIX_MODEL_PROVIDER=bedrock|azure|scripted` selects the proposer
+independently of the attack planner; live models still require
+`RUN_LIVE_INTEGRATIONS=1` plus their existing provider settings. Bedrock needs
+`AWS_REGION`, `BEDROCK_MODEL_ID`, and a valid `AWS_PROFILE` or runtime credentials.
+A configured `GAUNTLET_REVIEWER_TOKENS=name:token` login is required to approve the
+exact fix-plan hash and then run repair. No application of the proposed fix occurs
+before that approval. A proposal setup failure preserves the original finding.
+
+The repair runner exports the approved commit, builds a fresh local synthetic
+Cartwheel server, verifies its compiled SHA, replays the original action and
+viewport variants, and checks Help open/close plus order completion on mobile and
+desktop. This is **local Chrome verification**, even when the original finding
+came from Daytona/Anchor. Results and screenshots appear below the fix plan.
+Temporary processes/checkouts are deleted after verification. Nothing is pushed
+or deployed. Approval and run storage remain process-local.

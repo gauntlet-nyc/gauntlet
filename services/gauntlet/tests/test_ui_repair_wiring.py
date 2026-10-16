@@ -99,3 +99,46 @@ def test_executor_environment_failure_returns_not_verified(tmp_path: Path) -> No
         assert report.checks[0].detail.startswith("environment")
 
     scenario(tmp_path, run)
+
+
+def test_unavailable_repair_preserves_confirmed_gate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from fastapi.testclient import TestClient
+
+    from gauntlet.api.container import get_container
+    from gauntlet.api.main import app
+    from gauntlet.api.settings import get_settings
+
+    monkeypatch.setenv("GAUNTLET_UI_REPAIR_NODE_MODULES", str(tmp_path / "missing"))
+    monkeypatch.setenv("RUN_LIVE_INTEGRATIONS", "0")
+    get_container.cache_clear()
+    get_settings.cache_clear()
+    try:
+        with TestClient(app) as client:
+            run = client.post("/gate/runs", json={"change_id": "help-button"}).json()
+            assert run["status"] == "confirmed_regression"
+            assert len(run["attempts"]) == 4
+            assert run["events"][-1]["event_type"] == "fix_proposal_unavailable"
+            assert run["fix_plan"]["repairable"] is False
+    finally:
+        get_container.cache_clear()
+        get_settings.cache_clear()
+
+
+def test_real_executor_missing_browser_is_environment_error(tmp_path: Path) -> None:
+    import asyncio
+    from typing import cast
+
+    from gauntlet.contracts import EvidenceSubject
+    from gauntlet.integrations.local_artifacts import LocalArtifactStore
+    from gauntlet.ports import EnvironmentUnavailableError
+    from gauntlet.ui_repair_composition import LocalRepairExecutor
+
+    executor = LocalRepairExecutor(LocalArtifactStore(tmp_path), "/missing/chromium")
+    with pytest.raises(EnvironmentUnavailableError):
+        asyncio.run(
+            executor.attempt(
+                cast(AttackSpec, None), cast(EnvironmentHandle, None), cast(EvidenceSubject, None)
+            )
+        )

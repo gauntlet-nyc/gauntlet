@@ -1450,6 +1450,8 @@ export interface components {
             patched_sha: string | null;
             /** Provenance */
             provenance: components["schemas"]["Provenance"][];
+            /** Screenshot Artifact Ids */
+            screenshot_artifact_ids?: string[];
             /** Touched Paths */
             touched_paths: string[];
             /**
