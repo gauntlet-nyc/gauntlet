@@ -56,3 +56,29 @@ jobs:
       - run: pnpm --filter @gauntlet/dashboard lint
       - run: pnpm --filter @gauntlet/dashboard test
       - run: pnpm --filter @gauntlet/dashboard build
+  demo-rehearsal:
+    # Drives the docs/DEMO.md click-path offline in Chrome (no provider keys, nothing live).
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: '3.12'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: uv sync --frozen --group live-providers
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @gauntlet/dashboard build
+      - run: uv run --frozen --group live-providers python scripts/demo_rehearsal.py --chromium /usr/bin/google-chrome --backup-dir artifacts/demo-backup
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: demo-backup
+          path: artifacts/demo-backup
+          if-no-files-found: ignore
