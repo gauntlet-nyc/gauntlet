@@ -1060,3 +1060,21 @@ violations (ledger credit to a non-owner), 1 inconclusive, 32 clear. The
 offline agent policy is deterministic, so no control mismatch occurs offline;
 the control-mismatch path is covered by `test_s1_run_recall.py` with an
 unstable model.
+
+### Session 1: P2 AI/tool Gate (2026-10-16)
+
+`uv run python scripts/run_gate.py --change refund-tool` builds the refund
+fixture, freezes a plan (the planner was only allowed `ai_agent`/`api` workers
+because the diff touches `api/src/tools/`), exports base `0b1b2c4` and head
+`b5ea826` per environment with `git archive`, and runs the target's own
+`request_refund.ts` in Node 22 (type stripping) through a fixed harness. The
+harness, not the agent, writes the ledger snapshot; the `agent.refund_authorized`
+hard oracle reads only that snapshot.
+
+Offline/local result: `confirmed_regression`, `introduced`, head 2/2 (ledger
+credit for `ord-2001` requested by `synthetic-attacker-01`), base 0/2 (tool
+threw `forbidden`). Owner refund passes; a promise without a ledger entry
+passes. Adapters: `offline_scripted` planner + `offline_synthetic_agent` +
+`local_tool_world` (host subprocess, empty env, 15 s timeout — weaker than a
+Daytona sandbox). Live model agent and Daytona-hosted tool world: **NOT RUN /
+not built**.

@@ -3,6 +3,7 @@
     uv run python scripts/run_gate.py                       # scripted model, fake sandbox,
                                                             # simulated layout (offline)
     uv run python scripts/run_gate.py --clean               # unrelated change: expect passed
+    uv run python scripts/run_gate.py --change refund-tool  # AI-agent attack, real tool code
     RUN_LIVE_INTEGRATIONS=1 uv run python scripts/run_gate.py --model azure
     RUN_LIVE_INTEGRATIONS=1 uv run --group live-providers python scripts/run_gate.py \
         --model azure --sandbox daytona --browser anchor
@@ -25,6 +26,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from build_cartwheel_clean_fixture import build_clean  # noqa: E402
+from build_cartwheel_refund_fixture import build_refund  # noqa: E402
 
 from gauntlet.composition import GateTarget, build_gate, readiness  # noqa: E402
 from gauntlet.settings import MissingSettingError, Settings  # noqa: E402
@@ -34,11 +36,24 @@ async def run(args: argparse.Namespace) -> dict[str, object]:
     settings = Settings.from_env()
     workdir = Path(tempfile.mkdtemp(prefix="gauntlet-gate-"))
     repo = workdir / "cartwheel"
-    built = build_clean(repo)
-    target = GateTarget.cartwheel(repo)
-    if (built["base_sha"], built["regression_head_sha"]) != (target.base_sha, target.head_sha):
-        raise RuntimeError("rebuilt fixture SHAs differ from the pinned manifest")
-    intent = "Add a floating Help button"
+    if args.change == "refund-tool":
+        if args.clean:
+            raise ValueError("--clean applies to the help-button change only")
+        refund = build_refund(repo)
+        target = GateTarget.cartwheel_refund(repo)
+        if (refund["refund_base_sha"], refund["refund_head_sha"]) != (
+            target.base_sha,
+            target.head_sha,
+        ):
+            raise RuntimeError("rebuilt refund fixture SHAs differ from the pinned manifest")
+        intent = str(target.manifest["change"]["feature_intent"])
+        built: dict[str, str] = {}
+    else:
+        built = build_clean(repo)
+        target = GateTarget.cartwheel(repo)
+        if (built["base_sha"], built["regression_head_sha"]) != (target.base_sha, target.head_sha):
+            raise RuntimeError("rebuilt fixture SHAs differ from the pinned manifest")
+        intent = "Add a floating Help button"
     if args.clean:
         target = replace(target, clean_head_sha=built["clean_sha"])
         intent = "Clarify the product description"
@@ -65,7 +80,7 @@ async def run(args: argparse.Namespace) -> dict[str, object]:
         "adapters": runtime.labels,
         "live_readiness_missing": readiness(settings),
         "run_id": run_id,
-        "comparison": "clean_unrelated_change" if args.clean else "help_button_change",
+        "comparison": "clean_unrelated_change" if args.clean else f"{args.change}_change",
         "base_sha": change.base_sha,
         "head_sha": change.head_sha,
         "plan_hash": report.plan.plan_hash,
@@ -90,6 +105,7 @@ def main() -> int:
     parser.add_argument("--model", choices=("scripted", "azure", "bedrock"), default="scripted")
     parser.add_argument("--sandbox", choices=("fake", "local", "daytona"), default="fake")
     parser.add_argument("--browser", choices=("fake", "local", "anchor"), default="fake")
+    parser.add_argument("--change", choices=("help-button", "refund-tool"), default="help-button")
     parser.add_argument("--clean", action="store_true", help="use the unrelated clean change")
     parser.add_argument("--run-id")
     parser.add_argument("--output")

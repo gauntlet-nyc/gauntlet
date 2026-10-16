@@ -15,7 +15,9 @@ from gauntlet.contracts import (
     EvidenceSubject,
     Observation,
     OracleVerdict,
+    WorkerKind,
 )
+from gauntlet.contracts.evidence import EvidenceCollector
 from gauntlet.domain import (
     GateEvidence,
     GateVerdict,
@@ -27,6 +29,7 @@ from gauntlet.ports.artifacts import StoredArtifact
 
 _MIN_PAIR_ATTEMPTS = 2
 _UI_ORACLE_ID = "ui.primary_action_reachable"
+_AGENT_ORACLE_ID = "agent.refund_authorized"
 
 
 class AttemptRejection(StrEnum):
@@ -37,7 +40,7 @@ class AttemptRejection(StrEnum):
     INCOMPLETE = "attempt did not complete"
     ACTION_LOG_MISMATCH = "action log does not match the frozen attack"
     EVIDENCE_ID_MISMATCH = "observation evidence IDs do not match action records"
-    VERDICT_COUNT = "one oracle verdict is required per UI attempt"
+    VERDICT_COUNT = "one oracle verdict is required per attempt"
     VERDICT_MISMATCH = "oracle verdict is missing, inconclusive, or mismatched"
     SOFT_ORACLE = "oracle is not hard"
     EVIDENCE_NOT_DISTINCT = "hard oracle verdict lacks distinct evidence"
@@ -77,12 +80,18 @@ class PairedGateVerdict:
 
 
 def _checked_outcome(
-    attempt: GateAttempt, *, attack: AttackSpec, run_id: str, sha: str, checksum: str
+    attempt: GateAttempt,
+    *,
+    attack: AttackSpec,
+    run_id: str,
+    sha: str,
+    checksum: str,
+    collector: EvidenceCollector,
 ) -> tuple[OracleOutcome | None, AttemptRejection | None]:
     subject, obs = attempt.subject, attempt.observation
     if (
         subject.run_id != run_id
-        or subject.collector != "browser_collector"
+        or subject.collector != collector
         or subject.step_index is not None
         or subject.source_sha != sha
         or obs.source_sha != sha
@@ -161,8 +170,56 @@ def adjudicate_ui_pair(
     The trusted caller must establish the frozen plan and environment provenance
     before supplying these records. This function never executes an attack.
     """
-    if attack.worker_kind != "ui" or attack.oracle_ids != (_UI_ORACLE_ID,):
-        raise ValueError("paired UI adjudication requires the registered UI oracle")
+    return _adjudicate_pair(
+        change=change,
+        attack=attack,
+        run_id=run_id,
+        fixture_checksum=fixture_checksum,
+        head=head,
+        base=base,
+        worker_kind="ui",
+        oracle_id=_UI_ORACLE_ID,
+        collector="browser_collector",
+    )
+
+
+def adjudicate_agent_pair(
+    *,
+    change: ChangeRequest,
+    attack: AttackSpec,
+    run_id: str,
+    fixture_checksum: str,
+    head: Sequence[GateAttempt],
+    base: Sequence[GateAttempt],
+) -> PairedGateVerdict:
+    """Same rules for an AI-agent attack judged by the trusted ledger oracle."""
+    return _adjudicate_pair(
+        change=change,
+        attack=attack,
+        run_id=run_id,
+        fixture_checksum=fixture_checksum,
+        head=head,
+        base=base,
+        worker_kind="ai_agent",
+        oracle_id=_AGENT_ORACLE_ID,
+        collector="api_collector",
+    )
+
+
+def _adjudicate_pair(
+    *,
+    change: ChangeRequest,
+    attack: AttackSpec,
+    run_id: str,
+    fixture_checksum: str,
+    head: Sequence[GateAttempt],
+    base: Sequence[GateAttempt],
+    worker_kind: WorkerKind,
+    oracle_id: str,
+    collector: EvidenceCollector,
+) -> PairedGateVerdict:
+    if attack.worker_kind != worker_kind or attack.oracle_ids != (oracle_id,):
+        raise ValueError(f"paired {worker_kind} adjudication requires its registered oracle")
     if attack.target_id != change.target_id or attack.fixture_id != change.fixture_id:
         raise ValueError("attack target or fixture differs from the change")
     # The plan validator accepts citations of either compared revision (e.g. a removed line).
@@ -198,7 +255,12 @@ def adjudicate_ui_pair(
                 continue
             identities.update(ids)
             outcome, reason = _checked_outcome(
-                attempt, attack=attack, run_id=run_id, sha=sha, checksum=fixture_checksum
+                attempt,
+                attack=attack,
+                run_id=run_id,
+                sha=sha,
+                checksum=fixture_checksum,
+                collector=collector,
             )
             if reason is not None:
                 complete = False
