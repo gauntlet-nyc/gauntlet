@@ -45,6 +45,27 @@ reviewer tokens. Nothing in this document is a claim that a missing control exis
 | A8 | Browser and API workers stay on the environment's exact origin; redirects are blocked | local/Anchor browser adapters, `HttpxApiClient` | `test_b01_local_browser.py`, `test_s1_p9_workers.py` |
 | A9 | Secrets never print; missing keys fail with the variable name only | `gauntlet.settings.Secret`, `MissingSettingError` | `test_s1_run_gate.py::test_settings_never_reveal_secrets` |
 
+## Live Recall access
+
+The `/recall/audit`, `/recall/counterfactual`, `/recall/lineage/{decision_id}` and
+`/recall/review-queue` reads can start replay work. They require the existing reviewer
+bearer token whenever the composed Recall runtime uses a live provider. Missing or invalid
+credentials return HTTP 401 before replay starts, including requests for cached results.
+Offline synthetic replay remains public; `/recall/timeline` only reads recorded history.
+The dashboard forwards its httpOnly reviewer cookie in server-side requests and directs
+unauthenticated live Recall visitors to reviewer login.
+
+For live use, configure `GAUNTLET_REVIEWER_TOKENS=name:token` with a token of at least
+16 characters and `RUN_LIVE_INTEGRATIONS=1`. For Azure, set
+`GAUNTLET_MODEL_PROVIDER=azure`, `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_DEPLOYMENT`,
+and `AZURE_OPENAI_API_KEY`. For Bedrock, set `GAUNTLET_MODEL_PROVIDER=bedrock`,
+`AWS_REGION`, `BEDROCK_MODEL_ID`, and working AWS credentials through the standard
+credential chain (for example `AWS_PROFILE`, or `AWS_ACCESS_KEY_ID` plus
+`AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN` for temporary credentials).
+Restart the API after configuration changes, then sign in at `/login` using that token.
+Direct API callers supply `Authorization: Bearer <token>`. Never put tokens in URLs.
+The route guard is covered by `test_c3_api.py::test_live_recall_rejects_missing_or_invalid_auth_before_replay`.
+
 ## 4. Not implemented (explicit gaps)
 
 * `tenant_id` on records and ports; per-tenant stores and quotas.
