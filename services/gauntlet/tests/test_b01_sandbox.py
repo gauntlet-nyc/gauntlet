@@ -14,7 +14,7 @@ from gauntlet.integrations.daytona import (
     RegisteredSnapshot,
     RegisteredTarget,
 )
-from gauntlet.integrations.daytona.sdk import HttpxHealthProbe, SdkDaytonaRuntime
+from gauntlet.integrations.daytona.sdk import HttpxHealthProbe, SdkDaytonaRuntime, SdkSandbox
 from gauntlet.ports.errors import EnvironmentUnavailableError
 
 BASE = "a" * 40
@@ -32,6 +32,8 @@ class FakeSandbox:
         self.preview = "https://3100-token.proxy.daytona.work"
         self.source_reads = 0
         self.fixture_reads = 0
+        self.start_calls: list[tuple[str, int]] = []
+        self.fail_start = False
 
     async def checkout_sha(self, repo_path: str) -> str:
         assert repo_path == "/workspace/cartwheel"
@@ -43,8 +45,15 @@ class FakeSandbox:
         self.fixture_reads += 1
         return self.fixture_bytes_result
 
+    async def start_cartwheel(self, repo_path: str, port: int) -> None:
+        assert self.source_reads and self.fixture_reads
+        self.start_calls.append((repo_path, port))
+        if self.fail_start:
+            raise RuntimeError("secret provider startup detail")
+
     async def signed_preview_origin(self, port: int, expires_in_seconds: int) -> str:
         assert port == 3100 and expires_in_seconds == 900
+        assert self.start_calls == [("/workspace/cartwheel", 3100)]
         return self.preview
 
 
@@ -93,6 +102,7 @@ def target() -> RegisteredTarget:
         preview_port=3100,
         preview_domain_suffix=".proxy.daytona.work",
         ready_path="/checkout",
+        startup_profile="cartwheel_next_v1",
         snapshots=(
             RegisteredSnapshot(
                 source_sha=BASE, snapshot="cartwheel-base-v1", image_digest="d" * 64
@@ -186,6 +196,7 @@ def test_created_environment_rechecks_fixture_and_cleans_up() -> None:
         assert environment.source_sha == BASE
         assert environment.fixture_checksum == TEMPLATE_CHECKSUM
         assert environment.preview_origin == runtime.next_sandbox.preview
+        assert runtime.next_sandbox.start_calls == [("/workspace/cartwheel", 3100)]
         assert health.calls == 1
         assert await adapter.verify_fixture(environment.environment_id, TEMPLATE_CHECKSUM)
         runtime.next_sandbox.fixture_bytes_result = b"tampered"
@@ -211,6 +222,7 @@ def test_source_or_fixture_mismatch_deletes_partial_environment() -> None:
                     mode="gate_compare",
                 )
             assert runtime.deleted == ["daytona-1"]
+            assert runtime.next_sandbox.start_calls == []
 
     asyncio.run(scenario())
 
@@ -227,6 +239,24 @@ def test_unready_preview_times_out_and_deletes() -> None:
                 mode="gate_compare",
             )
         assert health.calls >= 1
+        assert runtime.deleted == ["daytona-1"]
+
+    asyncio.run(scenario())
+
+
+def test_registered_startup_failure_cleans_without_requesting_preview() -> None:
+    async def scenario() -> None:
+        runtime = FakeRuntime()
+        runtime.next_sandbox.fail_start = True
+        with pytest.raises(EnvironmentUnavailableError) as error:
+            await provider(runtime).create(
+                target_id="cartwheel-fixture",
+                source_sha=BASE,
+                fixture_id="baseline-v1",
+                mode="gate_compare",
+            )
+        assert "secret provider startup detail" not in str(error.value)
+        assert runtime.next_sandbox.start_calls == [("/workspace/cartwheel", 3100)]
         assert runtime.deleted == ["daytona-1"]
 
     asyncio.run(scenario())
@@ -313,17 +343,21 @@ def test_sdk_wrapper_uses_pinned_snapshot_and_waiting_delete(
         def __init__(self) -> None:
             self.params: Params | None = None
             self.deleted = False
+            self.commands: list[tuple[str, str, int]] = []
 
         async def create(self, params: Params, *, timeout: float) -> object:
             assert timeout == 20
             self.params = params
 
             async def exec_command(command: str, *, cwd: str, timeout: int) -> object:
-                assert (command, cwd, timeout) == ("git rev-parse HEAD", "/workspace/cartwheel", 15)
+                self.commands.append((command, cwd, timeout))
+                if command != "git rev-parse HEAD":
+                    return SimpleNamespace(exit_code=0, result="")
+                assert (cwd, timeout) == ("/workspace/cartwheel", 15)
                 return SimpleNamespace(exit_code=0, result=BASE)
 
-            async def download_file(path: str, *, timeout: int) -> bytes:
-                assert path == "/workspace/cartwheel/fixture-state.json" and timeout == 30
+            async def download_file(path: str) -> bytes:
+                assert path == "/workspace/cartwheel/fixture-state.json"
                 return FIXTURE_BYTES
 
             async def preview(
@@ -365,10 +399,41 @@ def test_sdk_wrapper_uses_pinned_snapshot_and_waiting_delete(
         }
         assert await sandbox.checkout_sha("/workspace/cartwheel") == BASE
         assert await sandbox.read_file("/workspace/cartwheel/fixture-state.json") == FIXTURE_BYTES
+        await sandbox.start_cartwheel("/workspace/cartwheel", 3100)
+        assert client.commands[-1] == (
+            "test -s .next/BUILD_ID && test -x ./node_modules/.bin/next && "
+            "(nohup ./node_modules/.bin/next start -p 3100 "
+            ">/tmp/gauntlet-cartwheel-start.log 2>&1 </dev/null &)",
+            "/workspace/cartwheel",
+            20,
+        )
         assert await sandbox.signed_preview_origin(3100, 900) == (
             "https://3100-token.proxy.daytona.work"
         )
         await runtime.delete(sandbox, 10)
         assert client.deleted
+
+    asyncio.run(scenario())
+
+
+def test_sdk_registered_startup_rejects_invalid_port_and_failed_command() -> None:
+    class Process:
+        def __init__(self) -> None:
+            self.called = False
+
+        async def exec(self, command: str, *, cwd: str, timeout: int) -> SimpleNamespace:
+            self.called = True
+            return SimpleNamespace(exit_code=1, result="secret output")
+
+    async def scenario() -> None:
+        process = Process()
+        sandbox = SdkSandbox(SimpleNamespace(id="daytona-1", process=process))
+        with pytest.raises(EnvironmentUnavailableError, match="port"):
+            await sandbox.start_cartwheel("/workspace/cartwheel", 0)
+        assert not process.called
+        with pytest.raises(EnvironmentUnavailableError, match="registered startup failed") as error:
+            await sandbox.start_cartwheel("/workspace/cartwheel", 3000)
+        assert process.called
+        assert "secret output" not in str(error.value)
 
     asyncio.run(scenario())

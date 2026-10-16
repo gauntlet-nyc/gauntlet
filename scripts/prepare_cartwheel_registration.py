@@ -69,6 +69,7 @@ def prepare_registration(
         preview_port=preview_port,
         preview_domain_suffix=preview_domain_suffix,
         ready_path="/checkout",
+        startup_profile="cartwheel_next_v1",
         snapshots=(
             RegisteredSnapshot(manifest["git_refs"]["base_sha"], base_snapshot, image_digest),
             RegisteredSnapshot(manifest["git_refs"]["head_sha"], head_snapshot, image_digest),
