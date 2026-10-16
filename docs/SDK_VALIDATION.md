@@ -707,3 +707,50 @@ created, so cloud cleanup behavior remains unverified.
   call alone does not satisfy hosted execution or P1 acceptance.
 
 AWS, Daytona and Anchor live results remain NOT RUN. P1 is not yet accepted.
+
+## P1 handoff and infrastructure recheck (2026-10-16)
+
+Main at `37b7758` passed 344 offline tests and the real local headless browser
+scope probe (`redirect=blocked subresource=blocked popup=blocked
+ off_origin_requests=0`). Provider preflight found the pinned SDKs installed but
+no process credentials; this checkout had no `.env`/`.env.local`, and no AWS
+shared config/credentials files were present. Credential values were not printed.
+The operator reported newly added keys; their location is still needed before
+any genuine provider smoke. Absence here is not a claim about other checkouts or
+secret managers. All paid/provider live results remain NOT RUN.
+
+PR #43's registry digest pins were independently reviewed and merged. An isolated
+Compose test using those exact pinned images and automatically allocated loopback
+ports passed SurrealDB health, authenticated `RETURN 1`, and an authenticated
+Postgres `cartwheel|1` query. Both reviewer and integrator repeated the smoke.
+Synthetic project `gauntlet-pr43-5a691abc` was torn down, including its own volumes
+and network, with no remaining project containers. No other project's resources
+were changed. Normal startup still needs Docker/Compose, registry access or cached
+images, `SURREAL_PASS`, `CARTWHEEL_DB_PASSWORD`, optional `SURREAL_USER`, and free
+loopback ports 8001/5432.
+
+A-01d now serializes the existing frozen plan into a strict versioned handoff.
+Consumers provide independently trusted change, plan hash, run, model and prompt
+identity; the loader checks these and recomputes the existing canonical plan hash.
+Malformed/duplicate fields and over-2-MB JSON are rejected. Empty plans remain
+`not_tested` and cannot dispatch. This integrity hash is not an authorization
+signature. The model CLI retains its report fields and adds `frozen_plan`.
+
+B-01n consumes that handoff with independently supplied expectations and executes
+unchanged accepted UI attacks twice against a selected local revision. The
+integrated real headless run used one scripted (not Bedrock-generated) receipt:
+
+- Run ID: `local-handoff-smoke`.
+- Plan hash: `659662f940dd7235d3f4a9e7de723aaadab99253e642edf8841183afd854fd4f`.
+- Base: two `pass` oracle outcomes; head: two `fail` oracle outcomes.
+- Both verified compiled build receipts before browser actions.
+- Reports/artifacts: `/tmp/gauntlet-p1-handoff-smoke/base/` and
+  `/tmp/gauntlet-p1-handoff-smoke/head/` (ephemeral local evidence).
+- Invocation wrapper: `.venv/bin/python /tmp/run-gauntlet-frozen-smoke.py base`
+  and the same command with `head`; wrapper passes the documented consumer flags
+  with trusted expectations saved when the scripted plan was frozen.
+
+This proves saved-plan transport through the real local browser/oracle path. It
+does not establish blind model proposal quality, hosted fixture attestation,
+restrictive proxy policy, or a final paired Gate classification. Both reports
+retain `gate_status=not_tested`. Servers were stopped after the probes.
