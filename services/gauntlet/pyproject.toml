@@ -3,11 +3,7 @@ name = "gauntlet-control"
 version = "0.1.0"
 description = "Gauntlet Gate/Recall modular control-plane starter"
 requires-python = ">=3.12"
-dependencies = [
-    "cryptography>=46",
-    "fastapi>=0.115",
-    "pydantic>=2.9",
-]
+dependencies = ["fastapi>=0.115", "pydantic>=2.9"]
 
 [build-system]
 requires = ["hatchling>=1.25"]

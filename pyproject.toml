@@ -18,6 +18,7 @@ dev = [
 live-providers = [
     "anchorbrowser==1.0.1",
     "boto3==1.43.114",
+    "cryptography==50.0.2",
     "daytona==0.224.1",
     "playwright==1.64.0",
 ]
