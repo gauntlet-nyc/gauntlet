@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI
 
-from .routes import fake_run, health, offline_gate, targets
+from .routes import approvals, fake_run, gate, health, offline_gate, recall, sponsors, targets
 
 
 def create_app() -> FastAPI:
@@ -11,6 +11,10 @@ def create_app() -> FastAPI:
     app.include_router(fake_run.router)
     app.include_router(targets.router)
     app.include_router(offline_gate.router)
+    app.include_router(gate.router)
+    app.include_router(recall.router)
+    app.include_router(approvals.router)
+    app.include_router(sponsors.router)
     return app
 
 
