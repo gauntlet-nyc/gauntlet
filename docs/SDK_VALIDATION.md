@@ -735,3 +735,22 @@ identity; the loader checks these and recomputes the existing canonical plan has
 Malformed/duplicate fields and over-2-MB JSON are rejected. Empty plans remain
 `not_tested` and cannot dispatch. This integrity hash is not an authorization
 signature. The model CLI retains its report fields and adds `frozen_plan`.
+
+B-01n consumes that handoff with independently supplied expectations and executes
+unchanged accepted UI attacks twice against a selected local revision. The
+integrated real headless run used one scripted (not Bedrock-generated) receipt:
+
+- Run ID: `local-handoff-smoke`.
+- Plan hash: `659662f940dd7235d3f4a9e7de723aaadab99253e642edf8841183afd854fd4f`.
+- Base: two `pass` oracle outcomes; head: two `fail` oracle outcomes.
+- Both verified compiled build receipts before browser actions.
+- Reports/artifacts: `/tmp/gauntlet-p1-handoff-smoke/base/` and
+  `/tmp/gauntlet-p1-handoff-smoke/head/` (ephemeral local evidence).
+- Invocation wrapper: `.venv/bin/python /tmp/run-gauntlet-frozen-smoke.py base`
+  and the same command with `head`; wrapper passes the documented consumer flags
+  with trusted expectations saved when the scripted plan was frozen.
+
+This proves saved-plan transport through the real local browser/oracle path. It
+does not establish blind model proposal quality, hosted fixture attestation,
+restrictive proxy policy, or a final paired Gate classification. Both reports
+retain `gate_status=not_tested`. Servers were stopped after the probes.
