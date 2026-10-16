@@ -52,17 +52,23 @@ def decode_fact_text(text: str) -> TemporalMemoryFact | None:
     return None
 
 
+GAUNTLET_LABEL = "source=gauntlet"
+# Allowed categories on the hosted service: identity, knowledge, context.
+MEMORY_CATEGORY = "knowledge"
+
+
 def fact_labels(fact: TemporalMemoryFact) -> list[str]:
+    # The hosted service only accepts `key=value` labels (bare labels are rejected).
     labels = [
-        "gauntlet",
-        f"fact:{fact.fact_id}",
-        f"kind:{fact.kind}",
-        f"trust:{fact.trust}",
-        f"verification:{fact.verification}",
-        *(f"surface:{kind}" for kind in fact.surface_kinds),
+        GAUNTLET_LABEL,
+        f"fact={fact.fact_id}",
+        f"kind={fact.kind}",
+        f"trust={fact.trust}",
+        f"verification={fact.verification}",
+        *(f"surface={kind}" for kind in fact.surface_kinds),
     ]
     if fact.supersedes:
-        labels.append(f"supersedes:{fact.supersedes}")
+        labels.append(f"supersedes={fact.supersedes}")
     return labels
 
 
@@ -74,13 +80,29 @@ class AgentMemorySdkStore:
     def __init__(self, client: Any) -> None:  # noqa: ANN401 - optional SDK boundary
         self._client = client
         self.undecodable_hits = 0
+        self._registered_scopes: set[str] = set()
+
+    async def _ensure_scope(self, scope: str) -> None:
+        """Hosted service rejects writes to unregistered scopes; registering is idempotent."""
+        if scope in self._registered_scopes:
+            return
+        scopes = getattr(self._client, "scopes", None)
+        if scopes is not None:
+            try:
+                await scopes.register(scope, description="Gauntlet target")
+            except Exception as exc:
+                raise EnvironmentUnavailableError(
+                    f"Agent Memory scope registration failed ({type(exc).__name__})"
+                ) from None
+        self._registered_scopes.add(scope)
 
     async def remember(self, fact: TemporalMemoryFact) -> None:
+        await self._ensure_scope(fact.scope)
         try:
             await self._client.remember(
                 encode_fact_text(fact),
                 scopes=[fact.scope],
-                memory_category="gauntlet_fact",
+                memory_category=MEMORY_CATEGORY,
                 labels=fact_labels(fact),
             )
         except Exception as exc:
@@ -96,7 +118,7 @@ class AgentMemorySdkStore:
                 f"gauntlet findings for {query.scope}: {text}",
                 k=min(_MAX_K, max(query.limit * 3, query.limit)),
                 lens=[query.scope],
-                labels=["gauntlet"],
+                labels=[GAUNTLET_LABEL],
             )
         except Exception as exc:
             raise EnvironmentUnavailableError(
@@ -116,7 +138,9 @@ class AgentMemorySdkStore:
     async def all(self) -> tuple[TemporalMemoryFact, ...]:
         """Every decodable Gauntlet fact the context returns, newest first (read-only view)."""
         try:
-            response = await self._client.recall("gauntlet findings", k=_MAX_K, labels=["gauntlet"])
+            response = await self._client.recall(
+                "gauntlet findings", k=_MAX_K, labels=[GAUNTLET_LABEL]
+            )
         except Exception as exc:
             raise EnvironmentUnavailableError(
                 f"Agent Memory recall failed ({type(exc).__name__})"

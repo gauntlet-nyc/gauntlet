@@ -100,7 +100,7 @@ def test_as_of_supersession_lens_and_undecodable() -> None:
 
     asyncio.run(scenario())
     assert store.undecodable_hits >= 1
-    assert "supersedes:f1" in client.remembered[1]["labels"]
+    assert "supersedes=f1" in client.remembered[1]["labels"]
     assert client.remembered[0]["scopes"] == ["cartwheel"]
 
 
@@ -126,6 +126,8 @@ def test_real_sdk_request_shape_with_fake_transport() -> None:
 
         async def request(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:  # noqa: ANN401
             calls.append((method, path, kwargs.get("json")))
+            if path.endswith("/scopes"):
+                return {"path": f"{kwargs['json']['path']}/"}
             if path.endswith("/facts"):
                 stored.append(kwargs["json"]["text"])
                 return {"mode": "text", "session_id": "s1"}
@@ -151,7 +153,8 @@ def test_real_sdk_request_shape_with_fake_transport() -> None:
         assert [f.fact_id for f in found] == ["f1"]
 
     asyncio.run(scenario())
-    (m1, p1, body1), (m2, p2, body2) = calls
+    (m0, p0, body0), (m1, p1, body1), (m2, p2, body2) = calls
+    assert m0 == "POST" and p0.endswith("/scopes") and body0["path"] == "cartwheel"
     assert m1 == "POST" and p1.endswith("/facts") and "infer" not in body1
-    assert body1["labels"][0] == "gauntlet" and "fact:f1" in body1["labels"]
-    assert m2 == "POST" and p2.endswith("/query") and body2["labels"] == ["gauntlet"]
+    assert body1["labels"][0] == "source=gauntlet" and "fact=f1" in body1["labels"]
+    assert m2 == "POST" and p2.endswith("/query") and body2["labels"] == ["source=gauntlet"]
