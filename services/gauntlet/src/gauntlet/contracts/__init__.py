@@ -49,6 +49,13 @@ from .lineage import (
     Relation,
     ToolEvent,
 )
+from .memory import (
+    MemoryKind,
+    MemoryLens,
+    MemoryProvenance,
+    MemoryTrust,
+    TemporalMemoryFact,
+)
 from .recall import HistoricalDecision, RecallMode, RecallTrigger, RecallVerdict
 from .remediation import AuditSummary, RemediationAction, RemediationProposal
 from .replay import ReplayMode, ReplayResult, ReplaySpec
@@ -81,6 +88,10 @@ __all__ = [
     "HistoricalDecision",
     "InspectStep",
     "LineageEdge",
+    "MemoryKind",
+    "MemoryLens",
+    "MemoryProvenance",
+    "MemoryTrust",
     "MissingInput",
     "NavigateStep",
     "NodeKind",
@@ -104,6 +115,7 @@ __all__ = [
     "SourceRef",
     "StrictDTO",
     "SurfaceKind",
+    "TemporalMemoryFact",
     "ToolCallRecord",
     "ToolEvent",
     "TypeStep",

@@ -15,6 +15,7 @@ from .errors import (
     UnknownOracleError,
 )
 from .lineage import HistoricalEventStore, LineageStore
+from .memory import MemoryQuery, MemoryReader, MemoryWriter
 from .model import ModelGateway, ModelRequest, ModelResponse
 from .oracle import OracleDescriptor, TrustedOracleRegistry
 from .replay import ReplayEngine, ReplayWorld, ReplayWorldResolver
@@ -39,6 +40,9 @@ __all__ = [
     "EventSequenceConflictError",
     "HistoricalEventStore",
     "LineageStore",
+    "MemoryQuery",
+    "MemoryReader",
+    "MemoryWriter",
     "ModelGateway",
     "ModelRequest",
     "ModelResponse",

@@ -22,3 +22,10 @@ Gauntlet is one modular Python control plane plus TypeScript dashboard/test fixt
 - `analysis/signals.py` adds line-cited `ChangeSignal`s to each surface: `auth_check_removed` / `auth_check_added` (an ownership/permission term inside a guard), `side_effect_call` (refund/charge/transfer/delete/ledger/email), `tool_definition`, `layout_positioning`. Adjacent lines merge into one ranged signal. Signals steer planning only; they are never evidence of a bug.
 - `ports/targets.py` `TargetCatalog` is the server-side registry of authorized targets. `PlanChangeUseCase` refuses (`TargetNotAuthorizedError`) an unknown target or fixture **before** reading the repo or calling a model.
 - `PlanValidator` rejects steps that navigate or call APIs outside the target's registered route prefixes (segment-boundary match), use an actor that is not a registered synthetic identity, or chat with an unregistered agent. The planner prompt lists only those identities, so it never needs a hidden victim ID.
+
+## Memory-informed planning (A-07)
+
+- `contracts/memory.py` `TemporalMemoryFact`: typed kind, summary, provenance (`finding_id`, `oracle_id`, commit, trace), `known_at` vs `valid_from/valid_until`, `supersedes`, trust. A confirmed fact must cite the finding and oracle that proved it; model summaries can never be confirmed.
+- `ports/memory.py`: `MemoryReader.recall(MemoryQuery(scope, lens, surface_kinds, as_of))` and append-only `MemoryWriter.remember` — B implements them on SurrealDB Agent Memory (a separate service from core).
+- `planning/memory_selection.py` re-filters whatever the store returns: confirmed + `verified_test`/`policy` trust only, known and valid at `as_of`, matching surfaces, superseded facts hidden (still stored).
+- `PlanChangeUseCase.execute(..., as_of=)` pins memory visibility, so historical benchmarks cannot leak future findings; the `plan_frozen` event records `memory_fact_ids`. Memory is shown to the planner as untrusted evidence, never as an oracle or instruction.

@@ -5,7 +5,13 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Final
 
-from gauntlet.contracts import ChangeImpactMap, ChangeRequest, RunEvent, SourceRef
+from gauntlet.contracts import (
+    ChangeImpactMap,
+    ChangeRequest,
+    RunEvent,
+    SourceRef,
+    TemporalMemoryFact,
+)
 from gauntlet.contracts.events import PayloadValue
 from gauntlet.planning import (
     PLANNER_VERSION,
@@ -13,8 +19,16 @@ from gauntlet.planning import (
     FrozenPlan,
     SourceExcerpt,
     compute_plan_hash,
+    select_memory,
 )
-from gauntlet.ports import PortError, RepositoryInspector, RunStore, TargetCatalog
+from gauntlet.ports import (
+    MemoryQuery,
+    MemoryReader,
+    PortError,
+    RepositoryInspector,
+    RunStore,
+    TargetCatalog,
+)
 
 from ..errors import TargetNotAuthorizedError
 
@@ -30,13 +44,18 @@ class PlanChangeDependencies:
     clock: Callable[[], datetime]
     new_event_id: Callable[[], str]
     max_excerpts: int = 12
+    memory: MemoryReader | None = None
+    max_memory_facts: int = 8
 
 
 class PlanChangeUseCase:
     def __init__(self, deps: PlanChangeDependencies) -> None:
         self._deps = deps
 
-    async def execute(self, run_id: str, change: ChangeRequest) -> FrozenPlan:
+    async def execute(
+        self, run_id: str, change: ChangeRequest, as_of: datetime | None = None
+    ) -> FrozenPlan:
+        """Plan a change. ``as_of`` pins memory visibility (historical benchmarks: no hindsight)."""
         target = await self._deps.targets.get(change.target_id)
         if target is None:
             raise TargetNotAuthorizedError("target is not registered")
@@ -53,7 +72,8 @@ class PlanChangeUseCase:
             },
         )
         excerpts, unreadable = await self._read_excerpts(change.repository_id, impact)
-        draft = await self._deps.planner.plan(change, impact, excerpts, target)
+        memory = await self._recall_memory(change, impact, as_of or self._deps.clock())
+        draft = await self._deps.planner.plan(change, impact, excerpts, target, memory)
         attacks = draft.validation.accepted
         frozen = FrozenPlan(
             run_id=run_id,
@@ -76,12 +96,32 @@ class PlanChangeUseCase:
                 "accepted_attacks": len(attacks),
                 "rejected_attacks": len(frozen.rejected),
                 "unreadable_excerpts": unreadable,
+                "memory_fact_ids": ",".join(f.fact_id for f in memory) or None,
                 "model_id": draft.model_id,
                 "not_tested_reason": draft.not_tested_reason,
             },
             trace_id=draft.trace_id,
         )
         return frozen
+
+    async def _recall_memory(
+        self, change: ChangeRequest, impact: ChangeImpactMap, as_of: datetime
+    ) -> tuple[TemporalMemoryFact, ...]:
+        if self._deps.memory is None or not impact.surfaces:
+            return ()
+        kinds = frozenset(s.kind for s in impact.surfaces)
+        query = MemoryQuery(
+            scope=f"project/{change.target_id}",
+            lens="planner",
+            surface_kinds=kinds,
+            as_of=as_of,
+            limit=self._deps.max_memory_facts,
+        )
+        try:
+            facts = await self._deps.memory.recall(query)
+        except PortError:
+            return ()
+        return select_memory(facts, as_of, kinds, self._deps.max_memory_facts)
 
     async def _read_excerpts(
         self, repository_id: str, impact: ChangeImpactMap

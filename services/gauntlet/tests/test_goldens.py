@@ -27,6 +27,7 @@ from gauntlet.contracts import (
     ReplaySpec,
     RunEvent,
     StrictDTO,
+    TemporalMemoryFact,
     ToolEvent,
 )
 
@@ -55,6 +56,7 @@ GOLDENS: dict[str, type[StrictDTO]] = {
     "replay-spec-control.v1.json": ReplaySpec,
     "replay-spec-counterfactual.v1.json": ReplaySpec,
     "run-event.v1.json": RunEvent,
+    "temporal-memory-fact.v1.json": TemporalMemoryFact,
     "tool-event.v1.json": ToolEvent,
     "ui-plan.v1.json": AttackSpec,
 }
