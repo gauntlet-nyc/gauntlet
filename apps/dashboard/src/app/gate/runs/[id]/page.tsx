@@ -22,7 +22,7 @@ import { FixPlanReview } from "@/components/gate/fix-plan-review";
 import { MonoId } from "@/components/gate/mono-id";
 import { AttackCard } from "@/components/gate/plan-pipeline";
 import { RevisionCompare } from "@/components/gate/revision-compare";
-import { AttemptsTable, EventTimeline, FindingCard } from "@/components/gate/run-sections";
+import { AttemptsTable, EventTimeline, FindingCard, OracleRecords } from "@/components/gate/run-sections";
 import { SectionNav, type NavSection } from "@/components/gate/section-nav";
 import { VerdictHero } from "@/components/gate/verdict-hero";
 import { Reveal } from "@/components/motion/reveal";
@@ -145,7 +145,7 @@ export default async function GateRunPage({
             <Fact label="Base..head" icon={Layers}>
               <span className="font-mono text-[13px]">
                 <MonoId value={run.base_sha} ellipsis={false} />
-                <span className="text-muted-foreground/60">..</span>
+                <span className="text-muted-foreground/60 px-0.5 font-sans">..</span>
                 <MonoId value={run.head_sha} ellipsis={false} />
               </span>
             </Fact>
@@ -178,12 +178,16 @@ export default async function GateRunPage({
           title="Evidence"
           icon={Images}
          
-          description="Frames captured by the worker. Bytes are served only by exact run and artifact ID from the write-once store."
+          description={evidence.length > 0 ? "Frames captured by the worker. Bytes are served only by exact run and artifact ID from the write-once store." : "This attack records ledger and trace evidence instead of frames. What the oracle recorded:"}
         >
           {evidence.length > 0 ? (
             <EvidenceGallery items={evidence} />
           ) : (
-            <EmptyState icon={Images} title="No screenshots for this run" description="This attack type records ledger and trace evidence instead of frames; see Attempts." />
+            run.attempts.length > 0 ? (
+            <OracleRecords attempts={run.attempts} />
+          ) : (
+            <EmptyState icon={Images} title="No evidence captured" description="Nothing executed for this change." />
+          )
           )}
         </Section>
       </Anchor>

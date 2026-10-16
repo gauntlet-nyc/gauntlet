@@ -1,5 +1,6 @@
 import { AlertTriangle, CheckCircle2, FolderLock, GitCommitHorizontal, ListChecks, Wrench, XCircle } from "lucide-react";
 
+import { humanize } from "@/components/gate/copy";
 import { MonoId } from "@/components/gate/mono-id";
 import { PendingButton } from "@/components/gate/pending-button";
 import { DecideForm, DiffView, OfflineBadge, ProvenanceList, TONE_CLASSES } from "@/components/shared";
@@ -32,7 +33,7 @@ function RepairResult({ repair }: { repair: Repair }) {
             <li key={c.name} className="flex items-start gap-3 px-5 py-3 text-sm">
               <Icon className={cn("mt-0.5 size-4 shrink-0", t.text)} aria-hidden />
               <div className="min-w-0">
-                <div className="font-medium capitalize">{c.name.replaceAll("_", " ")}</div>
+                <div className="font-medium">{humanize(c.name)}</div>
                 <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">{c.detail}</p>
               </div>
             </li>

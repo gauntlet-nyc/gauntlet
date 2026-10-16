@@ -37,7 +37,7 @@ export function AttemptsTable({ attempts }: { attempts: AttemptView[] }) {
         <TableBody>
           {attempts.map((a) => (
             <TableRow key={`${a.attack_id}-${a.revision}-${a.attempt}`} className="align-top">
-              <TableCell className="max-w-56 pl-5">
+              <TableCell className="max-w-72 pl-5">
                 <code className="block truncate font-mono text-xs" title={a.attack_id}>
                   {a.attack_id}
                 </code>
@@ -57,6 +57,35 @@ export function AttemptsTable({ attempts }: { attempts: AttemptView[] }) {
           ))}
         </TableBody>
       </Table>
+    </div>
+  );
+}
+
+/** For attacks without frames (API, AI-agent): what the oracle recorded, grouped per revision. */
+export function OracleRecords({ attempts }: { attempts: AttemptView[] }) {
+  const groups = (["head", "base"] as const).flatMap((revision) => {
+    const rows = attempts.filter((a) => a.revision === revision);
+    return [...new Set(rows.map((a) => a.observed))].map((observed) => {
+      const matching = rows.filter((a) => a.observed === observed);
+      return { revision, observed, outcome: matching[0]?.outcome ?? "inconclusive", count: matching.length, total: rows.length };
+    });
+  });
+  return (
+    <div className="grid gap-3 md:grid-cols-2">
+      {groups.map((g) => {
+        const tone = TONE_CLASSES[toneOf(g.outcome)];
+        return (
+          <div key={`${g.revision}-${g.observed}`} className={cn("bg-card rounded-xl border p-4", tone.border)}>
+            <div className="flex items-center justify-between gap-2 text-xs">
+              <span className="font-medium capitalize">{g.revision}</span>
+              <span className="text-muted-foreground tabular-nums">
+                {g.count}/{g.total} attempts
+              </span>
+            </div>
+            <p className={cn("mt-2 font-mono text-[13px] leading-relaxed", tone.text)}>{g.observed}</p>
+          </div>
+        );
+      })}
     </div>
   );
 }
