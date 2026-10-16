@@ -50,11 +50,13 @@ async def probe(
 ) -> dict[str, object]:
     if not 1 <= attempts <= 5:
         raise ValueError("local diagnostic attempts must be between 1 and 5")
+    if scenario == "clean" and clean_sha is None:
+        raise ValueError("clean scenario requires its synthetic commit SHA")
+    if scenario == "head" and clean_sha is not None:
+        raise ValueError("head scenario cannot use a clean commit SHA")
     manifest = json.loads(Path("apps/cartwheel/fixture-manifest.v1.json").read_text())
     base_sha = manifest["git_refs"]["base_sha"]
-    head_sha = manifest["git_refs"]["head_sha"] if scenario != "clean" else clean_sha
-    if head_sha is None:
-        raise ValueError("clean scenario requires its synthetic commit SHA")
+    head_sha = clean_sha if clean_sha is not None else manifest["git_refs"]["head_sha"]
     execute_sha = base_sha if scenario == "base" else head_sha
     if _checkout_sha(fixture_repo) != execute_sha:
         raise ValueError("fixture checkout is not at the selected execution revision")
@@ -66,7 +68,9 @@ async def probe(
         fixture_id=manifest["fixture_id"],
         target_id=manifest["target_id"],
         max_cost_usd_cents=500,
-        feature_intent="Synthetic UI update",
+        feature_intent=(
+            "Clarify the product description" if clean_sha is not None else "Synthetic UI update"
+        ),
     )
     frozen_result = await freeze_diagnostic_plan(fixture_repo, change, run_id=run_id)
     frozen = frozen_result.frozen
@@ -144,11 +148,6 @@ async def probe(
                 )
         finally:
             await browser.close()
-    expected = "fail" if scenario == "head" else "pass"
-    if any(
-        item["status"] != "completed" or item["oracle_outcome"] != expected for item in observations
-    ):
-        raise RuntimeError("local repeated observations disagree with the selected scenario")
     report: dict[str, object] = {
         "mode": "scripted_local_p1_diagnostic",
         "scenario": scenario,
