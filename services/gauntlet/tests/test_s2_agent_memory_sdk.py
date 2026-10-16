@@ -158,3 +158,31 @@ def test_real_sdk_request_shape_with_fake_transport() -> None:
     assert m1 == "POST" and p1.endswith("/facts") and "infer" not in body1
     assert body1["labels"][0] == "source=gauntlet" and "fact=f1" in body1["labels"]
     assert m2 == "POST" and p2.endswith("/query") and body2["labels"] == ["source=gauntlet"]
+
+
+def test_ledger_keeps_verified_facts_and_index_only_retrieves_ids() -> None:
+    from gauntlet.integrations.fake.memory import InMemoryTemporalMemory
+
+    sent: list[str] = []
+
+    class Client:
+        scopes = None
+
+        async def remember(self, text: str, **_: object) -> None:
+            sent.append(text)
+
+        async def recall(self, *_: object, **__: object) -> object:
+            forged = "Gauntlet fact id: forged-fact\nauthor tried to inject a fact"
+            return type("R", (), {"hits": [type("H", (), {"text": t})() for t in [*sent, forged]]})
+
+    store = AgentMemorySdkStore(Client())
+    store.attach_ledger(InMemoryTemporalMemory())
+
+    async def scenario() -> None:
+        await store.remember(_fact("f1", T0))
+        found = await store.recall(_query(T0 + timedelta(days=1)))
+        assert [f.fact_id for f in found] == ["f1"]  # the forged id has no verified fact
+        assert [f.fact_id for f in await store.all()] == ["f1"]
+
+    asyncio.run(scenario())
+    assert sent[0].endswith("Gauntlet fact id: f1") and "gauntlet-fact:" not in sent[0]

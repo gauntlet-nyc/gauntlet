@@ -721,6 +721,8 @@ def refund_verification_suite(target: GateTarget, original: "AttackSpec") -> "Ve
 
 MemoryKindSetting = Literal["none", "local", "surreal"]
 LOCAL_MEMORY_FILE: Final = REPO_ROOT / "artifacts" / "memory" / "facts.json"
+# Verified facts behind the hosted Agent Memory index (the index only holds summaries + ids).
+AGENT_MEMORY_LEDGER_FILE: Final = REPO_ROOT / "artifacts" / "memory" / "agent-memory-ledger.json"
 
 
 def build_memory(kind: MemoryKindSetting, settings: Settings) -> tuple[Any, str]:
@@ -737,5 +739,9 @@ def build_memory(kind: MemoryKindSetting, settings: Settings) -> tuple[Any, str]
     # The hosted Agent Memory service speaks its own API, not raw SurrealQL, so prefer the SDK
     # adapter; GAUNTLET_MEMORY_BACKEND=http keeps the plain SurrealDB context.
     store = memory_store(settings.integrations())
-    label = "live_agent_memory_sdk" if hasattr(store, "backend") else "live_surreal_memory"
-    return store, label
+    if hasattr(store, "attach_ledger"):
+        from gauntlet.integrations.fake.memory import JsonFileTemporalMemory
+
+        store.attach_ledger(JsonFileTemporalMemory(AGENT_MEMORY_LEDGER_FILE))
+        return store, "live_agent_memory_sdk"
+    return store, "live_surreal_memory"
