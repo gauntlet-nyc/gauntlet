@@ -1,6 +1,6 @@
 """Gate runs: start, list, get (diff, plan, attempts, verdict, fix plan, events, briefing)."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 
 from gauntlet.application.voice import build_briefing
 
@@ -58,3 +58,22 @@ async def get_gate_briefing(run_id: str) -> BriefingView:
     sequence = view.events[-1].sequence if view.events else 0
     briefing = build_briefing(view.run_id, view.findings, gaps, sequence)
     return BriefingView(briefing=briefing, audio_available=False, provenance=TEMPLATED_BRIEFING)
+
+
+@router.get(
+    "/runs/{run_id}/artifacts/{artifact_id}",
+    response_class=Response,
+    responses={200: {"content": {"image/png": {}, "application/json": {}}}},
+)
+async def get_gate_artifact(run_id: str, artifact_id: str) -> Response:
+    """Serves stored evidence bytes only by exact run and artifact ID."""
+    record = get_container().gate.runs.get(run_id)
+    stored = record.artifacts.get(artifact_id) if record else None
+    if stored is None:
+        raise HTTPException(status_code=404, detail="unknown artifact")
+    media_type, content = stored
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={"X-Content-Type-Options": "nosniff", "Cache-Control": "no-store"},
+    )

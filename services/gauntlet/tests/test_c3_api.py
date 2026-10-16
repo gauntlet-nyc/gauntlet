@@ -1,6 +1,5 @@
 """Session 3 API: Gate runs, Recall views, hash-bound approvals, sponsor status, settings."""
 
-import json
 import shutil
 from collections.abc import Iterator
 from pathlib import Path
@@ -10,8 +9,8 @@ from fastapi.testclient import TestClient
 
 from gauntlet.api.container import get_container
 from gauntlet.api.main import app
-from gauntlet.api.offline.history import FixtureHistory, HistoryIntegrityError
 from gauntlet.api.settings import REPO_ROOT, SettingsError, get_settings, load_settings
+from gauntlet.integrations.history_files import HistoryArchive, HistoryIntegrityError
 
 TOKEN = "dev-reviewer-token-0123456789"
 AUTH = {"Authorization": f"Bearer {TOKEN}"}
@@ -21,10 +20,7 @@ AUTH = {"Authorization": f"Bearer {TOKEN}"}
 def client(monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
     for name in ("DAYTONA_API_KEY", "ANCHOR_API_KEY", "RUN_LIVE_INTEGRATIONS"):
         monkeypatch.delenv(name, raising=False)
-    monkeypatch.setenv(
-        "GAUNTLET_REVIEWER_TOKENS",
-        json.dumps({TOKEN: {"reviewer_id": "reviewer-dev", "channel": "dashboard"}}),
-    )
+    monkeypatch.setenv("GAUNTLET_REVIEWER_TOKENS", f"reviewer-dev:{TOKEN}")
     get_settings.cache_clear()
     get_container.cache_clear()
     yield TestClient(app)
@@ -38,29 +34,39 @@ def _start(client: TestClient, change_id: str = "help-button") -> dict:  # type:
     return response.json()  # type: ignore[no-any-return]
 
 
-def test_help_button_offline_run_is_labelled_and_attributed(client: TestClient) -> None:
+def test_help_button_run_uses_real_pipeline_with_offline_labels(client: TestClient) -> None:
     run = _start(client)
     assert run["status"] == "confirmed_regression"
     assert run["attribution"] == "introduced"
-    assert [(a["revision"], a["outcome"]) for a in run["attempts"]] == [
-        ("head", "fail"),
-        ("head", "fail"),
-        ("base", "pass"),
-    ]
-    assert run["provenance"] and not any(p["live"] for p in run["provenance"])
-    assert all("OFFLINE" in a["provenance"]["label"] for a in run["attempts"])
+    sides = [(a["revision"], a["outcome"]) for a in run["attempts"]]
+    assert sides == [("head", "fail"), ("head", "fail"), ("base", "pass"), ("base", "pass")]
+    labels = {p["provider"] for p in run["provenance"]}
+    assert {"model:offline_scripted", "sandbox:offline_fake"} <= labels
+    assert not any(p["live"] for p in run["provenance"])
+    assert run["events"][1]["event_type"] == "plan_frozen"
+    assert run["events"][1]["payload"]["plan_hash"] == run["plan_sha256"]
     assert "src/components/FloatingHelp.module.css" in {d["path"] for d in run["diff"]}
-    assert run["frozen_plan"]["attack_id"] == "attack-ui-001"
-    assert len(run["plan_sha256"]) == 64
+    assert run["attacks"] and run["attacks"][0]["worker_kind"] == "ui"
+    shot = run["attempts"][0]["screenshot_artifact_ids"][0]
+    image = client.get(f"/gate/runs/{run['run_id']}/artifacts/{shot}")
+    assert image.status_code == 200 and image.headers["content-type"] == "image/png"
+    assert client.get(f"/gate/runs/{run['run_id']}/artifacts/nope").status_code == 404
     assert client.get(f"/gate/runs/{run['run_id']}").json() == run
     assert client.get("/gate/runs").json()[0]["offline"] is True
     assert client.get("/gate/runs/nope").status_code == 404
 
 
+def test_clean_change_passes_on_both_revisions(client: TestClient) -> None:
+    run = _start(client, "clean")
+    assert run["status"] == "passed"
+    assert run["fix_plan"] is None
+    assert all(a["outcome"] == "pass" for a in run["attempts"])
+
+
 def test_change_without_recording_is_not_tested_never_passed(client: TestClient) -> None:
     run = _start(client, "refund-tool")
     assert run["status"] == "not_tested"
-    assert "DAYTONA_API_KEY" in run["not_tested_reason"]
+    assert "AI/tool worker" in run["not_tested_reason"]
     assert "Not tested does not mean safe" in run["not_tested_reason"]
     assert run["attempts"] == [] and run["findings"] == []
     assert run["diff"][0]["path"] == "api/src/tools/request_refund.ts"
@@ -68,7 +74,7 @@ def test_change_without_recording_is_not_tested_never_passed(client: TestClient)
 
 
 def test_briefing_is_templated_from_findings(client: TestClient) -> None:
-    run = _start(client, "clean")
+    run = _start(client, "refund-tool")
     body = client.get(f"/gate/runs/{run['run_id']}/briefing").json()
     assert "Not tested does not mean safe." in body["briefing"]["spoken_summary"]
     assert body["provenance"]["live"] is False
@@ -183,13 +189,17 @@ def test_sponsors_never_claim_live_and_never_echo_values(
 def test_settings_validate_and_hide_tokens() -> None:
     with pytest.raises(SettingsError, match="RUN_LIVE_INTEGRATIONS"):
         load_settings({"RUN_LIVE_INTEGRATIONS": "yes"})
+    assert (
+        load_settings({"GAUNTLET_REVIEWER_TOKENS": "REPLACE_WITH_name:token"}).reviewer_for(
+            "REPLACE_WITH_name"
+        )
+        is None
+    )
     with pytest.raises(SettingsError, match="GAUNTLET_MODEL_PROVIDER"):
         load_settings({"GAUNTLET_MODEL_PROVIDER": "openai"})
     with pytest.raises(SettingsError, match="16"):
-        load_settings({"GAUNTLET_REVIEWER_TOKENS": json.dumps({"short": {"reviewer_id": "r"}})})
-    settings = load_settings(
-        {"GAUNTLET_REVIEWER_TOKENS": json.dumps({TOKEN: {"reviewer_id": "r"}})}
-    )
+        load_settings({"GAUNTLET_REVIEWER_TOKENS": "r:short"})
+    settings = load_settings({"GAUNTLET_REVIEWER_TOKENS": f"r:{TOKEN}"})
     assert TOKEN not in repr(settings)
     assert settings.anchor_require_proxy is True
     assert load_settings({"GAUNTLET_ANCHOR_REQUIRE_PROXY": "0"}).anchor_require_proxy is False
@@ -204,4 +214,30 @@ def test_tampered_history_is_refused(tmp_path: Path) -> None:
         ledger.read_text().replace("synthetic-customer-02", "synthetic-customer-03", 1)
     )
     with pytest.raises(HistoryIntegrityError):
-        FixtureHistory.load(copy)
+        HistoryArchive.load(copy)
+
+
+def test_adapter_selection_never_goes_live_without_opt_in() -> None:
+    from gauntlet.api.services.gate import GateService
+    from gauntlet.settings import Settings
+
+    keys = {
+        "DAYTONA_API_KEY": "k" * 20,
+        "DAYTONA_TARGET": "eu",
+        "GAUNTLET_DAYTONA_REGISTRATION": "/tmp/r.json",
+        "ANCHOR_API_KEY": "k" * 20,
+        "GAUNTLET_ANCHOR_REQUIRE_PROXY": "0",
+        "GAUNTLET_MODEL_PROVIDER": "azure",
+        "AZURE_OPENAI_ENDPOINT": "https://x.openai.azure.com",
+        "AZURE_OPENAI_DEPLOYMENT": "d",
+        "AZURE_OPENAI_API_KEY": "k" * 20,
+    }
+    assert GateService.adapters(Settings.from_env(keys)) == ("scripted", "fake", "fake")
+    live = Settings.from_env({**keys, "RUN_LIVE_INTEGRATIONS": "1"})
+    assert GateService.adapters(live) == ("azure", "daytona", "anchor")
+    local = {
+        "CARTWHEEL_BASE_ORIGIN": "http://127.0.0.1:3101",
+        "CARTWHEEL_HEAD_ORIGIN": "http://127.0.0.1:3102",
+    }
+    assert GateService.adapters(Settings.from_env(local)) == ("scripted", "local", "local")
+    assert GateService.adapters(Settings.from_env(local), "clean") == ("scripted", "fake", "fake")

@@ -91,6 +91,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/gate/runs/{run_id}/artifacts/{artifact_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Gate Artifact
+         * @description Serves stored evidence bytes only by exact run and artifact ID.
+         */
+        get: operations["get_gate_artifact_gate_runs__run_id__artifacts__artifact_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/gate/runs/{run_id}/briefing": {
         parameters: {
             query?: never;
@@ -430,15 +450,18 @@ export interface components {
         };
         /** AttemptView */
         AttemptView: {
+            /** Attack Id */
+            attack_id: string;
             /** Attempt */
             attempt: number;
             /** Evidence Ids */
             evidence_ids: string[];
+            /** Observed */
+            observed: string;
             /** Oracle Id */
             oracle_id: string;
             /** Outcome */
             outcome: string;
-            provenance: components["schemas"]["Provenance"];
             /**
              * Revision
              * @enum {string}
@@ -636,6 +659,8 @@ export interface components {
             };
             /** Gaps */
             gaps: string[];
+            /** Proposals */
+            proposals: components["schemas"]["RemediationProposal"][];
             /** Provenance */
             provenance: components["schemas"]["Provenance"][];
             /** Recall Id */
@@ -797,6 +822,8 @@ export interface components {
         };
         /** GateRunView */
         GateRunView: {
+            /** Attacks */
+            attacks: components["schemas"]["AttackSpec"][];
             /** Attempts */
             attempts: components["schemas"]["AttemptView"][];
             /** Attribution */
@@ -816,15 +843,18 @@ export interface components {
             fix_plan: components["schemas"]["FixPlanView"] | null;
             /** Fixture Id */
             fixture_id: string;
-            frozen_plan: components["schemas"]["AttackSpec"] | null;
             /** Head Sha */
             head_sha: string;
+            /** Model Id */
+            model_id: string | null;
             /** Not Tested Reason */
             not_tested_reason: string | null;
             /** Plan Sha256 */
             plan_sha256: string | null;
             /** Provenance */
             provenance: components["schemas"]["Provenance"][];
+            /** Rejected Attacks */
+            rejected_attacks: string[];
             /** Run Id */
             run_id: string;
             /** Status */
@@ -1574,6 +1604,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GateRunView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_gate_artifact_gate_runs__run_id__artifacts__artifact_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+                artifact_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                    "image/png": unknown;
                 };
             };
             /** @description Validation Error */

@@ -190,3 +190,24 @@ headless Chrome run produced two base passes and two clean passes under plan has
 The independent report `/tmp/gauntlet-a01g-paired-report.json` records
 `local_pair_status=passed`, zero failures and `gate_status=not_tested`. This is
 a scripted local false-positive check; it is not a blind Bedrock or Anchor run.
+
+## Demo API and dashboard (Session 3, 2026-10-16)
+
+```bash
+export GAUNTLET_REVIEWER_TOKENS='demo-reviewer:<16+ char token>'   # dev-grade login only
+uv run uvicorn gauntlet.api.main:app --port 8000
+pnpm --filter @gauntlet/dashboard build && (cd apps/dashboard && npx next start -p 3000)
+```
+
+- `POST /gate/runs {"change_id": "help-button" | "clean" | "refund-tool"}` runs Session 1's
+  `RunGateUseCase`. Adapter choice: Daytona + Anchor only with `RUN_LIVE_INTEGRATIONS=1` and all
+  their keys; else local Chromium if `CARTWHEEL_BASE_ORIGIN`/`CARTWHEEL_HEAD_ORIGIN` are set
+  (Help-button only, needs `--group live-providers`); else offline fake sandbox + simulated
+  layout. `refund-tool` is `not_tested` until the AI/tool worker is routed.
+- `/recall/*` runs Session 1's `RunRecallUseCase` over `apps/cartwheel/history` (checksum
+  verified). `/approvals` records hash-bound A-03 approvals; identity comes only from the bearer
+  token table. Remediation approvals are review-only.
+- Runs, artifacts and approvals live in API process memory; restarting clears them.
+- After changing API routes: `uv run python scripts/export_openapi.py` then
+  `pnpm --filter @gauntlet/dashboard generate:api`.
+- Demo click-path, go-live checklist and fallback: `docs/DEMO.md`.
