@@ -44,7 +44,7 @@ function RepairResult({ repair, runId }: { repair: Repair; runId: string }) {
         <section className="mt-4" aria-label="After repair evidence">
           <h4 className="text-sm font-medium">After repair — local browser evidence</h4>
           <div className="mt-2 grid grid-cols-2 gap-3 md:grid-cols-4">
-            {repair.screenshot_artifact_ids.slice(0, 8).map((id) => (
+            {(repair.screenshot_artifact_ids ?? []).slice(0, 8).map((id) => (
               // Stored evidence may be PNG or JPEG; preserve the original bytes.
               // eslint-disable-next-line @next/next/no-img-element
               <img key={id} src={artifactUrl(runId, id)} alt="Patched revision browser evidence" className="max-h-64 rounded border object-contain" />
