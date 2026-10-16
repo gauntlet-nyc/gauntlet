@@ -1,9 +1,10 @@
-import { AlertTriangle, CheckCircle2, FolderLock, GitCommitHorizontal, ListChecks, Wrench, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Wrench, XCircle } from "lucide-react";
 
 import { humanize } from "@/components/gate/copy";
 import { MonoId } from "@/components/gate/mono-id";
+import { PatchDisclosure } from "@/components/gate/patch-disclosure";
 import { PendingButton } from "@/components/gate/pending-button";
-import { DecideForm, DiffView, OfflineBadge, ProvenanceList, TONE_CLASSES } from "@/components/shared";
+import { DecideForm, DiffView, TONE_CLASSES } from "@/components/shared";
 import type { GateRunView } from "@/lib/gauntlet";
 import { cn } from "@/lib/utils";
 
@@ -13,42 +14,36 @@ type Repair = NonNullable<GateRunView["repair"]>;
 function RepairResult({ repair }: { repair: Repair }) {
   const ok = repair.verdict === "fix_verified_review_required";
   const tone = TONE_CLASSES[ok ? "good" : "bad"];
+  const Icon = ok ? CheckCircle2 : XCircle;
   return (
-    <div className={cn("bg-card overflow-hidden rounded-xl border", tone.border)}>
-      <div className={cn("flex flex-wrap items-center gap-3 border-b px-5 py-4", tone.bg)}>
-        {ok ? <CheckCircle2 className={cn("size-5", tone.text)} aria-hidden /> : <XCircle className={cn("size-5", tone.text)} aria-hidden />}
-        <strong className={cn("text-base", tone.text)}>Release verdict: {repair.verdict.replaceAll("_", " ")}</strong>
+    <div className="border-t pt-5">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <Icon className={cn("size-4", tone.text)} aria-hidden />
+        <strong className={cn("text-sm", tone.text)}>Release verdict: {repair.verdict.replaceAll("_", " ")}</strong>
         {repair.patched_sha && (
-          <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
-            <GitCommitHorizontal className="size-3.5" aria-hidden />
-            patched <MonoId value={repair.patched_sha} /> (local commit, never pushed)
+          <span className="text-muted-foreground text-xs">
+            patched <MonoId value={repair.patched_sha} ellipsis={false} />, local commit, never pushed
           </span>
         )}
       </div>
-      <ul className="divide-y">
+      <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2 pl-7">
         {repair.checks.map((c) => {
           const t = TONE_CLASSES[c.passed ? "good" : "bad"];
-          const Icon = c.passed ? CheckCircle2 : XCircle;
+          const CheckIcon = c.passed ? CheckCircle2 : XCircle;
           return (
-            <li key={c.name} className="flex items-start gap-3 px-5 py-3 text-sm">
-              <Icon className={cn("mt-0.5 size-4 shrink-0", t.text)} aria-hidden />
-              <div className="min-w-0">
-                <div className="font-medium">{humanize(c.name)}</div>
-                <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">{c.detail}</p>
-              </div>
+            <li key={c.name} className="flex items-center gap-1.5 text-xs" title={c.detail}>
+              <CheckIcon className={cn("size-3.5", t.text)} aria-hidden />
+              {humanize(c.name)}
             </li>
           );
         })}
       </ul>
-      <div className="space-y-3 border-t px-5 py-4">
-        <p className="text-muted-foreground text-xs leading-relaxed">{repair.note}</p>
-        <ProvenanceList provenance={repair.provenance} />
-      </div>
+      <p className="text-muted-foreground mt-3 pl-7 text-xs">{repair.note}</p>
     </div>
   );
 }
 
-/** Proposed patch, its scope, the hash-bound human decision and the optional repair re-verification. */
+/** The one action this page asks of a reviewer: decide on the proposed fix, then re-verify it. */
 export function FixPlanReview({
   runId,
   fixPlan,
@@ -68,84 +63,48 @@ export function FixPlanReview({
 }) {
   const { plan } = fixPlan;
   return (
-    <div className="space-y-4">
-      <OfflineBadge provenance={[fixPlan.provenance]} />
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <div className="min-w-0 space-y-3">
-          <p className="text-[15px] leading-relaxed">{plan.rationale}</p>
-          <DiffView diff={plan.unified_diff} />
+    <section aria-label="Next step" className="bg-card space-y-5 rounded-xl border p-6">
+      <div>
+        <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
+          <Wrench className="size-3.5" aria-hidden />
+          Next step · review the proposed fix
         </div>
-        <div className="space-y-4">
-          <div className="bg-card rounded-xl border p-4">
-            <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
-              <FolderLock className="size-3.5" aria-hidden />
-              Allowed paths
-            </div>
-            <ul className="mt-2 space-y-1">
-              {fixPlan.allowed_paths.map((p) => (
-                <li key={p} className="font-mono text-xs break-all">
-                  {p}
-                </li>
-              ))}
-            </ul>
-            <p className="text-muted-foreground mt-2 text-[11px] leading-snug">Any edit outside these paths fails verification.</p>
-          </div>
-          <div className="bg-card rounded-xl border p-4">
-            <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
-              <ListChecks className="size-3.5" aria-hidden />
-              Verification plan
-            </div>
-            <ol className="mt-2 space-y-2">
-              {plan.test_plan.map((t, i) => (
-                <li key={t} className="flex gap-2 text-xs leading-relaxed">
-                  <span className="text-muted-foreground font-mono tabular-nums">{i + 1}.</span>
-                  <span>{t}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </div>
+        <p className="mt-2 text-[15px] leading-relaxed">{plan.rationale}</p>
       </div>
-
-      <div className="bg-card rounded-xl border">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3">
-          <span className="text-sm font-medium">Your decision</span>
-          <span className="text-muted-foreground text-xs">
-            plan <MonoId value={fixPlan.plan_sha256} chars={12} />
-          </span>
-        </div>
-        <div className="space-y-4 px-5 py-4">
-          <DecideForm
-            action={decide}
-            runId={runId}
-            subject="fix_plan"
-            subjectId={plan.fix_plan_id}
-            planSha256={fixPlan.plan_sha256}
-            back={back}
-            approveLabel="Approve fix plan"
-          />
-          {fixPlan.repairable ? (
-            <form action={runRepair} className="space-y-3 border-t pt-4">
-              <input type="hidden" name="run_id" value={runId} />
-              <PendingButton icon={<Wrench aria-hidden />} variant="outline" pendingLabel="Re-verifying in a fresh worktree…">
-                Apply approved plan in a fresh worktree and re-verify
-              </PendingButton>
-              {repairStatus && repairStatus !== "done" && (
-                <div role="alert" className="border-regression/30 bg-regression/[0.07] text-regression flex items-start gap-2.5 rounded-lg border px-3.5 py-2.5 text-sm">
-                  <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
-                  <span>Refused (HTTP {repairStatus}): approve this exact hash first; approvals are single use.</span>
-                </div>
-              )}
-            </form>
-          ) : (
-            <p className="text-muted-foreground border-t pt-4 text-xs">
-              This sample plan is for review only; the repair runner is wired for AI-agent findings.
+      <PatchDisclosure summary={<span className="font-mono text-xs">{fixPlan.allowed_paths.join(", ")}</span>}>
+        <DiffView diff={plan.unified_diff} />
+        <ol className="text-muted-foreground mt-3 list-decimal space-y-1 pl-5 text-xs">
+          {plan.test_plan.map((t) => (
+            <li key={t}>{t}</li>
+          ))}
+        </ol>
+      </PatchDisclosure>
+      <DecideForm
+        action={decide}
+        runId={runId}
+        subject="fix_plan"
+        subjectId={plan.fix_plan_id}
+        planSha256={fixPlan.plan_sha256}
+        back={back}
+        approveLabel="Approve fix plan"
+      />
+      {fixPlan.repairable ? (
+        <form action={runRepair} className="space-y-3">
+          <input type="hidden" name="run_id" value={runId} />
+          <PendingButton icon={<Wrench aria-hidden />} variant="outline" pendingLabel="Re-verifying in a fresh worktree…">
+            Apply approved plan in a fresh worktree and re-verify
+          </PendingButton>
+          {repairStatus && repairStatus !== "done" && (
+            <p role="alert" className="text-regression flex items-start gap-2 text-sm">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
+              Refused (HTTP {repairStatus}): approve this exact hash first; approvals are single use.
             </p>
           )}
-        </div>
-      </div>
-
+        </form>
+      ) : (
+        <p className="text-muted-foreground text-xs">Sample plan for review only; the repair runner is wired for AI-agent findings.</p>
+      )}
       {repair && <RepairResult repair={repair} />}
-    </div>
+    </section>
   );
 }

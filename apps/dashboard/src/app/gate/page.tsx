@@ -1,10 +1,10 @@
-import { AlertTriangle, CheckCircle2, History, ShieldCheck, XCircle } from "lucide-react";
+import { AlertTriangle, History } from "lucide-react";
 
 import { startRun } from "@/app/actions";
 import { RunsTable } from "@/components/gate/runs-table";
 import { StartRunForm } from "@/components/gate/start-run-form";
 import { Reveal } from "@/components/motion/reveal";
-import { EmptyState, ErrorPanel, OfflineBadge, PageHeader, Section, StatCard, toneOf } from "@/components/shared";
+import { EmptyState, ErrorPanel, OfflineBadge, PageHeader, toneOf } from "@/components/shared";
 import { api } from "@/lib/gauntlet";
 
 export const dynamic = "force-dynamic";
@@ -22,51 +22,37 @@ export default async function GatePage({ searchParams }: { searchParams: Promise
   return (
     <main>
       <PageHeader
-        eyebrow="Gate"
-        icon={ShieldCheck}
-        title="Test a pull request before it ships"
-        description="Gauntlet reads the diff, plans attacks against what changed, runs each one on base and on head, and lets independent oracles decide."
+        title="Gate"
+        description="Attack each pull request on base and head; independent oracles decide."
+        actions={runs.some((r) => r.offline) ? <OfflineBadge provenance={[]} /> : undefined}
       />
-      {runs.some((r) => r.offline) && <OfflineBadge provenance={[]} />}
       {params.error && (
-        <div role="alert" className="border-regression/30 bg-regression/[0.07] text-regression my-4 flex items-center gap-2.5 rounded-lg border px-4 py-3 text-sm">
+        <p role="alert" className="text-regression mb-4 flex items-center gap-2 text-sm">
           <AlertTriangle className="size-4 shrink-0" aria-hidden />
           Could not start run (HTTP {params.error}).
-        </div>
+        </p>
       )}
 
-      <Section title="Start a run" description="Pick a change. The plan is hashed and frozen before any worker touches it.">
-        <Reveal>
-          <StartRunForm action={startRun} changes={changes} />
-        </Reveal>
-      </Section>
+      <Reveal>
+        <StartRunForm action={startRun} changes={changes} />
+      </Reveal>
 
-      <Section title="Runs" description="Newest first. Each run is immutable once its plan is frozen.">
+      <Reveal index={1} className="mt-12">
+        <div className="mb-3 flex items-baseline justify-between gap-4">
+          <h2 className="text-base font-semibold tracking-tight">Runs</h2>
+          {runs.length > 0 && (
+            <p className="text-muted-foreground text-xs tabular-nums">
+              {runs.length} runs · <span className={regressions > 0 ? "text-regression" : undefined}>{regressions} regressions</span> ·{" "}
+              <span className={passed > 0 ? "text-passed" : undefined}>{passed} passed</span>
+            </p>
+          )}
+        </div>
         {runs.length === 0 ? (
-          <EmptyState
-            icon={History}
-            title="No runs yet"
-            description="Runs live in this API process. Pick a change above and start one; it takes a few seconds offline."
-          />
+          <EmptyState icon={History} title="No runs yet" description="Pick a change above and start one; offline runs take a few seconds." />
         ) : (
-          <>
-            <div className="mb-4 grid grid-cols-3 gap-3">
-              <Reveal index={0}>
-                <StatCard label="Runs" value={runs.length} icon={History} />
-              </Reveal>
-              <Reveal index={1}>
-                <StatCard label="Regressions" value={regressions} tone={regressions > 0 ? "bad" : undefined} icon={XCircle} />
-              </Reveal>
-              <Reveal index={2}>
-                <StatCard label="Passed" value={passed} tone={passed > 0 ? "good" : undefined} icon={CheckCircle2} />
-              </Reveal>
-            </div>
-            <Reveal index={3}>
-              <RunsTable runs={runs} changes={changes} />
-            </Reveal>
-          </>
+          <RunsTable runs={runs} changes={changes} />
         )}
-      </Section>
+      </Reveal>
     </main>
   );
 }

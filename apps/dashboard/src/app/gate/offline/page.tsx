@@ -25,8 +25,8 @@ export default async function OfflineGatePage() {
         icon={FlaskConical}
         title="Offline gate (P0)"
         description="The first end-to-end gate: replayed golden observations judged by the real oracle path. No browser or sandbox runs here."
+        actions={<OfflineBadge provenance={[]} />}
       />
-      <OfflineBadge provenance={[]} />
       <Reveal>
         <Card tone={gate.status}>
           <div className="flex flex-wrap items-center gap-2 text-sm">
